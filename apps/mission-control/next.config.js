@@ -6,6 +6,11 @@ const nextConfig = {
   // Security: Mission Control is local-only.
   // Limit dev-origin allowances to loopback.
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
+
+  // Enable instrumentation hook for WAL initialization at startup
+  experimental: {
+    instrumentationHook: true,
+  },
 }
 
 module.exports = nextConfig

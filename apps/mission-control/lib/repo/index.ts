@@ -18,6 +18,8 @@ export type { SearchRepo, SearchResult, SearchOptions, SearchScope } from './sea
 export type { SkillsRepo, SkillFilters, CreateSkillInput, UpdateSkillInput, SkillWithContentDTO, DuplicateSkillTarget } from './skills'
 export type { PluginsRepo, PluginFilters, InstallPluginInput, UpdatePluginInput, PluginResponseMeta } from './plugins'
 export { PluginUnsupportedError } from './plugins'
+export type { GatewayRepo, GatewayStatusDTO as GatewayRepoStatusDTO, GatewayHealthDTO, GatewayProbeDTO } from './gateway'
+export type { CronRepo, CronStatusDTO as CronRepoStatusDTO, CronJobDTO as CronRepoJobDTO, CronRunDTO as CronRepoRunDTO, CronSchedule, CronPayload } from './cron'
 
 // Types (DTOs for UI consumption)
 export type {

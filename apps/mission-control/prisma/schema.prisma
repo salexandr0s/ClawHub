@@ -1,5 +1,8 @@
 // SAVORG Mission Control - Database Schema
 // SQLite with WAL mode for local-first performance
+//
+// WARNING: Use `prisma migrate dev` for schema changes.
+// NEVER use `prisma db push` — it causes drift between schema and migrations.
 
 generator client {
   provider = "prisma-client-js"

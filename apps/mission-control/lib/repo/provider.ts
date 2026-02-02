@@ -14,12 +14,15 @@ import { createDbReceiptsRepo, createMockReceiptsRepo, type ReceiptsRepo } from 
 import { createDbSearchRepo, createMockSearchRepo, type SearchRepo } from './search'
 import { createMockSkillsRepo, createFsSkillsRepo, type SkillsRepo } from './skills'
 import { createMockPluginsRepo, createCliPluginsRepo, type PluginsRepo } from './plugins'
+import { createMockGatewayRepo, createCliGatewayRepo, type GatewayRepo } from './gateway'
+import { createMockCronRepo, createCliCronRepo, type CronRepo } from './cron'
 
 // ============================================================================
 // REPOSITORY CONTAINER
 // ============================================================================
 
 export interface Repos {
+  // DB-backed repos (always real, no mock fallback in always-on)
   workOrders: WorkOrdersRepo
   operations: OperationsRepo
   agents: AgentsRepo
@@ -27,8 +30,16 @@ export interface Repos {
   activities: ActivitiesRepo
   receipts: ReceiptsRepo
   search: SearchRepo
+
+  // FS-backed repos
   skills: SkillsRepo
+
+  // CLI-backed repos (mock only if USE_MOCK_DATA=true)
   plugins: PluginsRepo
+
+  // OpenClaw-backed repos (availability-aware)
+  gateway: GatewayRepo
+  cron: CronRepo
 }
 
 // ============================================================================
@@ -73,6 +84,8 @@ export function createRepos(): Repos {
       search: createMockSearchRepo(),
       skills: createMockSkillsRepo(),
       plugins: createMockPluginsRepo(),
+      gateway: createMockGatewayRepo(),
+      cron: createMockCronRepo(),
     }
   }
 
@@ -86,6 +99,8 @@ export function createRepos(): Repos {
     search: createDbSearchRepo(),
     skills: createFsSkillsRepo(),
     plugins: createCliPluginsRepo(),
+    gateway: createCliGatewayRepo(),
+    cron: createCliCronRepo(),
   }
 }
 
