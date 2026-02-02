@@ -9,15 +9,8 @@
  */
 
 import { getRepos, useMockData } from './repo'
-import {
-  mockGlobalSkills,
-  mockAgentSkills,
-  mockAgents,
-  mockPlugins,
-  mockCronJobs,
-  mockGatewayStatus,
-  mockWorkspaceFiles,
-} from '@savorg/core'
+import { mockWorkspaceFiles } from '@savorg/core'
+import type { OpenClawResponse } from '@/lib/openclaw/availability'
 
 import type {
   WorkOrderDTO,
@@ -164,141 +157,78 @@ export async function getDashboardStats(): Promise<DashboardStatsDTO> {
 }
 
 // ============================================================================
-// SKILLS
+// SKILLS (FS-backed, returns data directly)
 // ============================================================================
 
-export async function getSkills(scope?: 'global' | 'agent'): Promise<SkillDTO[]> {
-  const allSkills = [...mockGlobalSkills, ...mockAgentSkills]
-
-  const filtered = scope
-    ? allSkills.filter((s) => s.scope === scope)
-    : allSkills
-
-  return filtered.map((s) => {
-    const agentName = s.scope === 'agent' && s.agentId
-      ? mockAgents.find((a) => a.id === s.agentId)?.name
-      : undefined
-
-    return {
-      id: s.id,
-      name: s.name,
-      description: s.description,
-      version: s.version,
-      scope: s.scope,
-      agentId: s.agentId,
-      agentName,
-      enabled: s.enabled,
-      usageCount: s.usageCount,
-      lastUsedAt: s.lastUsedAt,
-      installedAt: s.installedAt,
-      modifiedAt: s.modifiedAt,
-      hasConfig: s.hasConfig,
-      hasEntrypoint: s.hasEntrypoint,
-    }
-  })
+export async function getSkills(filters?: { scope?: SkillScope; agentId?: string; enabled?: boolean }): Promise<SkillDTO[]> {
+  return getRepos().skills.list(filters)
 }
 
-export async function getSkillById(scope: 'global' | 'agent', id: string): Promise<SkillDTO | null> {
-  const skills = scope === 'global' ? mockGlobalSkills : mockAgentSkills
-  const skill = skills.find((s) => s.id === id)
-  if (!skill) return null
+export async function getSkillById(scope: SkillScope, id: string): Promise<SkillDTO | null> {
+  return getRepos().skills.getById(scope, id)
+}
 
-  const agentName = skill.scope === 'agent' && skill.agentId
-    ? mockAgents.find((a) => a.id === skill.agentId)?.name
-    : undefined
+// ============================================================================
+// PLUGINS (CLI-backed via repo)
+// ============================================================================
 
+import type { PluginResponseMeta } from './repo/plugins'
+
+export async function getPlugins(): Promise<{ data: PluginDTO[]; meta: PluginResponseMeta }> {
+  return getRepos().plugins.list()
+}
+
+export async function getPluginById(id: string): Promise<{ data: PluginDTO | null; meta: PluginResponseMeta }> {
+  const result = await getRepos().plugins.getById(id)
+  // getById returns PluginWithConfigDTO | null, but data layer returns PluginDTO | null
   return {
-    id: skill.id,
-    name: skill.name,
-    description: skill.description,
-    version: skill.version,
-    scope: skill.scope,
-    agentId: skill.agentId,
-    agentName,
-    enabled: skill.enabled,
-    usageCount: skill.usageCount,
-    lastUsedAt: skill.lastUsedAt,
-    installedAt: skill.installedAt,
-    modifiedAt: skill.modifiedAt,
-    hasConfig: skill.hasConfig,
-    hasEntrypoint: skill.hasEntrypoint,
+    data: result.data,
+    meta: result.meta,
   }
 }
 
 // ============================================================================
-// PLUGINS (mock only for now)
+// CRON (OpenClaw-backed, availability-aware)
 // ============================================================================
 
-export async function getPlugins(): Promise<PluginDTO[]> {
-  return mockPlugins.map((p) => ({
-    id: p.id,
-    name: p.name,
-    description: p.description,
-    version: p.version,
-    author: p.author,
-    enabled: p.enabled,
-    status: p.status,
-    sourceType: p.sourceType,
-    sourcePath: p.sourcePath,
-    npmSpec: p.npmSpec,
-    hasConfig: p.hasConfig,
-    doctorResult: p.doctorResult,
-    restartRequired: p.restartRequired,
-    lastError: p.lastError,
-    installedAt: p.installedAt,
-    updatedAt: p.updatedAt,
-  }))
+import type {
+  CronStatusDTO as CronRepoStatusDTO,
+  CronJobDTO as CronRepoJobDTO,
+  CronRunDTO as CronRepoRunDTO,
+} from './repo/cron'
+
+export async function getCronStatus(): Promise<OpenClawResponse<CronRepoStatusDTO>> {
+  return getRepos().cron.status()
 }
 
-export async function getPluginById(id: string): Promise<PluginDTO | null> {
-  const plugin = mockPlugins.find((p) => p.id === id)
-  if (!plugin) return null
-  return {
-    id: plugin.id,
-    name: plugin.name,
-    description: plugin.description,
-    version: plugin.version,
-    author: plugin.author,
-    enabled: plugin.enabled,
-    status: plugin.status,
-    sourceType: plugin.sourceType,
-    sourcePath: plugin.sourcePath,
-    npmSpec: plugin.npmSpec,
-    hasConfig: plugin.hasConfig,
-    doctorResult: plugin.doctorResult,
-    restartRequired: plugin.restartRequired,
-    lastError: plugin.lastError,
-    installedAt: plugin.installedAt,
-    updatedAt: plugin.updatedAt,
-  }
+export async function getCronJobs(): Promise<OpenClawResponse<CronRepoJobDTO[]>> {
+  return getRepos().cron.list()
+}
+
+export async function getCronRuns(jobId: string): Promise<OpenClawResponse<CronRepoRunDTO[]>> {
+  return getRepos().cron.runs(jobId)
 }
 
 // ============================================================================
-// CRON JOBS (mock only for now)
+// GATEWAY (OpenClaw-backed, availability-aware)
 // ============================================================================
 
-export async function getCronJobs(): Promise<CronJobDTO[]> {
-  return mockCronJobs.map((c) => ({
-    id: c.id,
-    name: c.name,
-    schedule: c.schedule,
-    description: c.description,
-    enabled: c.enabled,
-    lastRunAt: c.lastRunAt,
-    nextRunAt: c.nextRunAt,
-    lastStatus: c.lastStatus,
-    runCount: c.runCount,
-    createdAt: c.lastRunAt ?? new Date(), // mock doesn't have createdAt
-    updatedAt: c.lastRunAt ?? new Date(),
-  }))
+import type {
+  GatewayStatusDTO as GatewayRepoStatusDTO,
+  GatewayHealthDTO,
+  GatewayProbeDTO,
+} from './repo/gateway'
+
+export async function getGatewayStatus(): Promise<OpenClawResponse<GatewayRepoStatusDTO>> {
+  return getRepos().gateway.status()
 }
 
-// ============================================================================
-// GATEWAY (mock only for now)
-// ============================================================================
+export async function getGatewayHealth(): Promise<OpenClawResponse<GatewayHealthDTO>> {
+  return getRepos().gateway.health()
+}
 
-export async function getGatewayStatus(): Promise<GatewayStatusDTO> {
-  return mockGatewayStatus
+export async function getGatewayProbe(): Promise<OpenClawResponse<GatewayProbeDTO>> {
+  return getRepos().gateway.probe()
 }
 
 // ============================================================================
@@ -369,3 +299,16 @@ export type {
   SearchOptions,
   SearchScope,
 }
+
+// Re-export availability-aware types for OpenClaw-backed data
+export type { OpenClawResponse } from '@/lib/openclaw/availability'
+export type {
+  CronStatusDTO as CronRepoStatusDTO,
+  CronJobDTO as CronRepoJobDTO,
+  CronRunDTO as CronRepoRunDTO,
+} from './repo/cron'
+export type {
+  GatewayStatusDTO as GatewayRepoStatusDTO,
+  GatewayHealthDTO,
+  GatewayProbeDTO,
+} from './repo/gateway'

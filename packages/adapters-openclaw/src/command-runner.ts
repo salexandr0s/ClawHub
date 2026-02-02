@@ -60,6 +60,11 @@ export const ALLOWED_COMMANDS = {
   // Gateway Discovery (documented at docs.openclaw.ai/cli/gateway)
   'gateway.discover': { args: ['gateway', 'discover', '--json'], danger: false, description: 'Scan for gateways on network' },
 
+  // Cron Management
+  'cron.status.json': { args: ['cron', 'status', '--json'], danger: false, description: 'Get cron scheduler status (JSON output)' },
+  'cron.jobs.json': { args: ['cron', 'list', '--json'], danger: false, description: 'List cron jobs (JSON output)' },
+  // Note: cron.runs requires dynamic --id flag, handled separately in adapter
+
   // Plugin Management
   'plugins.list': { args: ['plugins', 'list'], danger: false, description: 'List installed plugins' },
   'plugins.list.json': { args: ['plugins', 'list', '--json'], danger: false, description: 'List installed plugins (JSON output)' },
@@ -335,6 +340,116 @@ export async function runCommandJson<T = unknown>(
     return {
       error: 'Failed to parse JSON output',
       exitCode: result.exitCode,
+    }
+  }
+}
+
+// ============================================================================
+// DYNAMIC COMMAND EXECUTION (for commands with runtime parameters)
+// ============================================================================
+
+/**
+ * Allowed dynamic commands that take runtime parameters.
+ * Security: Only whitelisted command patterns are allowed.
+ */
+export const ALLOWED_DYNAMIC_COMMANDS = {
+  'cron.runs': {
+    baseArgs: ['cron', 'runs', '--json'],
+    requiredParams: ['id'] as const,
+    danger: false,
+    description: 'Get cron job run history (requires --id)',
+  },
+} as const
+
+export type AllowedDynamicCommandId = keyof typeof ALLOWED_DYNAMIC_COMMANDS
+
+/**
+ * Execute a dynamic command with runtime parameters.
+ * Security: Parameters are validated and only whitelisted commands are allowed.
+ */
+export async function runDynamicCommandJson<T = unknown>(
+  commandId: AllowedDynamicCommandId,
+  params: Record<string, string>,
+  options: Omit<StreamingCommandOptions, 'onChunk'> = {}
+): Promise<{ data?: T; error?: string; exitCode: number }> {
+  const spec = ALLOWED_DYNAMIC_COMMANDS[commandId]
+  if (!spec) {
+    return { error: `Unknown dynamic command: ${commandId}`, exitCode: 1 }
+  }
+
+  // Validate required params
+  for (const param of spec.requiredParams) {
+    if (!params[param]) {
+      return { error: `Missing required parameter: ${param}`, exitCode: 1 }
+    }
+  }
+
+  // Build args with parameters
+  const args: string[] = [...spec.baseArgs]
+  for (const [key, value] of Object.entries(params)) {
+    // Security: Validate param values (alphanumeric + dash/underscore only)
+    if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+      return { error: `Invalid parameter value for ${key}: ${value}`, exitCode: 1 }
+    }
+    args.push(`--${key}`, value)
+  }
+
+  // Check CLI availability
+  const cliCheck = await checkOpenClaw()
+  if (!cliCheck.available) {
+    return {
+      error: `OpenClaw CLI not available: ${cliCheck.error}`,
+      exitCode: 127,
+    }
+  }
+
+  const timeout = options.timeout ?? 60000
+  const startTime = Date.now()
+
+  try {
+    const child = spawn(OPENCLAW_BIN, args, {
+      cwd: options.cwd,
+      env: { ...process.env, ...options.env },
+      timeout,
+    })
+
+    let stdout = ''
+    let stderr = ''
+
+    if (child.stdout) {
+      for await (const chunk of child.stdout) {
+        stdout += chunk.toString()
+      }
+    }
+
+    if (child.stderr) {
+      for await (const chunk of child.stderr) {
+        stderr += chunk.toString()
+      }
+    }
+
+    const exitCode = await new Promise<number>((resolve) => {
+      child.on('close', (code) => resolve(code ?? 1))
+      child.on('error', () => resolve(1))
+    })
+
+    if (exitCode !== 0) {
+      return {
+        error: stderr || `Command failed with exit code ${exitCode}`,
+        exitCode,
+      }
+    }
+
+    try {
+      const data = JSON.parse(stdout) as T
+      return { data, exitCode: 0 }
+    } catch {
+      return { error: 'Failed to parse JSON output', exitCode }
+    }
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : 'Unknown error',
+      exitCode: 1,
     }
   }
 }
