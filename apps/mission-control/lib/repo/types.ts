@@ -77,6 +77,7 @@ export interface AgentDTO {
   sessionKey: string
   capabilities: Record<string, boolean>
   wipLimit: number
+  avatarPath: string | null
   lastSeenAt: Date | null
   lastHeartbeatAt: Date | null
   createdAt: Date

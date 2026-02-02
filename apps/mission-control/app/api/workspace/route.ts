@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { useMockData } from '@/lib/repo'
+import { isMockData } from '@/lib/repo'
 import { mockWorkspaceFiles } from '@savorg/core'
 import { listWorkspace } from '@/lib/fs/workspace-fs'
 
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const path = searchParams.get('path') || '/'
 
   try {
-    if (useMockData()) {
+    if (isMockData()) {
       const data = mockWorkspaceFiles
         .filter((f) => f.path === path)
         .map((f) => ({

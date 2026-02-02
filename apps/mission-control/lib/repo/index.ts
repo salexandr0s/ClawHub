@@ -5,7 +5,7 @@
  */
 
 // Provider (main entry point)
-export { getRepos, createRepos, resetRepos, useMockData, type Repos } from './provider'
+export { getRepos, createRepos, resetRepos, isMockData, type Repos } from './provider'
 
 // Individual repos (for type imports)
 export type { WorkOrdersRepo } from './workOrders'

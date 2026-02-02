@@ -49,15 +49,20 @@ const agentColumns: Column<AgentDTO>[] = [
     width: '140px',
     mono: true,
     render: (row) => (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
+        <img
+          src={`/api/agents/${row.id}/avatar`}
+          alt=""
+          className="w-6 h-6 rounded-md bg-bg-3 border border-white/[0.06]"
+        />
         <span className={cn(
-          'w-2 h-2 rounded-full',
+          'w-2 h-2 rounded-full shrink-0',
           row.status === 'active' && 'bg-status-success',
           row.status === 'idle' && 'bg-fg-3',
           row.status === 'blocked' && 'bg-status-warning',
           row.status === 'error' && 'bg-status-danger'
         )} />
-        <span className="text-status-progress">{row.name}</span>
+        <span className="text-status-progress truncate">{row.name}</span>
       </div>
     ),
   },
@@ -219,6 +224,31 @@ export function AgentsClient() {
         })
         await fetchData()
         setCreateResult({ success: true, message: `Updated ${agent.name}` })
+      },
+      onError: (err) => {
+        setCreateResult({ success: false, message: err.message })
+      },
+    })
+  }
+
+  const handleUploadAvatar = (agent: AgentDTO, dataUrl: string) => {
+    triggerProtectedAction({
+      actionKind: 'agent.edit',
+      actionTitle: 'Set Agent Avatar',
+      actionDescription: `Upload a profile image for ${agent.name}`,
+      entityName: agent.name,
+      onConfirm: async (typedConfirmText) => {
+        const res = await fetch(`/api/agents/${agent.id}/avatar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl, typedConfirmText }),
+        })
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}))
+          throw new Error(j.error || 'Failed to upload avatar')
+        }
+        await fetchData()
+        setCreateResult({ success: true, message: `Updated avatar for ${agent.name}` })
       },
       onError: (err) => {
         setCreateResult({ success: false, message: err.message })
@@ -411,6 +441,7 @@ export function AgentsClient() {
             onProvision={() => handleProvisionAgent(selectedAgent)}
             onTest={() => handleTestAgent(selectedAgent)}
             onEdit={(patch) => handleEditAgent(selectedAgent, patch)}
+            onUploadAvatar={(dataUrl) => handleUploadAvatar(selectedAgent, dataUrl)}
           />
         )}
       </RightDrawer>
@@ -936,6 +967,7 @@ function AgentDetail({
   onProvision,
   onTest,
   onEdit,
+  onUploadAvatar,
 }: {
   agent: AgentDTO
   assignedOps: OperationDTO[]
@@ -948,6 +980,7 @@ function AgentDetail({
     capabilities?: Record<string, boolean>
     sessionKey?: string
   }) => void
+  onUploadAvatar: (dataUrl: string) => void
 }) {
   const toneMap: Record<string, StatusTone> = {
     active: 'success',
@@ -974,8 +1007,37 @@ function AgentDetail({
     <div className="space-y-6">
       {/* Status */}
       <div className="flex items-center gap-3">
-        <StatusPill tone={toneMap[agent.status]} label={agent.status} />
-        <span className="px-2 py-0.5 text-xs bg-bg-3 rounded text-fg-1">{agent.station}</span>
+        <img
+          src={`/api/agents/${agent.id}/avatar`}
+          alt=""
+          className="w-10 h-10 rounded-[var(--radius-md)] bg-bg-3 border border-white/[0.06]"
+        />
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <StatusPill tone={toneMap[agent.status]} label={agent.status} />
+            <span className="px-2 py-0.5 text-xs bg-bg-3 rounded text-fg-1">{agent.station}</span>
+          </div>
+          <label className="mt-2 text-xs text-fg-2">
+            <span className="mr-2">Avatar</span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="text-xs text-fg-2"
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const dataUrl = String(reader.result || '')
+                  if (dataUrl) onUploadAvatar(dataUrl)
+                }
+                reader.readAsDataURL(file)
+                // reset input so you can re-upload same file
+                e.currentTarget.value = ''
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       {/* Actions */}

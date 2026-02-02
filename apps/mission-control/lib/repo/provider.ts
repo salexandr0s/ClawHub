@@ -38,7 +38,7 @@ export interface Repos {
  * - USE_MOCK_DATA=true → mock
  * - default (unset or any other value) → DB
  */
-export function useMockData(): boolean {
+export function isMockData(): boolean {
   return process.env.USE_MOCK_DATA === 'true'
 }
 
@@ -50,7 +50,7 @@ let hasLoggedMode = false
  * based on the USE_MOCK_DATA environment variable.
  */
 export function createRepos(): Repos {
-  const isMock = useMockData()
+  const isMock = isMockData()
 
   // Log data mode once (server-side only)
   if (!hasLoggedMode && typeof window === 'undefined') {

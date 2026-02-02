@@ -22,6 +22,7 @@ export interface UpdateAgentInput {
   capabilities?: Record<string, boolean>
   wipLimit?: number
   sessionKey?: string
+  avatarPath?: string | null
 }
 
 export interface CreateAgentInput {
@@ -105,6 +106,7 @@ export function createDbAgentsRepo(): AgentsRepo {
           ...(input.capabilities !== undefined && { capabilities: JSON.stringify(input.capabilities) }),
           ...(input.wipLimit !== undefined && { wipLimit: input.wipLimit }),
           ...(input.sessionKey !== undefined && { sessionKey: input.sessionKey }),
+          ...(input.avatarPath !== undefined && { avatarPath: input.avatarPath }),
           lastSeenAt: new Date(),
         },
       })
@@ -216,6 +218,7 @@ function toDTO(row: {
   sessionKey: string
   capabilities: string
   wipLimit: number
+  avatarPath: string | null
   lastSeenAt: Date | null
   lastHeartbeatAt: Date | null
   createdAt: Date
@@ -230,6 +233,7 @@ function toDTO(row: {
     sessionKey: row.sessionKey,
     capabilities: JSON.parse(row.capabilities),
     wipLimit: row.wipLimit,
+    avatarPath: row.avatarPath,
     lastSeenAt: row.lastSeenAt,
     lastHeartbeatAt: row.lastHeartbeatAt,
     createdAt: row.createdAt,
@@ -247,6 +251,7 @@ function mockToDTO(agent: typeof mockAgents[number]): AgentDTO {
     sessionKey: agent.sessionKey,
     capabilities: agent.capabilities,
     wipLimit: agent.wipLimit,
+    avatarPath: null,
     lastSeenAt: agent.lastSeenAt,
     lastHeartbeatAt: agent.lastHeartbeatAt,
     createdAt: agent.createdAt,

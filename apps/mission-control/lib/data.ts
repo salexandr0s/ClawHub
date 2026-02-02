@@ -8,7 +8,7 @@
  *   UI Components -> data.ts -> repo layer -> DB or Mock
  */
 
-import { getRepos, useMockData } from './repo'
+import { getRepos, isMockData } from './repo'
 import {
   mockGlobalSkills,
   mockAgentSkills,
@@ -304,7 +304,7 @@ export async function getGatewayStatus(): Promise<GatewayStatusDTO> {
 // ============================================================================
 
 export async function getWorkspaceFiles(path = '/'): Promise<WorkspaceFileDTO[]> {
-  if (useMockData()) {
+  if (isMockData()) {
     return mockWorkspaceFiles
       .filter((f) => f.path === path)
       .map((f) => ({
@@ -337,7 +337,7 @@ export async function search(
 // UTILITY
 // ============================================================================
 
-export { useMockData }
+export { isMockData }
 
 // ============================================================================
 // TYPE RE-EXPORTS

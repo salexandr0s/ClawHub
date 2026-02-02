@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { mockWorkspaceFiles, mockFileContents } from '@savorg/core'
 import { enforceTypedConfirm } from '@/lib/with-governor'
 import type { ActionKind } from '@savorg/core'
-import { useMockData } from '@/lib/repo'
+import { isMockData } from '@/lib/repo'
 import { readWorkspaceFileById, writeWorkspaceFileById } from '@/lib/fs/workspace-fs'
 
 // Protected file mapping
@@ -22,7 +22,7 @@ export async function GET(
   const { id } = await params
 
   // Mock mode uses in-memory files; DB mode reads from disk
-  if (useMockData()) {
+  if (isMockData()) {
     const file = mockWorkspaceFiles.find((f) => f.id === id)
     if (!file) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
@@ -69,7 +69,7 @@ export async function PUT(
   }
 
   // Determine file name for protected-file gating
-  const fileName = useMockData()
+  const fileName = isMockData()
     ? mockWorkspaceFiles.find((f) => f.id === id)?.name
     : (() => {
         try {
@@ -101,7 +101,7 @@ export async function PUT(
     }
   }
 
-  if (useMockData()) {
+  if (isMockData()) {
     const file = mockWorkspaceFiles.find((f) => f.id === id)
     if (!file) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
