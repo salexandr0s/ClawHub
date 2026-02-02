@@ -6,8 +6,9 @@ import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import { PageHeader, PageSection, EmptyState, DisabledAction } from '@savorg/ui'
 import { OperationStatusPill, WorkOrderStatePill, PriorityPill } from '@/components/ui/status-pill'
-import { workOrdersApi, operationsApi, activitiesApi, approvalsApi } from '@/lib/http'
-import type { WorkOrderWithOpsDTO, OperationDTO, ActivityDTO, ApprovalDTO } from '@/lib/repo'
+import { workOrdersApi, operationsApi, activitiesApi, approvalsApi, agentsApi } from '@/lib/http'
+import { AgentBadge } from '@/components/ui/agent-badge'
+import type { WorkOrderWithOpsDTO, OperationDTO, ActivityDTO, ApprovalDTO, AgentDTO } from '@/lib/repo'
 import { cn } from '@/lib/utils'
 import { useProtectedActionTrigger } from '@/components/protected-action-modal'
 import { getValidWorkOrderTransitions, type WorkOrderState } from '@savorg/core'
@@ -63,6 +64,7 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   const [operations, setOperations] = useState<OperationDTO[]>([])
   const [activities, setActivities] = useState<ActivityDTO[]>([])
   const [approvals, setApprovals] = useState<ApprovalDTO[]>([])
+  const [agents, setAgents] = useState<AgentDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
@@ -71,16 +73,18 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [woResult, opsResult, activitiesResult, approvalsResult] = await Promise.all([
+        const [woResult, opsResult, activitiesResult, approvalsResult, agentsResult] = await Promise.all([
           workOrdersApi.get(workOrderId),
           operationsApi.list({ workOrderId }),
           activitiesApi.list({ entityType: 'work_order', entityId: workOrderId, limit: 50 }),
           approvalsApi.list({ workOrderId, limit: 50 }),
+          agentsApi.list(),
         ])
         setWorkOrder(woResult.data)
         setOperations(opsResult.data)
         setActivities(activitiesResult.data)
         setApprovals(approvalsResult.data)
+        setAgents(agentsResult.data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load work order')
       } finally {
@@ -289,6 +293,7 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
         {activeTab === 'operations' && (
           <OperationsTab
             operations={operations}
+            agents={agents}
             workOrderId={workOrderId}
             onOperationCreated={refreshData}
           />
@@ -602,10 +607,12 @@ function PipelineTab({
 
 function OperationsTab({
   operations,
+  agents,
   workOrderId,
   onOperationCreated,
 }: {
   operations: OperationDTO[]
+  agents: AgentDTO[]
   workOrderId: string
   onOperationCreated?: () => void
 }) {
@@ -675,9 +682,17 @@ function OperationsTab({
                     {op.assigneeAgentIds.length > 0 && (
                       <>
                         <span className="text-fg-3">•</span>
-                        <span className="text-xs text-status-progress font-mono">
-                          {op.assigneeAgentIds.length} assignee{op.assigneeAgentIds.length > 1 ? 's' : ''}
-                        </span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {op.assigneeAgentIds.slice(0, 3).map((aid) => {
+                            const a = agents.find((x: AgentDTO) => x.id === aid)
+                            return a ? (
+                              <AgentBadge key={aid} agentId={a.id} name={a.name} size="xs" />
+                            ) : null
+                          })}
+                          {op.assigneeAgentIds.length > 3 && (
+                            <span className="text-xs text-fg-3 font-mono">+{op.assigneeAgentIds.length - 3}</span>
+                          )}
+                        </div>
                       </>
                     )}
                     {op.blockedReason && (

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, PageSection, EmptyState } from '@savorg/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { OperationStatusPill } from '@/components/ui/status-pill'
+import { AgentBadge } from '@/components/ui/agent-badge'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { operationsApi, workOrdersApi, agentsApi } from '@/lib/http'
 import type { OperationDTO, WorkOrderDTO, AgentDTO } from '@/lib/repo'
@@ -127,7 +128,8 @@ export function RunsClient() {
           return <span className="text-fg-3">Unassigned</span>
         }
         const agent = agentsMap[row.assigneeAgentIds[0]]
-        return <span className="text-status-progress font-mono text-xs">{agent?.name || '—'}</span>
+        if (!agent) return <span className="text-fg-3">—</span>
+        return <AgentBadge agentId={agent.id} name={agent.name} />
       },
     },
     {
