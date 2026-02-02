@@ -8,8 +8,8 @@
 import { PrismaClient } from '@prisma/client'
 import {
   initializeFts,
-  indexWorkOrder,
-  indexOperation,
+  indexWorkOrder as _indexWorkOrder,
+  indexOperation as _indexOperation,
   rebuildAllIndexes,
 } from '../lib/db/fts'
 

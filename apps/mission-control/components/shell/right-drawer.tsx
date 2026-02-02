@@ -7,7 +7,7 @@ import { X } from 'lucide-react'
 interface RightDrawerProps {
   open: boolean
   onClose: () => void
-  title?: string
+  title?: React.ReactNode
   description?: string
   children: React.ReactNode
   width?: 'default' | 'lg' | 'full'
@@ -103,8 +103,9 @@ export function RightDrawer({
         {(title || description) && (
           <header className="flex items-start justify-between gap-4 px-4 py-3 border-b border-white/[0.08] sm:p-4">
             <div className="min-w-0 flex-1">
-              {title && (
-                <h2 className="text-sm font-semibold text-fg-0 truncate">{title}</h2>
+              {title && (typeof title === 'string'
+                ? <h2 className="text-sm font-semibold text-fg-0 truncate">{title}</h2>
+                : <div className="min-w-0">{title}</div>
               )}
               {description && (
                 <p className="text-xs text-fg-2 mt-0.5 truncate">{description}</p>

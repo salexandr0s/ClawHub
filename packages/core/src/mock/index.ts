@@ -11,10 +11,10 @@ import type {
   Agent,
   Approval,
   Activity,
-  Artifact,
-  Receipt,
-  Playbook,
-  CommandTemplate,
+  Artifact as _Artifact,
+  Receipt as _Receipt,
+  Playbook as _Playbook,
+  CommandTemplate as _CommandTemplate,
 } from '../types'
 
 // ============================================================================

@@ -5,7 +5,7 @@ import {
   getTemplateById,
   getTemplateFiles,
   getTemplateReadme,
-  getTemplateFileContent,
+  getTemplateFileContent as _getTemplateFileContent,
   scanTemplates,
 } from '@/lib/templates'
 import { mockWorkspaceFiles, mockFileContents } from '@savorg/core'

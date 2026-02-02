@@ -5,6 +5,7 @@ import {
   getPendingApprovals,
   getRecentActivities,
   getDashboardStats,
+  getAgents,
 } from '@/lib/data'
 import { NowDashboard } from './now-dashboard'
 
@@ -24,12 +25,16 @@ export default async function NowPage() {
     approvals,
     activities,
     stats,
+    agents,
   ] = await Promise.all([
     getWorkOrdersWithOps(),
     getPendingApprovals(),
     getRecentActivities(8),
     getDashboardStats(),
+    getAgents(),
   ])
+
+  const agentsByName = Object.fromEntries(agents.map((a) => [a.name, a]))
 
   // Transform work orders for display
   const transformedWorkOrders = workOrders.slice(0, 10).map((wo) => ({
@@ -48,7 +53,8 @@ export default async function NowPage() {
     type: apr.type,
     title: apr.questionMd.slice(0, 50) + (apr.questionMd.length > 50 ? '...' : ''),
     work_order_id: apr.workOrderId,
-    agent: 'agent', // Will be enhanced when we add agent lookup
+    agentId: undefined,
+    agentName: undefined,
     requested_at: formatRelativeTime(apr.createdAt),
   }))
 
@@ -58,7 +64,12 @@ export default async function NowPage() {
     type: act.entityType as 'work_order' | 'operation' | 'agent' | 'system',
     message: act.summary,
     timestamp: formatRelativeTime(act.ts),
-    agent: act.actor.startsWith('agent:') ? act.actor.replace('agent:', '') : undefined,
+    agentId: act.actor.startsWith('agent:')
+      ? agentsByName[act.actor.replace('agent:', '').split(':')[0]]?.id
+      : undefined,
+    agentName: act.actor.startsWith('agent:')
+      ? act.actor.replace('agent:', '').split(':')[0]
+      : undefined,
   }))
 
   return (

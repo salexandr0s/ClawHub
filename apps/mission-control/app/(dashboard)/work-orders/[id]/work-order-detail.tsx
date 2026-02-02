@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
-import { PageHeader, PageSection, EmptyState, DisabledAction } from '@savorg/ui'
+import { PageHeader, PageSection, EmptyState, DisabledAction as _DisabledAction } from '@savorg/ui'
 import { OperationStatusPill, WorkOrderStatePill, PriorityPill } from '@/components/ui/status-pill'
 import { workOrdersApi, operationsApi, activitiesApi, approvalsApi, agentsApi } from '@/lib/http'
 import { AgentBadge } from '@/components/ui/agent-badge'
+import { AgentActorBadge } from '@/components/ui/agent-actor-badge'
 import type { WorkOrderWithOpsDTO, OperationDTO, ActivityDTO, ApprovalDTO, AgentDTO } from '@/lib/repo'
 import { cn } from '@/lib/utils'
 import { useProtectedActionTrigger } from '@/components/protected-action-modal'
@@ -58,7 +59,7 @@ interface WorkOrderDetailProps {
 }
 
 export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
-  const router = useRouter()
+  const _router = useRouter()
   const triggerProtectedAction = useProtectedActionTrigger()
   const [workOrder, setWorkOrder] = useState<WorkOrderWithOpsDTO | null>(null)
   const [operations, setOperations] = useState<OperationDTO[]>([])
@@ -299,7 +300,7 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           />
         )}
         {activeTab === 'activity' && (
-          <ActivityTab activities={activities} workOrderId={workOrderId} />
+          <ActivityTab activities={activities} workOrderId={workOrderId} agents={agents} />
         )}
       </div>
     </div>
@@ -828,10 +829,12 @@ function OperationsTab({
 
 function ActivityTab({
   activities,
-  workOrderId,
+  workOrderId: _workOrderId,
+  agents,
 }: {
   activities: ActivityDTO[]
   workOrderId: string
+  agents: AgentDTO[]
 }) {
   const typeIcons: Record<string, typeof Activity> = {
     work_order: ClipboardList,
@@ -876,9 +879,7 @@ function ActivityTab({
                       {activity.actor !== 'system' && (
                         <>
                           <span className="text-fg-3">•</span>
-                          <span className="text-xs text-status-progress font-mono">
-                            {activity.actor.replace('agent:', '')}
-                          </span>
+                          <AgentActorBadge actor={activity.actor} agents={agents} size="xs" />
                         </>
                       )}
                     </div>

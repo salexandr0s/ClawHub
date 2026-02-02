@@ -11,7 +11,7 @@ import type {
   WorkOrderDTO,
   WorkOrderWithOpsDTO,
   WorkOrderFilters,
-  OperationSummaryDTO,
+  OperationSummaryDTO as _OperationSummaryDTO,
 } from './types'
 
 // ============================================================================
@@ -340,7 +340,7 @@ export function createMockWorkOrdersRepo(): WorkOrdersRepo {
     async updateStateWithActivity(
       id: string,
       newState: string,
-      actor: string
+      _actor: string
     ): Promise<StateTransitionResult | null> {
       const wo = mockWorkOrders.find((w) => w.id === id)
       if (!wo) return null

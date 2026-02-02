@@ -83,7 +83,7 @@ class MockAdapter implements OpenClawAdapter {
     return { ok: true, latencyMs: 5 }
   }
 
-  async *tailLogs(options?: { limit?: number }): AsyncGenerator<string> {
+  async *tailLogs(_options?: { limit?: number }): AsyncGenerator<string> {
     const logs = [
       '[INFO] Gateway started',
       '[INFO] Client connected: savorgBUILD',
@@ -91,7 +91,7 @@ class MockAdapter implements OpenClawAdapter {
       '[INFO] Agent ready: savorgCEO',
       '[DEBUG] Health check passed',
     ]
-    for (const log of logs.slice(0, options?.limit ?? 10)) {
+    for (const log of logs.slice(0, _options?.limit ?? 10)) {
       yield log
     }
   }
@@ -254,7 +254,7 @@ class LocalCliAdapter implements OpenClawAdapter {
     }
   }
 
-  async *tailLogs(options?: { limit?: number }): AsyncGenerator<string> {
+  async *tailLogs(_options?: { limit?: number }): AsyncGenerator<string> {
     const available = await this.ensureAvailable()
 
     if (!available) {

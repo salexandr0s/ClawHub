@@ -3,7 +3,7 @@ import {
   mockGlobalSkills,
   mockAgentSkills,
   mockSkillContents,
-  mockAgents,
+  mockAgents as _mockAgents,
 } from '@savorg/core'
 import type { SkillScope, SkillManifest } from '@savorg/core'
 import JSZip from 'jszip'

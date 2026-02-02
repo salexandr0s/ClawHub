@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { PageHeader, PageSection, EmptyState } from '@savorg/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { AgentBadge } from '@/components/ui/agent-badge'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { useProtectedActionTrigger } from '@/components/protected-action-modal'
 import { agentsApi, operationsApi, templatesApi, type TemplateSummary } from '@/lib/http'
@@ -50,11 +51,6 @@ const agentColumns: Column<AgentDTO>[] = [
     mono: true,
     render: (row) => (
       <div className="flex items-center gap-2 min-w-0">
-        <img
-          src={`/api/agents/${row.id}/avatar`}
-          alt=""
-          className="w-6 h-6 rounded-md bg-bg-3 border border-white/[0.06]"
-        />
         <span className={cn(
           'w-2 h-2 rounded-full shrink-0',
           row.status === 'active' && 'bg-status-success',
@@ -62,7 +58,7 @@ const agentColumns: Column<AgentDTO>[] = [
           row.status === 'blocked' && 'bg-status-warning',
           row.status === 'error' && 'bg-status-danger'
         )} />
-        <span className="text-status-progress truncate">{row.name}</span>
+        <AgentBadge agentId={row.id} name={row.name} size="sm" className="min-w-0" />
       </div>
     ),
   },
@@ -158,7 +154,6 @@ export function AgentsClient() {
   }
 
   const selectedAgent = selectedId ? agents.find((a) => a.id === selectedId) : undefined
-  const activeCount = agents.filter((a) => a.status === 'active').length
 
   const assignedOps = selectedAgent
     ? operations.filter((op) => op.assigneeAgentIds.includes(selectedAgent.id))
@@ -249,6 +244,31 @@ export function AgentsClient() {
         }
         await fetchData()
         setCreateResult({ success: true, message: `Updated avatar for ${agent.name}` })
+      },
+      onError: (err) => {
+        setCreateResult({ success: false, message: err.message })
+      },
+    })
+  }
+
+  const handleResetAvatar = (agent: AgentDTO) => {
+    triggerProtectedAction({
+      actionKind: 'agent.edit',
+      actionTitle: 'Reset Agent Avatar',
+      actionDescription: `Reset avatar for ${agent.name} back to identicon`,
+      entityName: agent.name,
+      onConfirm: async (typedConfirmText) => {
+        const res = await fetch(`/api/agents/${agent.id}/avatar`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ typedConfirmText }),
+        })
+        if (!res.ok) {
+          const j = await res.json().catch(() => ({}))
+          throw new Error(j.error || 'Failed to reset avatar')
+        }
+        await fetchData()
+        setCreateResult({ success: true, message: `Reset avatar for ${agent.name}` })
       },
       onError: (err) => {
         setCreateResult({ success: false, message: err.message })
@@ -431,7 +451,7 @@ export function AgentsClient() {
       <RightDrawer
         open={!!selectedAgent}
         onClose={() => setSelectedId(undefined)}
-        title={selectedAgent?.name}
+        title={selectedAgent ? <AgentBadge agentId={selectedAgent.id} name={selectedAgent.name} size="md" /> : undefined}
         description={selectedAgent?.role}
       >
         {selectedAgent && (
@@ -442,6 +462,7 @@ export function AgentsClient() {
             onTest={() => handleTestAgent(selectedAgent)}
             onEdit={(patch) => handleEditAgent(selectedAgent, patch)}
             onUploadAvatar={(dataUrl) => handleUploadAvatar(selectedAgent, dataUrl)}
+            onResetAvatar={() => handleResetAvatar(selectedAgent)}
           />
         )}
       </RightDrawer>
@@ -968,6 +989,7 @@ function AgentDetail({
   onTest,
   onEdit,
   onUploadAvatar,
+  onResetAvatar,
 }: {
   agent: AgentDTO
   assignedOps: OperationDTO[]
@@ -981,6 +1003,7 @@ function AgentDetail({
     sessionKey?: string
   }) => void
   onUploadAvatar: (dataUrl: string) => void
+  onResetAvatar: () => void
 }) {
   const toneMap: Record<string, StatusTone> = {
     active: 'success',
@@ -1021,7 +1044,7 @@ function AgentDetail({
             <span className="mr-2">Avatar</span>
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              accept="image/png,image/jpeg,image/webp"
               className="text-xs text-fg-2"
               onChange={async (e) => {
                 const file = e.target.files?.[0]
@@ -1037,6 +1060,13 @@ function AgentDetail({
               }}
             />
           </label>
+          <button
+            type="button"
+            onClick={onResetAvatar}
+            className="mt-2 text-xs text-fg-2 hover:text-fg-1 underline underline-offset-4 self-start"
+          >
+            Reset to identicon
+          </button>
         </div>
       </div>
 

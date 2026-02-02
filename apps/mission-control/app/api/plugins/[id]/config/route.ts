@@ -6,7 +6,7 @@ import Ajv from 'ajv'
 
 const ajv = new Ajv({ allErrors: true, strict: false })
 
-function findPlugin(id: string) {
+function _findPlugin(id: string) {
   return mockPlugins.find((p) => p.id === id)
 }
 
@@ -39,7 +39,7 @@ function validateConfig(
     }
 
     return { valid: true }
-  } catch (err) {
+  } catch {
     return { valid: false, errors: ['Invalid schema'] }
   }
 }

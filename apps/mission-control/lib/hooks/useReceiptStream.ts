@@ -234,7 +234,7 @@ export function useReceiptStream(options: UseReceiptStreamOptions): UseReceiptSt
     return () => {
       disconnect()
     }
-  }, [receiptId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [receiptId]) // deps intentionally only receiptId
 
   return {
     stdout,

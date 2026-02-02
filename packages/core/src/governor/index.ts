@@ -59,6 +59,8 @@ export type ActionKind =
   | 'config.agents_md.edit'
   | 'config.soul_overlay.edit'
   | 'config.routing_template.edit'
+  // Workspace actions
+  | 'workspace.write'
   // Doctor actions
   | 'doctor.run'
   | 'doctor.fix'
@@ -331,6 +333,15 @@ export const ACTION_POLICIES: Record<ActionKind, ActionPolicy> = {
     requiresApproval: true,
     approvalType: 'scope_change',
     description: 'Edit routing template',
+  },
+
+  // Workspace actions
+  'workspace.write': {
+    riskLevel: 'danger',
+    confirmMode: 'CONFIRM',
+    requiresApproval: true,
+    approvalType: 'risky_action',
+    description: 'Write to workspace files',
   },
 
   // Doctor actions

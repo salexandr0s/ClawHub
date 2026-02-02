@@ -8,6 +8,7 @@
 
 import { promises as fsp } from 'node:fs'
 import { dirname, join, basename } from 'node:path'
+import { realpathSync } from 'node:fs'
 import { validateWorkspacePath, getWorkspaceRoot, getAllowedSubdirs, getAllowedRootFiles } from './path-policy'
 
 export type WorkspaceEntryType = 'file' | 'folder'
@@ -23,6 +24,64 @@ export interface WorkspaceEntry {
 
 export interface WorkspaceEntryWithContent extends WorkspaceEntry {
   content: string
+}
+
+const WORKSPACE_READ_ONLY =
+  process.env.OPENCLAW_WORKSPACE_READ_ONLY === 'true' ||
+  process.env.MISSION_CONTROL_READ_ONLY === 'true'
+
+class WorkspaceReadOnlyError extends Error {
+  constructor() {
+    super('Workspace is read-only')
+    this.name = 'WorkspaceReadOnlyError'
+  }
+}
+
+function assertInsideWorkspace(realAbsPath: string): void {
+  const root = getWorkspaceRoot()
+  if (!realAbsPath.startsWith(root)) {
+    throw new Error('Path escapes workspace root')
+  }
+}
+
+async function ensureSafeDirPath(absDir: string): Promise<void> {
+  // Create directories one segment at a time so we can fail fast on symlink tricks.
+  const root = getWorkspaceRoot()
+
+  // Root must exist.
+  await fsp.mkdir(root, { recursive: true })
+  assertInsideWorkspace(realpathSync(root))
+
+  // Walk from root → target dir
+  const rel = absDir.slice(root.length).split('/').filter(Boolean)
+  let current = root
+
+  for (const seg of rel) {
+    const next = join(current, seg)
+
+    try {
+      const st = await fsp.lstat(next).catch(() => null)
+      if (!st) {
+        await fsp.mkdir(next)
+      } else {
+        if (st.isSymbolicLink()) {
+          throw new Error('Path contains symlink segment')
+        }
+        if (!st.isDirectory()) {
+          throw new Error('Path segment is not a directory')
+        }
+      }
+
+      // Resolve after create/verify
+      const rp = realpathSync(next)
+      assertInsideWorkspace(rp)
+
+      current = next
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      throw new Error(`Unsafe workspace directory path: ${msg}`)
+    }
+  }
 }
 
 // We encode the workspace-relative full path (e.g. "/agents/foo.md") as id.
@@ -51,6 +110,7 @@ export async function listWorkspace(path = '/'): Promise<WorkspaceEntry[]> {
   for (const ent of entries) {
     // Skip dotfiles by default (can revisit)
     if (ent.name.startsWith('.')) continue
+    if (ent.isSymbolicLink()) continue
 
     // At root, only expose allowlisted folders/files.
     if (path === '/') {
@@ -62,7 +122,7 @@ export async function listWorkspace(path = '/'): Promise<WorkspaceEntry[]> {
     }
 
     const abs = join(absDir, ent.name)
-    const st = await fsp.stat(abs)
+    const st = await fsp.lstat(abs)
 
     out.push({
       id: encodeWorkspaceId(path === '/' ? `/${ent.name}` : `${path}/${ent.name}`),
@@ -89,7 +149,10 @@ export async function readWorkspaceFileById(id: string): Promise<WorkspaceEntryW
   if (!res.valid || !res.resolvedPath) throw new Error(res.error || 'Invalid path')
 
   const abs = res.resolvedPath
-  const st = await fsp.stat(abs)
+  const st = await fsp.lstat(abs)
+  if (st.isSymbolicLink()) {
+    throw new Error('Refusing to read symlink')
+  }
   if (st.isDirectory()) throw new Error('Cannot read folder content')
 
   const content = await fsp.readFile(abs, 'utf8')
@@ -109,12 +172,25 @@ export async function readWorkspaceFileById(id: string): Promise<WorkspaceEntryW
 }
 
 export async function writeWorkspaceFileById(id: string, content: string): Promise<WorkspaceEntryWithContent> {
+  if (WORKSPACE_READ_ONLY) {
+    throw new WorkspaceReadOnlyError()
+  }
+
   const fullPath = decodeWorkspaceId(id)
   const res = validateWorkspacePath(fullPath)
   if (!res.valid || !res.resolvedPath) throw new Error(res.error || 'Invalid path')
 
   const abs = res.resolvedPath
-  await fsp.mkdir(dirname(abs), { recursive: true })
+
+  // Ensure safe directory creation without symlink traversal.
+  await ensureSafeDirPath(dirname(abs))
+
+  // Refuse to follow symlinks for the target file.
+  const existing = await fsp.lstat(abs).catch(() => null)
+  if (existing?.isSymbolicLink()) {
+    throw new Error('Refusing to write to symlink')
+  }
+
   await fsp.writeFile(abs, content, 'utf8')
 
   const st = await fsp.stat(abs)
@@ -136,4 +212,8 @@ export async function writeWorkspaceFileById(id: string, content: string): Promi
 export async function ensureWorkspaceRootExists(): Promise<void> {
   const root = getWorkspaceRoot()
   await fsp.mkdir(root, { recursive: true })
+}
+
+export function isWorkspaceReadOnly(): boolean {
+  return WORKSPACE_READ_ONLY
 }

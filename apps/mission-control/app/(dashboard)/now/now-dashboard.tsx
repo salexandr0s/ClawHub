@@ -5,6 +5,7 @@ import {
   WorkOrderStatePill,
   PriorityPill,
 } from '@/components/ui/status-pill'
+import { AgentBadge } from '@/components/ui/agent-badge'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { cn } from '@/lib/utils'
 import {
@@ -20,7 +21,6 @@ import {
   Globe,
   CalendarClock,
   CheckSquare,
-  User,
   LayoutDashboard,
 } from 'lucide-react'
 
@@ -43,7 +43,8 @@ interface PendingApproval {
   type: string
   title: string
   work_order_id: string
-  agent: string
+  agentId?: string
+  agentName?: string
   requested_at: string
 }
 
@@ -52,7 +53,8 @@ interface ActivityEvent {
   type: 'work_order' | 'operation' | 'agent' | 'system'
   message: string
   timestamp: string
-  agent?: string
+  agentId?: string
+  agentName?: string
 }
 
 interface DashboardStats {
@@ -144,9 +146,13 @@ const approvalColumns: Column<PendingApproval>[] = [
   {
     key: 'agent',
     header: 'Agent',
-    width: '90px',
-    mono: true,
-    render: (row) => <span className="text-status-progress">{row.agent}</span>,
+    width: '120px',
+    render: (row) =>
+      row.agentId && row.agentName ? (
+        <AgentBadge agentId={row.agentId} name={row.agentName} size="xs" />
+      ) : (
+        <span className="text-fg-3">—</span>
+      ),
   },
   {
     key: 'requested_at',
@@ -355,8 +361,8 @@ function ActivityRow({ event }: { event: ActivityEvent }) {
     <div className="flex items-center gap-3 px-4 py-2 hover:bg-bg-3/50 transition-colors">
       <Icon className="w-3.5 h-3.5 text-fg-2 shrink-0" />
       <span className="flex-1 text-[13px] text-fg-1 truncate">{event.message}</span>
-      {event.agent && (
-        <span className="font-mono text-xs text-status-progress">{event.agent}</span>
+      {event.agentId && event.agentName && (
+        <AgentBadge agentId={event.agentId} name={event.agentName} size="xs" />
       )}
       <span className="text-xs text-fg-2 shrink-0 tabular-nums">{event.timestamp}</span>
     </div>

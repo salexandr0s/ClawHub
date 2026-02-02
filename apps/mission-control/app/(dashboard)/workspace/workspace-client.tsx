@@ -8,7 +8,7 @@ import { YamlEditor } from '@/components/editors/yaml-editor'
 import { JsonEditor } from '@/components/editors/json-editor'
 import { workspaceApi, HttpError } from '@/lib/http'
 import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
-import { ACTION_POLICIES, type ActionKind } from '@savorg/core'
+import type { ActionKind } from '@savorg/core'
 import type { WorkspaceFileDTO } from '@/lib/data'
 import { cn } from '@/lib/utils'
 import {
@@ -16,8 +16,6 @@ import {
   Folder,
   FileText,
   ChevronRight,
-  Upload,
-  Plus,
   FileCode,
   Loader2,
   Shield,
@@ -29,6 +27,7 @@ import {
 
 interface Props {
   initialFiles: WorkspaceFileDTO[]
+  readOnly: boolean
 }
 
 interface FileWithContent extends WorkspaceFileDTO {
@@ -45,7 +44,7 @@ const PROTECTED_FILES: Record<string, { actionKind: ActionKind; label: string }>
 // COMPONENT
 // ============================================================================
 
-export function WorkspaceClient({ initialFiles }: Props) {
+export function WorkspaceClient({ initialFiles, readOnly }: Props) {
   const [currentPath, setCurrentPath] = useState('/')
   const [filesByPath, setFilesByPath] = useState<Record<string, WorkspaceFileDTO[]>>({
     '/': initialFiles,
@@ -110,63 +109,51 @@ export function WorkspaceClient({ initialFiles }: Props) {
   const handleSave = useCallback(async (content: string): Promise<void> => {
     if (!selectedFile) return
 
+    if (readOnly) {
+      setError('Workspace is read-only')
+      return
+    }
+
     const protectedInfo = PROTECTED_FILES[selectedFile.name]
+    const description = protectedInfo
+      ? `You are editing "${selectedFile.name}". ${protectedInfo.label} is a protected configuration file that affects agent behavior.`
+      : `Write changes to "${selectedFile.name}" in the workspace.`
 
-    // For protected files, trigger Governor confirmation
-    if (protectedInfo) {
-      return new Promise((resolve, reject) => {
-        protectedAction.trigger({
-          actionKind: protectedInfo.actionKind,
-          actionTitle: `Edit ${protectedInfo.label}`,
-          actionDescription: `You are editing "${selectedFile.name}". This is a protected configuration file that affects agent behavior.`,
-          onConfirm: async (typedConfirmText) => {
-            setIsSaving(true)
-            setError(null)
+    return new Promise((resolve, reject) => {
+      protectedAction.trigger({
+        actionKind: 'workspace.write',
+        actionTitle: 'Write Workspace File',
+        actionDescription: description,
+        entityName: selectedFile.name,
+        onConfirm: async (typedConfirmText) => {
+          setIsSaving(true)
+          setError(null)
 
-            try {
-              await workspaceApi.update(selectedFile.id, {
-                content,
-                typedConfirmText,
-              })
-              setSelectedFile((prev) => prev ? { ...prev, content } : null)
-              setFileContent(content)
-              resolve()
-            } catch (err) {
-              console.error('Failed to save file:', err)
-              if (err instanceof HttpError) {
-                setError(err.message)
-              }
-              reject(err)
-            } finally {
-              setIsSaving(false)
+          try {
+            await workspaceApi.update(selectedFile.id, {
+              content,
+              typedConfirmText,
+            })
+            setSelectedFile((prev) => prev ? { ...prev, content } : null)
+            setFileContent(content)
+            resolve()
+          } catch (err) {
+            console.error('Failed to save file:', err)
+            if (err instanceof HttpError) {
+              setError(err.message)
             }
-          },
-          onError: (err) => {
-            setError(err.message)
             reject(err)
-          },
-        })
+          } finally {
+            setIsSaving(false)
+          }
+        },
+        onError: (err) => {
+          setError(err.message)
+          reject(err)
+        },
       })
-    }
-
-    // For non-protected files, save directly
-    setIsSaving(true)
-    setError(null)
-
-    try {
-      await workspaceApi.update(selectedFile.id, { content })
-      setSelectedFile((prev) => prev ? { ...prev, content } : null)
-      setFileContent(content)
-    } catch (err) {
-      console.error('Failed to save file:', err)
-      if (err instanceof HttpError) {
-        setError(err.message)
-      }
-      throw err
-    } finally {
-      setIsSaving(false)
-    }
-  }, [selectedFile, protectedAction])
+    })
+  }, [selectedFile, protectedAction, readOnly])
 
   // Render the appropriate editor based on file type
   const renderEditor = () => {
@@ -179,6 +166,7 @@ export function WorkspaceClient({ initialFiles }: Props) {
       onChange: setFileContent,
       onSave: handleSave,
       filePath: selectedFile.path === '/' ? selectedFile.name : `${selectedFile.path}/${selectedFile.name}`,
+      readOnly,
       isSaving,
       error,
       height: 'calc(100vh - 200px)',
@@ -230,6 +218,13 @@ export function WorkspaceClient({ initialFiles }: Props) {
           title="Workspace"
           subtitle={`${files.length} items`}
         />
+
+        {readOnly && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-[var(--radius-md)] border border-status-warning/30 bg-status-warning/10 text-status-warning">
+            <Shield className="w-4 h-4 shrink-0" />
+            <span className="text-sm">Workspace is read-only. Editing and uploads are disabled.</span>
+          </div>
+        )}
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-1 text-sm">
@@ -287,8 +282,11 @@ export function WorkspaceClient({ initialFiles }: Props) {
         }}
         title={selectedFile?.name ?? ''}
         description={
-          selectedFile && PROTECTED_FILES[selectedFile.name]
-            ? 'Protected configuration file'
+          selectedFile
+            ? [
+                readOnly ? 'Read-only workspace' : null,
+                PROTECTED_FILES[selectedFile.name] ? 'Protected configuration file' : null,
+              ].filter(Boolean).join(' • ')
             : undefined
         }
         width="lg"

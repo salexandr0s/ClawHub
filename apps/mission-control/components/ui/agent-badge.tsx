@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { generateIdenticonSvg } from '@/lib/avatar'
 
 export function AgentBadge({
   agentId,
@@ -8,17 +9,20 @@ export function AgentBadge({
   className,
   size = 'sm',
 }: {
-  agentId: string
+  agentId?: string
   name: string
   className?: string
   size?: 'xs' | 'sm' | 'md'
 }) {
   const dim = size === 'xs' ? 16 : size === 'sm' ? 20 : 28
+  const avatarSrc = agentId
+    ? `/api/agents/${agentId}/avatar`
+    : `data:image/svg+xml;utf8,${encodeURIComponent(generateIdenticonSvg(name, { size: dim }))}`
 
   return (
     <span className={cn('inline-flex items-center gap-2 min-w-0', className)}>
       <img
-        src={`/api/agents/${agentId}/avatar`}
+        src={avatarSrc}
         alt=""
         width={dim}
         height={dim}

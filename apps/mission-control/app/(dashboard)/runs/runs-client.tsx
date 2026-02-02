@@ -250,9 +250,11 @@ function OperationDetail({
             {assignees.map((agent) => (
               <div
                 key={agent.id}
-                className="flex items-center justify-between p-2 bg-bg-3 rounded-[var(--radius-md)]"
+                className={cn(
+                  'flex items-center justify-between p-2 bg-bg-3 rounded-[var(--radius-md)]'
+                )}
               >
-                <span className="font-mono text-xs text-status-progress">{agent.name}</span>
+                <AgentBadge agentId={agent.id} name={agent.name} size="xs" />
                 <span className="text-xs text-fg-2">{agent.role}</span>
               </div>
             ))}

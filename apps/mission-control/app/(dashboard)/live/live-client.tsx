@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { PageHeader, EmptyState } from '@savorg/ui'
-import { activitiesApi } from '@/lib/http'
+import { activitiesApi, agentsApi } from '@/lib/http'
 import { useSseStream, type SseConnectionState } from '@/lib/hooks/useSseStream'
-import type { ActivityDTO } from '@/lib/repo'
+import type { ActivityDTO, AgentDTO } from '@/lib/repo'
 import { cn } from '@/lib/utils'
+import { AgentActorBadge } from '@/components/ui/agent-actor-badge'
 import {
   Activity as ActivityIcon,
   Play,
@@ -30,6 +31,7 @@ type ViewMode = 'timeline' | 'visualizer'
 export function LiveClient() {
   const [viewMode, setViewMode] = useState<ViewMode>('timeline')
   const [activities, setActivities] = useState<ActivityDTO[]>([])
+  const [agents, setAgents] = useState<AgentDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<ActivityType>('all')
@@ -40,8 +42,12 @@ export function LiveClient() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const result = await activitiesApi.list({ limit: 100 })
-        setActivities(result.data)
+        const [acts, ags] = await Promise.all([
+          activitiesApi.list({ limit: 100 }),
+          agentsApi.list(),
+        ])
+        setActivities(acts.data)
+        setAgents(ags.data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load activities')
       } finally {
@@ -200,6 +206,7 @@ export function LiveClient() {
                     key={activity.id}
                     activity={activity}
                     typeIcons={typeIcons}
+                    agents={agents}
                   />
                 ))}
               </div>
@@ -281,9 +288,11 @@ function ConnectionStatus({
 function ActivityRow({
   activity,
   typeIcons,
+  agents,
 }: {
   activity: ActivityDTO
   typeIcons: Record<string, typeof ClipboardList>
+  agents: AgentDTO[]
 }) {
   const [expanded, setExpanded] = useState(false)
   const typeKey = activity.type.split('.')[0]
@@ -322,9 +331,7 @@ function ActivityRow({
           {activity.actor !== 'system' && (
             <>
               <span className="text-fg-3">•</span>
-              <span className="text-xs text-status-progress font-mono">
-                {activity.actor.replace('agent:', '')}
-              </span>
+              <AgentActorBadge actor={activity.actor} agents={agents} size="xs" />
             </>
           )}
         </div>

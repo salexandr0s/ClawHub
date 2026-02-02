@@ -52,7 +52,7 @@ const operationStatusTone: Record<string, StatusTone> = {
 }
 
 // Execution state tones
-const executionStateTone: Record<ExecutionState, StatusTone> = {
+const _executionStateTone: Record<ExecutionState, StatusTone> = {
   intent: 'idle',
   queued: 'warning',
   executing: 'progress',

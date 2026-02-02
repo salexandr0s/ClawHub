@@ -110,7 +110,7 @@ export default function SettingsPage() {
 // ============================================================================
 
 function LayoutModeCard({
-  mode,
+  mode: _mode,
   label,
   description,
   icon: Icon,

@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { PageHeader, PageSection, EmptyState, TypedConfirmModal } from '@savorg/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { AgentBadge } from '@/components/ui/agent-badge'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { MarkdownEditor } from '@/components/editors'
 import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
@@ -340,7 +341,11 @@ export function SkillsClient({ skills: initialSkills, agents }: Props) {
           ) : (
             <>
               <User className="w-3.5 h-3.5 text-fg-2" />
-              <span className="text-fg-1 font-mono text-xs">{row.agentName}</span>
+              {row.agentId && row.agentName ? (
+                <AgentBadge agentId={row.agentId} name={row.agentName} size="xs" />
+              ) : (
+                <span className="text-fg-3 text-xs">—</span>
+              )}
             </>
           )}
         </div>
@@ -484,7 +489,11 @@ export function SkillsClient({ skills: initialSkills, agents }: Props) {
                   ) : (
                     <>
                       <User className="w-3.5 h-3.5" />
-                      <span className="text-xs font-mono">{selectedSkill.agentName}</span>
+                      {selectedSkill.agentId && selectedSkill.agentName ? (
+                        <AgentBadge agentId={selectedSkill.agentId} name={selectedSkill.agentName} size="xs" />
+                      ) : (
+                        <span className="text-xs text-fg-3">—</span>
+                      )}
                     </>
                   )}
                 </div>
@@ -574,17 +583,26 @@ export function SkillsClient({ skills: initialSkills, agents }: Props) {
                     </label>
                   </div>
                   {duplicateTarget.scope === 'agent' && (
-                    <select
-                      value={duplicateTarget.agentId}
-                      onChange={(e) => setDuplicateTarget({ scope: 'agent', agentId: e.target.value })}
-                      className="w-full px-3 py-2 bg-bg-2 border border-white/[0.06] rounded-[var(--radius-md)] text-sm text-fg-1"
-                    >
-                      {agents.map((agent) => (
-                        <option key={agent.id} value={agent.id}>
-                          {agent.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                      {agents.map((agent) => {
+                        const isActive = duplicateTarget.agentId === agent.id
+                        return (
+                          <button
+                            key={agent.id}
+                            type="button"
+                            onClick={() => setDuplicateTarget({ scope: 'agent', agentId: agent.id })}
+                            className={cn(
+                              'flex items-center gap-2 px-2.5 py-1.5 rounded-[var(--radius-md)] border text-xs transition-colors',
+                              isActive
+                                ? 'bg-status-progress/10 text-status-progress border-status-progress/30'
+                                : 'bg-bg-2 text-fg-1 border-white/[0.06] hover:bg-bg-1'
+                            )}
+                          >
+                            <AgentBadge agentId={agent.id} name={agent.name} size="xs" />
+                          </button>
+                        )
+                      })}
+                    </div>
                   )}
                   <div className="flex gap-2">
                     <button

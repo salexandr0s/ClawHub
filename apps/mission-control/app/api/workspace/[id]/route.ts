@@ -68,6 +68,22 @@ export async function PUT(
     return NextResponse.json({ error: 'Content is required' }, { status: 400 })
   }
 
+  // Always gate workspace writes (path traversal / config edits)
+  const gate = await enforceTypedConfirm({
+    actionKind: 'workspace.write',
+    typedConfirmText,
+  })
+
+  if (!gate.allowed) {
+    return NextResponse.json(
+      {
+        error: gate.errorType,
+        policy: gate.policy,
+      },
+      { status: gate.errorType === 'TYPED_CONFIRM_REQUIRED' ? 428 : 403 }
+    )
+  }
+
   // Determine file name for protected-file gating
   const fileName = isMockData()
     ? mockWorkspaceFiles.find((f) => f.id === id)?.name
@@ -127,6 +143,11 @@ export async function PUT(
     return NextResponse.json({ data: file })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to write file'
+
+    if (err instanceof Error && err.name === 'WorkspaceReadOnlyError') {
+      return NextResponse.json({ error: msg }, { status: 403 })
+    }
+
     return NextResponse.json({ error: msg }, { status: 400 })
   }
 }
