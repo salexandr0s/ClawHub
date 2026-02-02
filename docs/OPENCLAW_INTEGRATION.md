@@ -277,6 +277,166 @@ const child = spawn('openclaw', args, {
 
 ---
 
+## Plugin Capabilities Probing
+
+Mission Control probes OpenClaw to detect which plugin commands are supported. This allows graceful degradation when running with OpenClaw versions that don't support certain features.
+
+### Capability Detection
+
+Probing uses only safe, non-mutating commands (`--help` flags):
+
+```typescript
+// lib/openclaw/capabilities.ts
+export interface PluginCapabilities {
+  supported: boolean    // Does `openclaw plugins` exist?
+  listJson: boolean     // Does `openclaw plugins list --json` work?
+  infoJson: boolean     // Does `openclaw plugins info --json` work?
+  doctor: boolean       // Does `openclaw plugins doctor` work?
+  install: boolean      // Does `openclaw plugins install` exist?
+  enable: boolean       // Does `openclaw plugins enable` exist?
+  disable: boolean      // Does `openclaw plugins disable` exist?
+  uninstall: boolean    // Does `openclaw plugins uninstall` exist?
+  setConfig: boolean    // Does `openclaw plugins config` exist?
+}
+```
+
+### API Response Format
+
+All plugin API endpoints return a `meta` object with capability information:
+
+```typescript
+interface PluginResponseMeta {
+  source: 'openclaw_cli' | 'mock' | 'unsupported'
+  capabilities: PluginCapabilities
+  degraded: boolean
+  message?: string
+}
+
+// Example response
+{
+  "data": [...],
+  "meta": {
+    "source": "openclaw_cli",
+    "capabilities": {
+      "supported": true,
+      "listJson": true,
+      "install": true,
+      // ...
+    },
+    "degraded": false
+  }
+}
+```
+
+### Capabilities Endpoint
+
+GET `/api/openclaw/capabilities` returns the current probed capabilities:
+
+```bash
+curl http://localhost:3000/api/openclaw/capabilities
+```
+
+Response:
+
+```json
+{
+  "data": {
+    "version": "0.2.0",
+    "available": true,
+    "plugins": {
+      "supported": true,
+      "listJson": true,
+      "infoJson": true,
+      "doctor": true,
+      "install": true,
+      "enable": true,
+      "disable": true,
+      "uninstall": true,
+      "setConfig": true
+    },
+    "sources": { "cli": true, "http": false },
+    "probedAt": "2024-01-15T10:30:00Z",
+    "degradedReason": null
+  },
+  "meta": {
+    "cacheHit": false,
+    "cacheTtlMs": 60000
+  }
+}
+```
+
+### Caching and Refresh
+
+Capability probing results are cached for 60 seconds by default. Use `?refresh=1` to force a fresh probe:
+
+```bash
+# Force re-probe
+curl "http://localhost:3000/api/openclaw/capabilities?refresh=1"
+```
+
+Programmatic cache control:
+
+```typescript
+// Clear cache
+clearCapabilitiesCache()
+
+// Configure TTL (in milliseconds)
+setCapabilitiesCacheTtl(30_000) // 30 seconds
+```
+
+The UI provides a "Re-probe" button on the unsupported/degraded banners for immediate refresh.
+
+### UI Degradation
+
+When plugin management is not supported:
+
+1. **Unsupported Banner** — "Plugin Management Not Available" banner displayed
+2. **Disabled Buttons** — Install, Enable, Disable, Uninstall buttons are disabled
+3. **Tooltip Hints** — Buttons show "Not supported by OpenClaw" on hover
+
+When running in degraded mode (partial support):
+
+1. **Warning Banner** — "Limited Plugin Management" banner displayed
+2. **Selective Disabling** — Only unsupported actions are disabled
+
+### Error Handling
+
+When a plugin operation fails due to unsupported capability:
+
+```typescript
+// Returns HTTP 501 Not Implemented
+{
+  "error": "PLUGIN_UNSUPPORTED",
+  "message": "Plugin operation \"install\" is not supported by this OpenClaw version",
+  "operation": "install",
+  "capabilities": { ... }
+}
+```
+
+### Receipt Auditability
+
+All plugin operations include a `capabilitySnapshot` in the receipt's `parsedJson`:
+
+```json
+{
+  "status": "installed",
+  "pluginName": "my-plugin",
+  "capabilitySnapshot": {
+    "source": "openclaw_cli",
+    "capabilities": {
+      "supported": true,
+      "install": true,
+      "listJson": true
+    },
+    "degraded": false
+  }
+}
+```
+
+This allows debugging "worked yesterday, not today" scenarios after OpenClaw updates.
+
+---
+
 ## Demo Mode Details
 
 When OpenClaw is unavailable, Mission Control provides:
