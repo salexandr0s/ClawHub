@@ -46,12 +46,6 @@ interface MemoryStatusResponse {
   [key: string]: unknown
 }
 
-interface MemorySearchResponse {
-  results?: SearchResult[]
-  matches?: SearchResult[]
-  [key: string]: unknown
-}
-
 /**
  * GET /api/memory
  * Get memory status, search, or daily notes

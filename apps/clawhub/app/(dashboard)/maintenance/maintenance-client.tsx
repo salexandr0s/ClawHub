@@ -28,7 +28,6 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  Info,
 } from 'lucide-react'
 
 interface Props {
