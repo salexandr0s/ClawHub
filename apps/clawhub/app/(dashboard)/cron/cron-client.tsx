@@ -1,14 +1,16 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { PageHeader, PageSection, EmptyState } from '@clawhub/ui'
+import { PageHeader, PageSection, EmptyState, TypedConfirmModal } from '@clawhub/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
 import { RightDrawer } from '@/components/shell/right-drawer'
+import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
 import type { CronJobDTO } from '@/lib/data'
+import type { ActionKind } from '@clawhub/core'
 import { cn } from '@/lib/utils'
-import { Clock, Plus, Play, Pause, Loader2, Trash2, X } from 'lucide-react'
+import { Clock, Plus, Play, Pause, Loader2, Trash2, X, CheckCircle, XCircle } from 'lucide-react'
 import type { StatusTone } from '@clawhub/ui/theme'
 
 interface Props {
@@ -159,200 +161,283 @@ function CronDetail({
   const [isPending, startTransition] = useTransition()
   const [actionInProgress, setActionInProgress] = useState<'run' | 'toggle' | 'delete' | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [lastRunResult, setLastRunResult] = useState<{
+    success: boolean
+    message: string
+  } | null>(null)
 
-  async function handleRunNow() {
-    setActionInProgress('run')
-    setError(null)
+  const protectedAction = useProtectedAction()
 
-    try {
-      const res = await fetch(`/api/openclaw/cron/${job.id}/run`, { method: 'POST' })
-      const data = await res.json()
+  // Run Now action with Governor protection
+  const handleRunNow = useCallback(() => {
+    setLastRunResult(null)
 
-      if (data.status === 'unavailable') {
-        setError(data.error ?? 'Failed to run job')
-      } else {
-        // Refresh the page to show updated state
-        startTransition(() => {
-          router.refresh()
-        })
-        onClose()
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to run job')
-    } finally {
-      setActionInProgress(null)
-    }
-  }
+    protectedAction.trigger({
+      actionKind: 'cron.run_now' as ActionKind,
+      actionTitle: 'Run Cron Job Now',
+      actionDescription: `Execute "${job.name}" immediately. This will run the job outside its scheduled time.`,
+      entityName: job.name,
+      onConfirm: async (typedConfirmText) => {
+        setActionInProgress('run')
+        setError(null)
 
-  async function handleToggleEnabled() {
-    setActionInProgress('toggle')
-    setError(null)
+        try {
+          const res = await fetch(`/api/openclaw/cron/${job.id}/run`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ typedConfirmText }),
+          })
+          const data = await res.json()
 
-    const endpoint = job.enabled ? 'disable' : 'enable'
+          if (data.status === 'unavailable' || data.error) {
+            setError(data.error ?? 'Failed to run job')
+            setLastRunResult({ success: false, message: data.error ?? 'Failed to run job' })
+          } else {
+            setLastRunResult({ success: true, message: 'Job executed successfully' })
+            startTransition(() => {
+              router.refresh()
+            })
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to run job'
+          setError(message)
+          setLastRunResult({ success: false, message })
+        } finally {
+          setActionInProgress(null)
+        }
+      },
+      onError: (err) => {
+        setError(err.message)
+        setActionInProgress(null)
+      },
+    })
+  }, [job, router, protectedAction])
 
-    try {
-      const res = await fetch(`/api/openclaw/cron/${job.id}/${endpoint}`, { method: 'POST' })
-      const data = await res.json()
+  // Toggle enabled/disabled with Governor protection
+  const handleToggleEnabled = useCallback(() => {
+    const actionKind = job.enabled ? 'cron.disable' : 'cron.enable'
+    const actionTitle = job.enabled ? 'Disable Cron Job' : 'Enable Cron Job'
+    const actionDescription = job.enabled
+      ? `Disable "${job.name}". It will no longer run on its schedule until re-enabled.`
+      : `Enable "${job.name}". It will start running according to its schedule.`
 
-      if (data.status === 'unavailable') {
-        setError(data.error ?? `Failed to ${endpoint} job`)
-      } else {
-        // Refresh the page to show updated state
-        startTransition(() => {
-          router.refresh()
-        })
-        onClose()
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : `Failed to ${endpoint} job`)
-    } finally {
-      setActionInProgress(null)
-    }
-  }
+    protectedAction.trigger({
+      actionKind: actionKind as ActionKind,
+      actionTitle,
+      actionDescription,
+      entityName: job.name,
+      onConfirm: async (typedConfirmText) => {
+        setActionInProgress('toggle')
+        setError(null)
 
-  async function handleDelete() {
-    if (!confirmDelete) {
-      setConfirmDelete(true)
-      return
-    }
+        const endpoint = job.enabled ? 'disable' : 'enable'
 
-    setActionInProgress('delete')
-    setError(null)
+        try {
+          const res = await fetch(`/api/openclaw/cron/${job.id}/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ typedConfirmText }),
+          })
+          const data = await res.json()
 
-    try {
-      const res = await fetch(`/api/openclaw/cron/${job.id}/delete`, { method: 'POST' })
-      const data = await res.json()
+          if (data.status === 'unavailable' || data.error) {
+            setError(data.error ?? `Failed to ${endpoint} job`)
+          } else {
+            startTransition(() => {
+              router.refresh()
+            })
+            onClose()
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : `Failed to ${endpoint} job`)
+        } finally {
+          setActionInProgress(null)
+        }
+      },
+      onError: (err) => {
+        setError(err.message)
+        setActionInProgress(null)
+      },
+    })
+  }, [job, router, onClose, protectedAction])
 
-      if (data.status === 'unavailable') {
-        setError(data.error ?? 'Failed to delete job')
-        setConfirmDelete(false)
-      } else {
-        onDeleted?.()
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete job')
-      setConfirmDelete(false)
-    } finally {
-      setActionInProgress(null)
-    }
-  }
+  // Delete with Governor protection (using action.danger)
+  const handleDelete = useCallback(() => {
+    protectedAction.trigger({
+      actionKind: 'action.danger' as ActionKind,
+      actionTitle: 'Delete Cron Job',
+      actionDescription: `Permanently delete "${job.name}". This action cannot be undone.`,
+      entityName: job.name,
+      onConfirm: async (typedConfirmText) => {
+        setActionInProgress('delete')
+        setError(null)
 
-  const isLoading = actionInProgress !== null || isPending
+        try {
+          const res = await fetch(`/api/openclaw/cron/${job.id}/delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ typedConfirmText }),
+          })
+          const data = await res.json()
+
+          if (data.status === 'unavailable' || data.error) {
+            setError(data.error ?? 'Failed to delete job')
+          } else {
+            onDeleted?.()
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to delete job')
+        } finally {
+          setActionInProgress(null)
+        }
+      },
+      onError: (err) => {
+        setError(err.message)
+        setActionInProgress(null)
+      },
+    })
+  }, [job, onDeleted, protectedAction])
+
+  const isLoading = actionInProgress !== null || isPending || protectedAction.state.isLoading
 
   return (
-    <div className="space-y-6">
-      {/* Status */}
-      <div className="flex items-center gap-3">
-        <span className={cn(
-          'px-2 py-0.5 text-xs rounded',
-          job.enabled
-            ? 'bg-status-success/10 text-status-success'
-            : 'bg-fg-3/10 text-fg-3'
-        )}>
-          {job.enabled ? 'Enabled' : 'Disabled'}
-        </span>
-        {job.lastStatus && (
-          <StatusPill
-            tone={job.lastStatus === 'success' ? 'success' : job.lastStatus === 'failed' ? 'danger' : 'progress'}
-            label={job.lastStatus}
-          />
-        )}
-      </div>
-
-      {/* Schedule */}
-      <PageSection title="Schedule">
-        <div className="p-3 bg-bg-3 rounded-[var(--radius-md)] border border-bd-0">
-          <code className="font-mono text-sm text-fg-0">{job.schedule}</code>
+    <>
+      <div className="space-y-6">
+        {/* Status */}
+        <div className="flex items-center gap-3">
+          <span className={cn(
+            'px-2 py-0.5 text-xs rounded',
+            job.enabled
+              ? 'bg-status-success/10 text-status-success'
+              : 'bg-fg-3/10 text-fg-3'
+          )}>
+            {job.enabled ? 'Enabled' : 'Disabled'}
+          </span>
+          {job.lastStatus && (
+            <StatusPill
+              tone={job.lastStatus === 'success' ? 'success' : job.lastStatus === 'failed' ? 'danger' : 'progress'}
+              label={job.lastStatus}
+            />
+          )}
         </div>
-      </PageSection>
 
-      {/* Actions */}
-      <PageSection title="Actions">
-        {error && (
-          <div className="mb-3 p-2 bg-status-error/10 rounded text-status-error text-sm">
-            {error}
+        {/* Last Run Result (from this session) */}
+        {lastRunResult && (
+          <div className={cn(
+            'flex items-center gap-2 p-3 rounded-[var(--radius-md)]',
+            lastRunResult.success
+              ? 'bg-status-success/10 text-status-success'
+              : 'bg-status-error/10 text-status-error'
+          )}>
+            {lastRunResult.success ? (
+              <CheckCircle className="w-4 h-4 shrink-0" />
+            ) : (
+              <XCircle className="w-4 h-4 shrink-0" />
+            )}
+            <span className="text-sm">{lastRunResult.message}</span>
           </div>
         )}
-        <div className="flex gap-2">
-          <button
-            onClick={handleRunNow}
-            disabled={isLoading}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
-              'bg-accent/10 text-accent hover:bg-accent/20',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-          >
-            {actionInProgress === 'run' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Play className="w-3.5 h-3.5" />
-            )}
-            Run Now
-          </button>
-          <button
-            onClick={handleToggleEnabled}
-            disabled={isLoading}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
-              job.enabled
-                ? 'bg-status-warning/10 text-status-warning hover:bg-status-warning/20'
-                : 'bg-status-success/10 text-status-success hover:bg-status-success/20',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-          >
-            {actionInProgress === 'toggle' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : job.enabled ? (
-              <Pause className="w-3.5 h-3.5" />
-            ) : (
-              <Play className="w-3.5 h-3.5" />
-            )}
-            {job.enabled ? 'Disable' : 'Enable'}
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={isLoading}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
-              confirmDelete
-                ? 'bg-status-danger text-white hover:bg-status-danger/90'
-                : 'bg-status-danger/10 text-status-danger hover:bg-status-danger/20',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-          >
-            {actionInProgress === 'delete' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Trash2 className="w-3.5 h-3.5" />
-            )}
-            {confirmDelete ? 'Confirm Delete' : 'Delete'}
-          </button>
-        </div>
-        {confirmDelete && (
-          <p className="mt-2 text-xs text-status-danger">
-            Click again to permanently delete this job
-          </p>
-        )}
-      </PageSection>
 
-      {/* Stats */}
-      <PageSection title="Statistics">
-        <dl className="grid grid-cols-2 gap-2 text-sm">
-          <dt className="text-fg-2">Total Runs</dt>
-          <dd className="text-fg-1 font-mono">{job.runCount}</dd>
-          <dt className="text-fg-2">Last Run</dt>
-          <dd className="text-fg-1 font-mono text-xs">
-            {job.lastRunAt ? formatRelativeTime(job.lastRunAt) : 'Never'}
-          </dd>
-          <dt className="text-fg-2">Next Run</dt>
-          <dd className="text-fg-1 font-mono text-xs">
-            {job.nextRunAt ? formatRelativeTime(job.nextRunAt) : '—'}
-          </dd>
-        </dl>
-      </PageSection>
-    </div>
+        {/* Schedule */}
+        <PageSection title="Schedule">
+          <div className="p-3 bg-bg-3 rounded-[var(--radius-md)] border border-bd-0">
+            <code className="font-mono text-sm text-fg-0">{job.schedule}</code>
+          </div>
+        </PageSection>
+
+        {/* Actions */}
+        <PageSection title="Actions">
+          {error && (
+            <div className="mb-3 p-2 bg-status-error/10 rounded text-status-error text-sm">
+              {error}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={handleRunNow}
+              disabled={isLoading}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
+                'bg-accent-primary/10 text-accent-primary hover:bg-accent-primary/20',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              {actionInProgress === 'run' ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Play className="w-3.5 h-3.5" />
+              )}
+              Run Now
+            </button>
+            <button
+              onClick={handleToggleEnabled}
+              disabled={isLoading}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
+                job.enabled
+                  ? 'bg-status-warning/10 text-status-warning hover:bg-status-warning/20'
+                  : 'bg-status-success/10 text-status-success hover:bg-status-success/20',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              {actionInProgress === 'toggle' ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : job.enabled ? (
+                <Pause className="w-3.5 h-3.5" />
+              ) : (
+                <Play className="w-3.5 h-3.5" />
+              )}
+              {job.enabled ? 'Disable' : 'Enable'}
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={isLoading}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium transition-colors',
+                'bg-status-danger/10 text-status-danger hover:bg-status-danger/20',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              {actionInProgress === 'delete' ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5" />
+              )}
+              Delete
+            </button>
+          </div>
+        </PageSection>
+
+        {/* Stats */}
+        <PageSection title="Statistics">
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            <dt className="text-fg-2">Total Runs</dt>
+            <dd className="text-fg-1 font-mono">{job.runCount}</dd>
+            <dt className="text-fg-2">Last Run</dt>
+            <dd className="text-fg-1 font-mono text-xs">
+              {job.lastRunAt ? formatRelativeTime(job.lastRunAt) : 'Never'}
+            </dd>
+            <dt className="text-fg-2">Next Run</dt>
+            <dd className="text-fg-1 font-mono text-xs">
+              {job.nextRunAt ? formatRelativeTime(job.nextRunAt) : '—'}
+            </dd>
+          </dl>
+        </PageSection>
+      </div>
+
+      {/* TypedConfirmModal for protected actions */}
+      <TypedConfirmModal
+        isOpen={protectedAction.state.isOpen}
+        onClose={protectedAction.cancel}
+        onConfirm={protectedAction.confirm}
+        actionTitle={protectedAction.state.actionTitle}
+        actionDescription={protectedAction.state.actionDescription}
+        riskLevel={protectedAction.riskLevel}
+        confirmMode={protectedAction.confirmMode}
+        isLoading={protectedAction.state.isLoading}
+        entityName={protectedAction.state.entityName}
+      />
+    </>
   )
 }
 
