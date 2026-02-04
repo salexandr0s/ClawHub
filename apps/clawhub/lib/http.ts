@@ -1425,3 +1425,69 @@ export const modelsApi = {
   runAction: (action: ModelAction) =>
     apiPost<{ data: ModelListResponse | ModelStatusResponse }>('/api/models', { action }),
 }
+
+// ============================================================================
+// STATUS API
+// ============================================================================
+
+export interface FullStatusReport {
+  version: string
+  build?: string
+  uptime?: number
+  uptimeHuman?: string
+  workspace: string
+  configPath: string
+  dataDir: string
+  gateway: {
+    running: boolean
+    url?: string
+    pid?: number
+    clients?: number
+  }
+  models: {
+    default: string
+    fallbacks: string[]
+    configured: number
+  }
+  auth: {
+    providers: Array<{
+      provider: string
+      status: 'ok' | 'expiring' | 'expired' | 'missing'
+      profiles: number
+    }>
+  }
+  cron: {
+    enabled: boolean
+    jobCount: number
+    nextRun?: string
+  }
+  plugins: {
+    installed: number
+    active: number
+  }
+  memory?: {
+    indexed: number
+    lastIndexed?: string
+  }
+  raw?: string
+}
+
+export interface HealthCheck {
+  name: string
+  status: 'pass' | 'warn' | 'fail'
+  message: string
+  latencyMs?: number
+  details?: Record<string, unknown>
+}
+
+export interface HealthReport {
+  status: 'healthy' | 'degraded' | 'unhealthy'
+  timestamp: string
+  checks: HealthCheck[]
+}
+
+export const statusApi = {
+  getFullStatus: () => apiGet<{ data: FullStatusReport; receiptId?: string }>('/api/status'),
+
+  getHealth: () => apiGet<{ data: HealthReport; receiptId?: string }>('/api/status/health'),
+}

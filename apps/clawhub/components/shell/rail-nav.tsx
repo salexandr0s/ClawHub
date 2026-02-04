@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Radio,
   Cpu,
+  Gauge,
 } from 'lucide-react'
 import type { Route } from 'next'
 
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
   { href: '/runs' as Route, label: 'Runs', icon: TerminalSquare },
   { href: '/maintenance' as Route, label: 'Maintenance', icon: Wrench },
   { href: '/security' as Route, label: 'Security', icon: Shield },
+  { href: '/status' as Route, label: 'Status', icon: Gauge },
   { href: '/models' as Route, label: 'Models', icon: Cpu },
   { href: '/gateway-live' as Route, label: 'Gateway', icon: Radio },
   { href: '/live' as Route, label: 'Live', icon: Activity },
