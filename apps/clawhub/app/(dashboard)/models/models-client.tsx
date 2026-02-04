@@ -26,13 +26,18 @@ import {
   Globe,
   HardDrive,
   Eye,
+  Zap,
+  ArrowRight,
+  Info,
 } from 'lucide-react'
 
 type ModelsState = {
   isLoading: boolean
   isRefreshing: boolean
+  isProbing: boolean
   status: ModelStatusResponse | null
   models: ModelListItem[] | null
+  probeResult: ModelStatusResponse | null
   error: string | null
 }
 
@@ -40,10 +45,13 @@ export function ModelsClient() {
   const [state, setState] = useState<ModelsState>({
     isLoading: true,
     isRefreshing: false,
+    isProbing: false,
     status: null,
     models: null,
+    probeResult: null,
     error: null,
   })
+  const [showProbeWarning, setShowProbeWarning] = useState(false)
   const [expandedProviders, setExpandedProviders] = useState<Set<string>>(new Set())
 
   const fetchData = useCallback(async (isRefresh = false) => {
@@ -95,7 +103,32 @@ export function ModelsClient() {
     })
   }
 
-  const { isLoading, isRefreshing, status, models, error } = state
+  const runProbe = useCallback(async () => {
+    setState((prev) => ({
+      ...prev,
+      isProbing: true,
+      error: null,
+    }))
+    setShowProbeWarning(false)
+
+    try {
+      const probeResult = await modelsApi.runAction('probe')
+      setState((prev) => ({
+        ...prev,
+        isProbing: false,
+        probeResult: probeResult.data as ModelStatusResponse,
+      }))
+    } catch (err) {
+      const message = err instanceof HttpError ? err.message : 'Failed to probe auth'
+      setState((prev) => ({
+        ...prev,
+        isProbing: false,
+        error: message,
+      }))
+    }
+  }, [])
+
+  const { isLoading, isRefreshing, isProbing, status, models, probeResult, error } = state
 
   // Group models by provider
   const modelsByProvider = models?.reduce((acc, model) => {
@@ -116,18 +149,69 @@ export function ModelsClient() {
         title="Models"
         subtitle="View and manage AI model configuration"
         actions={
-          <button
-            onClick={() => fetchData(true)}
-            disabled={isRefreshing}
-            className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-sm)] text-sm font-medium transition-colors',
-              'bg-bg-3 text-fg-0 hover:bg-bg-2',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-          >
-            <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                onClick={() => setShowProbeWarning(true)}
+                disabled={isProbing}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-sm)] text-sm font-medium transition-colors',
+                  'bg-status-warning/10 text-status-warning hover:bg-status-warning/20',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
+              >
+                {isProbing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Zap className="w-4 h-4" />
+                )}
+                Probe Auth
+              </button>
+              {showProbeWarning && (
+                <div className="absolute top-full right-0 mt-2 w-80 bg-bg-2 border border-bd-0 rounded-[var(--radius-md)] shadow-lg z-10 p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-status-warning shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-sm font-medium text-fg-0 mb-1">Token Usage Warning</h4>
+                      <p className="text-xs text-fg-2 mb-3">
+                        Probing authentication will make small API calls to each provider to verify credentials.
+                        This may use a small amount of tokens/credits.
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={runProbe}
+                          className={cn(
+                            'px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-medium',
+                            'bg-status-warning text-white hover:bg-status-warning/90'
+                          )}
+                        >
+                          Continue
+                        </button>
+                        <button
+                          onClick={() => setShowProbeWarning(false)}
+                          className="px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-medium bg-bg-3 text-fg-0 hover:bg-bg-1"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => fetchData(true)}
+              disabled={isRefreshing}
+              className={cn(
+                'flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-sm)] text-sm font-medium transition-colors',
+                'bg-bg-3 text-fg-0 hover:bg-bg-2',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+              Refresh
+            </button>
+          </div>
         }
       />
 
@@ -151,29 +235,83 @@ export function ModelsClient() {
       {/* Content */}
       {!isLoading && status && (
         <>
-          {/* Configuration Overview - Horizontal inline layout */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-fg-3">Default:</span>
-              <span className="font-mono text-fg-0">{status.defaultModel}</span>
-            </div>
-            {status.fallbacks.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-fg-3">Fallbacks:</span>
-                <span className="font-mono text-fg-2">{status.fallbacks.join(', ')}</span>
+          {/* Probe Result Banner */}
+          {probeResult && (
+            <div className="p-4 rounded-[var(--radius-md)] bg-status-success/10 border border-status-success/30">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-status-success shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-status-success">Auth Probe Complete</h4>
+                  <p className="text-xs text-fg-2 mt-0.5">
+                    Live authentication check completed. Results shown below are verified.
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
+          )}
+
+          {/* Fallback Chain Visualization */}
+          <PageSection title="Model Fallback Chain" description="Request routing order when models are unavailable">
+            <div className="flex flex-wrap items-center gap-2 p-4 bg-bg-3 rounded-[var(--radius-md)]">
+              <div className="flex items-center gap-2 px-3 py-2 bg-accent-primary/10 border border-accent-primary/30 rounded-[var(--radius-sm)]">
+                <Cpu className="w-4 h-4 text-accent-primary" />
+                <span className="font-mono text-sm text-fg-0">{status.defaultModel}</span>
+                <span className="text-[10px] text-accent-primary font-medium uppercase">default</span>
+              </div>
+              {status.fallbacks.map((fallback, idx) => (
+                <div key={fallback} className="flex items-center gap-2">
+                  <ArrowRight className="w-4 h-4 text-fg-3" />
+                  <div className="flex items-center gap-2 px-3 py-2 bg-bg-2 border border-bd-0 rounded-[var(--radius-sm)]">
+                    <span className="font-mono text-sm text-fg-1">{fallback}</span>
+                    <span className="text-[10px] text-fg-3 font-medium">#{idx + 1}</span>
+                  </div>
+                </div>
+              ))}
+              {status.fallbacks.length === 0 && (
+                <div className="flex items-center gap-2 text-fg-3 ml-2">
+                  <Info className="w-4 h-4" />
+                  <span className="text-xs">No fallbacks configured</span>
+                </div>
+              )}
+            </div>
             {status.imageModel && (
-              <div className="flex items-center gap-2">
-                <span className="text-fg-3">Image:</span>
-                <span className="font-mono text-fg-2">{status.imageModel}</span>
+              <div className="mt-3 flex flex-wrap items-center gap-2 p-4 bg-bg-3 rounded-[var(--radius-md)]">
+                <div className="flex items-center gap-2 px-3 py-2 bg-status-progress/10 border border-status-progress/30 rounded-[var(--radius-sm)]">
+                  <Eye className="w-4 h-4 text-status-progress" />
+                  <span className="font-mono text-sm text-fg-0">{status.imageModel}</span>
+                  <span className="text-[10px] text-status-progress font-medium uppercase">image</span>
+                </div>
+                {status.imageFallbacks.map((fallback, idx) => (
+                  <div key={fallback} className="flex items-center gap-2">
+                    <ArrowRight className="w-4 h-4 text-fg-3" />
+                    <div className="flex items-center gap-2 px-3 py-2 bg-bg-2 border border-bd-0 rounded-[var(--radius-sm)]">
+                      <span className="font-mono text-sm text-fg-1">{fallback}</span>
+                      <span className="text-[10px] text-fg-3 font-medium">#{idx + 1}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            <div className="flex items-center gap-2">
-              <span className="text-fg-3">Allowed:</span>
-              <span className="text-fg-2">{status.allowed.length} models</span>
-            </div>
-          </div>
+          </PageSection>
+
+          {/* Aliases Section - Enhanced */}
+          {Object.keys(status.aliases).length > 0 && (
+            <PageSection title="Model Aliases" description="Shorthand names that resolve to full model identifiers">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries(status.aliases).map(([alias, target]) => (
+                  <div key={alias} className="flex items-center gap-3 bg-bg-3 px-4 py-3 rounded-[var(--radius-md)] border border-bd-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-mono text-sm text-accent-primary font-medium">{alias}</div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <ArrowRight className="w-3 h-3 text-fg-3" />
+                        <span className="font-mono text-xs text-fg-2 truncate">{target}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </PageSection>
+          )}
 
           {/* Auth Status */}
           <PageSection title="Authentication Status" description="Provider authentication and OAuth status">
@@ -244,20 +382,6 @@ export function ModelsClient() {
             </div>
           </PageSection>
 
-          {/* Aliases */}
-          {Object.keys(status.aliases).length > 0 && (
-            <PageSection title="Aliases" description="Shorthand names for models">
-              <div className="flex flex-wrap gap-4">
-                {Object.entries(status.aliases).map(([alias, target]) => (
-                  <div key={alias} className="flex items-center gap-2 text-sm bg-bg-3 px-3 py-2 rounded-[var(--radius-md)]">
-                    <span className="font-mono text-status-info">{alias}</span>
-                    <span className="text-fg-3">→</span>
-                    <span className="font-mono text-fg-2">{target}</span>
-                  </div>
-                ))}
-              </div>
-            </PageSection>
-          )}
         </>
       )}
     </div>
