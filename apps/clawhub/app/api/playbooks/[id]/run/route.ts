@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mockPlaybooks } from '@clawhub/core'
-import { useMockData, getRepos } from '@/lib/repo'
+import { getRepos } from '@/lib/repo'
 import { enforceTypedConfirm } from '@/lib/with-governor'
 import { getPlaybook } from '@/lib/fs/playbooks-fs'
 import type { ActionKind } from '@clawhub/core'
@@ -11,7 +10,7 @@ const PLAYBOOK_RUN_ACTION: ActionKind = 'action.caution'
 /**
  * POST /api/playbooks/:id/run
  *
- * Execute a playbook. This is a simulated execution that:
+ * Execute a playbook. This:
  * 1. Parses the YAML content
  * 2. Records a receipt for auditing
  * 3. Returns step-by-step results
@@ -22,20 +21,13 @@ export async function POST(
 ) {
   const { id } = await params
 
-  // Get playbook from mock or real filesystem
+  // Get playbook from filesystem
   let playbook: { id: string; name: string; content: string; severity?: string } | null = null
 
-  if (useMockData()) {
-    const found = mockPlaybooks.find((p) => p.id === id)
-    if (found) {
-      playbook = found
-    }
-  } else {
-    try {
-      playbook = await getPlaybook(id)
-    } catch {
-      return NextResponse.json({ error: 'Failed to read playbook' }, { status: 500 })
-    }
+  try {
+    playbook = await getPlaybook(id)
+  } catch {
+    return NextResponse.json({ error: 'Failed to read playbook' }, { status: 500 })
   }
 
   if (!playbook) {

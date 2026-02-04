@@ -30,7 +30,7 @@ import { WsAdapter } from './ws-adapter'
 export function createAdapter(config: AdapterConfig): OpenClawAdapter {
   switch (config.mode) {
     case 'mock':
-      return new MockAdapter()
+      throw new Error('Mock mode has been removed. ClawHub requires OpenClaw to be installed.')
     case 'local_cli':
       return new LocalCliAdapter()
     case 'remote_http':
@@ -56,119 +56,10 @@ export function createWsAdapter(config: Omit<AdapterConfig, 'mode'>): WsAdapter 
 }
 
 /**
- * Get the default adapter (local_cli in production, mock in development)
+ * Get the default adapter (always local_cli - OpenClaw is required)
  */
 export function getDefaultAdapter(): OpenClawAdapter {
-  const isDev = process.env.NODE_ENV === 'development'
-  const mode: AdapterMode = isDev ? 'mock' : 'local_cli'
-  return createAdapter({ mode })
-}
-
-/**
- * Mock Adapter for development
- */
-class MockAdapter implements OpenClawAdapter {
-  readonly mode: AdapterMode = 'mock'
-
-  async healthCheck(): Promise<HealthCheckResult> {
-    return {
-      status: 'ok',
-      message: 'Mock gateway healthy',
-      timestamp: new Date().toISOString(),
-    }
-  }
-
-  async gatewayStatus(): Promise<GatewayStatus> {
-    return {
-      running: true,
-      version: '1.0.0-mock',
-      build: 'mock-build',
-      uptime: 3600,
-      clients: 2,
-    }
-  }
-
-  async gatewayProbe(): Promise<ProbeResult> {
-    return { ok: true, latencyMs: 5 }
-  }
-
-  async *tailLogs(options?: { limit?: number }): AsyncGenerator<string> {
-    const logs = [
-      '[INFO] Gateway started',
-      '[INFO] Client connected: savorgBUILD',
-      '[INFO] Client connected: savorgQA',
-      '[INFO] Agent ready: savorgCEO',
-      '[DEBUG] Health check passed',
-    ]
-    for (const log of logs.slice(0, options?.limit ?? 10)) {
-      yield log
-    }
-  }
-
-  async channelsStatus(): Promise<ChannelsStatus> {
-    return {
-      discord: { status: 'connected' },
-      telegram: { status: 'connected' },
-    }
-  }
-
-  async modelsStatus(): Promise<ModelsStatus> {
-    return {
-      models: ['claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-      default: 'claude-3-sonnet',
-    }
-  }
-
-  async *sendToAgent(target: string, message: string): AsyncGenerator<string> {
-    yield `[Mock] Received message for ${target}\n`
-    yield `[Mock] Processing: "${message.slice(0, 50)}..."\n`
-    await new Promise((r) => setTimeout(r, 100))
-    yield `[Mock] Response from ${target}: Task acknowledged.\n`
-  }
-
-  async *runCommandTemplate(
-    templateId: string,
-    _args: Record<string, unknown>
-  ): AsyncGenerator<CommandOutput> {
-    yield { type: 'stdout', chunk: `[Mock] Running template: ${templateId}\n` }
-    await new Promise((r) => setTimeout(r, 200))
-    yield { type: 'stdout', chunk: '[Mock] Checking status...\n' }
-    await new Promise((r) => setTimeout(r, 200))
-    yield { type: 'stdout', chunk: '[Mock] Complete.\n' }
-    yield { type: 'exit', code: 0 }
-  }
-
-  async gatewayRestart(): Promise<void> {
-    // Mock restart - no-op
-  }
-
-  async listPlugins(): Promise<PluginInfo[]> {
-    return [
-      { id: 'plugin-discord', name: 'Discord', version: '1.0.0', enabled: true, status: 'ok' },
-      { id: 'plugin-telegram', name: 'Telegram', version: '1.0.0', enabled: true, status: 'ok' },
-      { id: 'plugin-mcp', name: 'MCP Server', version: '0.5.0', enabled: false, status: 'disabled' },
-    ]
-  }
-
-  async pluginInfo(id: string): Promise<PluginInfo> {
-    const plugins = await this.listPlugins()
-    const plugin = plugins.find((p) => p.id === id)
-    if (!plugin) throw new Error(`Plugin not found: ${id}`)
-    return plugin
-  }
-
-  async pluginDoctor(): Promise<PluginDoctorResult> {
-    return { ok: true, issues: [] }
-  }
-
-  async *installPlugin(spec: string): AsyncGenerator<string> {
-    yield `[Mock] Installing ${spec}...\n`
-    await new Promise((r) => setTimeout(r, 500))
-    yield '[Mock] Installation complete.\n'
-  }
-
-  async enablePlugin(_id: string): Promise<void> {}
-  async disablePlugin(_id: string): Promise<void> {}
+  return createAdapter({ mode: 'local_cli' })
 }
 
 /**

@@ -2,20 +2,20 @@
  * Repository Provider
  *
  * Single entry point for repository creation.
- * Switches between DB and mock implementations based on USE_MOCK_DATA env var.
+ * ClawHub requires OpenClaw - no mock mode support.
  */
 
-import { createDbWorkOrdersRepo, createMockWorkOrdersRepo, type WorkOrdersRepo } from './workOrders'
-import { createDbOperationsRepo, createMockOperationsRepo, type OperationsRepo } from './operations'
-import { createDbAgentsRepo, createMockAgentsRepo, type AgentsRepo } from './agents'
-import { createDbApprovalsRepo, createMockApprovalsRepo, type ApprovalsRepo } from './approvals'
-import { createDbActivitiesRepo, createMockActivitiesRepo, type ActivitiesRepo } from './activities'
-import { createDbReceiptsRepo, createMockReceiptsRepo, type ReceiptsRepo } from './receipts'
-import { createDbSearchRepo, createMockSearchRepo, type SearchRepo } from './search'
-import { createMockSkillsRepo, createFsSkillsRepo, type SkillsRepo } from './skills'
-import { createMockPluginsRepo, createCliPluginsRepo, type PluginsRepo } from './plugins'
-import { createMockGatewayRepo, createCliGatewayRepo, type GatewayRepo } from './gateway'
-import { createMockCronRepo, createCliCronRepo, type CronRepo } from './cron'
+import { createDbWorkOrdersRepo, type WorkOrdersRepo } from './workOrders'
+import { createDbOperationsRepo, type OperationsRepo } from './operations'
+import { createDbAgentsRepo, type AgentsRepo } from './agents'
+import { createDbApprovalsRepo, type ApprovalsRepo } from './approvals'
+import { createDbActivitiesRepo, type ActivitiesRepo } from './activities'
+import { createDbReceiptsRepo, type ReceiptsRepo } from './receipts'
+import { createDbSearchRepo, type SearchRepo } from './search'
+import { createFsSkillsRepo, type SkillsRepo } from './skills'
+import { createCliPluginsRepo, type PluginsRepo } from './plugins'
+import { createCliGatewayRepo, type GatewayRepo } from './gateway'
+import { createCliCronRepo, type CronRepo } from './cron'
 
 // ============================================================================
 // REPOSITORY CONTAINER
@@ -46,47 +46,18 @@ export interface Repos {
 // PROVIDER
 // ============================================================================
 
-/**
- * Check if mock data mode is enabled.
- *
- * Resolution order (deterministic):
- * - USE_MOCK_DATA=true → mock
- * - default (unset or any other value) → DB
- */
-export function useMockData(): boolean {
-  return process.env.USE_MOCK_DATA === 'true'
-}
-
 // Track if we've logged the data mode (prevents spam on hot reload)
 let hasLoggedMode = false
 
 /**
- * Create the appropriate repository implementations
- * based on the USE_MOCK_DATA environment variable.
+ * Create the repository implementations.
+ * ClawHub requires OpenClaw - all repos use real implementations.
  */
 export function createRepos(): Repos {
-  const isMock = useMockData()
-
   // Log data mode once (server-side only)
   if (!hasLoggedMode && typeof window === 'undefined') {
-    console.log(`[repo] Data mode: ${isMock ? 'MOCK' : 'DB/FS/CLI'}`)
+    console.log('[repo] Data mode: DB/FS/CLI (OpenClaw required)')
     hasLoggedMode = true
-  }
-
-  if (isMock) {
-    return {
-      workOrders: createMockWorkOrdersRepo(),
-      operations: createMockOperationsRepo(),
-      agents: createMockAgentsRepo(),
-      approvals: createMockApprovalsRepo(),
-      activities: createMockActivitiesRepo(),
-      receipts: createMockReceiptsRepo(),
-      search: createMockSearchRepo(),
-      skills: createMockSkillsRepo(),
-      plugins: createMockPluginsRepo(),
-      gateway: createMockGatewayRepo(),
-      cron: createMockCronRepo(),
-    }
   }
 
   return {
