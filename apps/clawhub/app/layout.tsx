@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { LayoutProvider } from '@/lib/layout-context'
 import { SettingsProvider } from '@/lib/settings-context'
+import { ToastProvider } from '@/components/ui/toast'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -33,7 +34,9 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-bg-0 text-fg-0 min-h-screen">
         <SettingsProvider>
           <LayoutProvider>
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </LayoutProvider>
         </SettingsProvider>
       </body>

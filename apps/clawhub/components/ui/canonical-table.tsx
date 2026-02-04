@@ -40,9 +40,9 @@ const monoCellClass = 'font-mono text-xs font-medium tracking-tight text-fg-1'
 const textCellClass = 'text-[13px] text-fg-0'
 
 // Row states - subtle visual hierarchy
-const rowBaseClass = 'border-b border-bd-0 transition-colors duration-100'
-const rowHoverClass = 'hover:bg-bg-2/70'
-const rowSelectedClass = 'bg-bg-3/80 border-l-2 border-l-status-info'
+const rowBaseClass = 'border-b border-bd-0 transition-all duration-100'
+const rowHoverClass = 'hover:bg-bg-2 hover:shadow-[inset_2px_0_0_0_var(--info)]'
+const rowSelectedClass = 'bg-bg-3/80 shadow-[inset_2px_0_0_0_var(--info)]'
 const rowClickableClass = 'cursor-pointer'
 
 // ============================================================================

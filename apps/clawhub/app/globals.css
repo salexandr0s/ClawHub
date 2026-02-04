@@ -141,10 +141,10 @@ body {
   background: var(--fg3);
 }
 
-/* Focus ring */
+/* Focus ring - softer double-ring effect */
 *:focus-visible {
-  outline: 2px solid var(--info);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg0), 0 0 0 4px var(--info);
 }
 
 /* Remove focus ring for mouse users */

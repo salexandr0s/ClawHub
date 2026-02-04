@@ -71,6 +71,20 @@ const config: Config = {
         card: '12px',
         page: '16px',
       },
+      keyframes: {
+        'slide-in-from-right': {
+          from: { transform: 'translateX(100%)', opacity: '0' },
+          to: { transform: 'translateX(0)', opacity: '1' },
+        },
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+      },
+      animation: {
+        'slide-in-from-right': 'slide-in-from-right 200ms ease-out',
+        'fade-in': 'fade-in 200ms ease-out',
+      },
     },
   },
   plugins: [],
