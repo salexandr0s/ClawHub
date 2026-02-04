@@ -59,7 +59,7 @@ export function AgentCard({
     <div
       onClick={onClick}
       className={cn(
-        'bg-bg-2 border rounded-[var(--radius-lg)] p-4 cursor-pointer transition-all',
+        'group bg-bg-2 border rounded-[var(--radius-lg)] p-4 cursor-pointer transition-all',
         selected
           ? 'border-status-progress/50 ring-1 ring-status-progress/20'
           : 'border-bd-0 hover:border-bd-1'
@@ -93,81 +93,18 @@ export function AgentCard({
         <span>Last seen {formatRelativeTime(agent.lastSeenAt)}</span>
       </div>
 
-      {/* Capabilities */}
+      {/* Capabilities - collapsed summary */}
       {enabledCapabilities.length > 0 && (
-        <div className="mb-3">
-          <div className="text-[10px] uppercase tracking-wide text-fg-3 mb-1.5">Capabilities</div>
-          <div className="flex flex-wrap gap-1">
-            {enabledCapabilities.slice(0, 6).map((cap) => (
-              <span
-                key={cap}
-                className="px-1.5 py-0.5 text-[10px] bg-bg-3 rounded text-fg-2"
-              >
-                {cap.replace(/_/g, ' ')}
-              </span>
-            ))}
-            {enabledCapabilities.length > 6 && (
-              <span className="px-1.5 py-0.5 text-[10px] bg-bg-3 rounded text-fg-3">
-                +{enabledCapabilities.length - 6}
-              </span>
-            )}
-          </div>
+        <div className="flex items-center gap-2 text-xs text-fg-2 mb-3">
+          <span>{enabledCapabilities.length} capabilities</span>
+          {skills.length > 0 && (
+            <>
+              <span className="text-fg-3">·</span>
+              <span>{skills.length} skills</span>
+            </>
+          )}
         </div>
       )}
-
-      {/* Skills */}
-      {skills.length > 0 && (
-        <div className="mb-3">
-          <div className="text-[10px] uppercase tracking-wide text-fg-3 mb-1.5">Skills</div>
-          <div className="flex flex-wrap gap-1">
-            {skills.slice(0, 4).map((skill) => (
-              <span
-                key={skill.id}
-                className={cn(
-                  'px-1.5 py-0.5 text-[10px] rounded',
-                  skill.enabled
-                    ? 'bg-status-success/10 text-status-success'
-                    : 'bg-bg-3 text-fg-3'
-                )}
-              >
-                {skill.name}
-              </span>
-            ))}
-            {skills.length > 4 && (
-              <span className="px-1.5 py-0.5 text-[10px] bg-bg-3 rounded text-fg-3">
-                +{skills.length - 4}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Files */}
-      <div className="mb-3">
-        <div className="text-[10px] uppercase tracking-wide text-fg-3 mb-1.5">Files</div>
-        <div className="flex gap-1.5">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onEditFile?.(`${agent.name}.soul.md`)
-            }}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] bg-bg-3 hover:bg-bd-1 rounded text-fg-2 transition-colors"
-          >
-            <FileCode className="w-3 h-3" />
-            soul.md
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onEditFile?.(`${agent.name}.md`)
-            }}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] bg-bg-3 hover:bg-bd-1 rounded text-fg-2 transition-colors"
-          >
-            <Settings className="w-3 h-3" />
-            overlay.md
-          </button>
-        </div>
-      </div>
 
       {/* Actions */}
       <div className="flex gap-2 pt-2 border-t border-bd-0">

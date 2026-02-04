@@ -71,6 +71,7 @@ interface StatusChipStripProps {
   chips: StatusChip[]
   onChipClick?: (chipId: string) => void
   scrollable?: boolean
+  maxVisible?: number
   className?: string
 }
 
@@ -78,8 +79,12 @@ export function StatusChipStrip({
   chips,
   onChipClick,
   scrollable = false,
+  maxVisible = 4,
   className,
 }: StatusChipStripProps) {
+  const visibleChips = chips.slice(0, maxVisible)
+  const hiddenCount = chips.length - maxVisible
+
   return (
     <div
       className={cn(
@@ -90,13 +95,18 @@ export function StatusChipStrip({
         className
       )}
     >
-      {chips.map((chip) => (
+      {visibleChips.map((chip) => (
         <StatusChipItem
           key={chip.id}
           chip={chip}
           onClick={() => onChipClick?.(chip.id)}
         />
       ))}
+      {hiddenCount > 0 && (
+        <span className="px-2 py-1 text-xs text-fg-3 bg-bg-3 rounded-[var(--radius-md)] border border-bd-0">
+          +{hiddenCount}
+        </span>
+      )}
     </div>
   )
 }

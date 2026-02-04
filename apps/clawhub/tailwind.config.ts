@@ -41,10 +41,24 @@ const config: Config = {
       fontSize: {
         'page-title': ['20px', { lineHeight: '1.2', fontWeight: '600' }],
         'section-title': ['14px', { lineHeight: '1.3', fontWeight: '600' }],
-        body: ['13px', { lineHeight: '1.4', fontWeight: '450' }],
-        caption: ['12px', { lineHeight: '1.35', fontWeight: '450' }],
+        body: ['13px', { lineHeight: '1.4', fontWeight: '400' }],
+        caption: ['12px', { lineHeight: '1.35', fontWeight: '400' }],
         'mono-sm': ['12px', { lineHeight: '1.4', fontWeight: '500' }],
         'mono-md': ['13px', { lineHeight: '1.4', fontWeight: '500' }],
+      },
+      width: {
+        'icon-xs': 'var(--icon-xs)',
+        'icon-sm': 'var(--icon-sm)',
+        'icon-md': 'var(--icon-md)',
+        'icon-lg': 'var(--icon-lg)',
+        'icon-xl': 'var(--icon-xl)',
+      },
+      height: {
+        'icon-xs': 'var(--icon-xs)',
+        'icon-sm': 'var(--icon-sm)',
+        'icon-md': 'var(--icon-md)',
+        'icon-lg': 'var(--icon-lg)',
+        'icon-xl': 'var(--icon-xl)',
       },
       borderRadius: {
         card: '2px',

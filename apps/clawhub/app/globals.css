@@ -85,6 +85,13 @@
     --transition-fast: 150ms ease;
     --transition-base: 200ms ease;
     --transition-slow: 300ms ease;
+
+    /* Icon scale - semantic sizes */
+    --icon-xs: 12px;   /* inline/caption */
+    --icon-sm: 14px;   /* buttons/pills */
+    --icon-md: 16px;   /* nav/lists */
+    --icon-lg: 20px;   /* cards/sections */
+    --icon-xl: 24px;   /* empty states/heroes */
   }
 
   /* Ops Dim preset - lower contrast for extended viewing */

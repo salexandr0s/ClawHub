@@ -99,16 +99,16 @@ export function EmptyState({
   return (
     <div
       className={[
-        'flex flex-col items-center justify-center py-12 text-center',
+        'flex flex-col items-center justify-center py-16 px-4 text-center',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      {icon && <div className="text-fg-3 mb-3">{icon}</div>}
-      <h3 className="text-sm font-medium text-fg-1">{title}</h3>
+      {icon && <div className="text-fg-3 mb-4 [&>svg]:w-12 [&>svg]:h-12">{icon}</div>}
+      <h3 className="text-sm font-medium text-fg-1 mb-1">{title}</h3>
       {description && (
-        <p className="text-xs text-fg-2 mt-1 max-w-xs">{description}</p>
+        <p className="text-xs text-fg-2 max-w-xs">{description}</p>
       )}
       {action && <div className="mt-4">{action}</div>}
     </div>
