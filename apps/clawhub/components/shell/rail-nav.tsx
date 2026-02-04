@@ -25,6 +25,7 @@ import {
   Cpu,
   Gauge,
   ScrollText,
+  Globe,
 } from 'lucide-react'
 import type { Route } from 'next'
 
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { href: '/security' as Route, label: 'Security', icon: Shield },
   { href: '/status' as Route, label: 'Status', icon: Gauge },
   { href: '/logs' as Route, label: 'Logs', icon: ScrollText },
+  { href: '/browser' as Route, label: 'Browser', icon: Globe },
   { href: '/models' as Route, label: 'Models', icon: Cpu },
   { href: '/gateway-live' as Route, label: 'Gateway', icon: Radio },
   { href: '/live' as Route, label: 'Live', icon: Activity },

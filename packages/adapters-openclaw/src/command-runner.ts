@@ -95,6 +95,16 @@ export const ALLOWED_COMMANDS = {
   'models.list.all.json': { args: ['models', 'list', '--all', '--json'], danger: false, description: 'List all available models (JSON output)' },
   'models.status.json': { args: ['models', 'status', '--json'], danger: false, description: 'Get model configuration status (JSON output)' },
   'models.status.probe.json': { args: ['models', 'status', '--probe', '--json'], danger: false, description: 'Get model status with live auth probe (JSON output)' },
+
+  // Browser Control
+  'browser.status': { args: ['browser', 'status'], danger: false, description: 'Get browser status' },
+  'browser.status.json': { args: ['browser', 'status', '--json'], danger: false, description: 'Get browser status (JSON output)' },
+  'browser.start': { args: ['browser', 'start'], danger: true, description: 'Start the browser' },
+  'browser.stop': { args: ['browser', 'stop'], danger: true, description: 'Stop the browser' },
+  'browser.tabs.json': { args: ['browser', 'tabs', '--json'], danger: false, description: 'List browser tabs (JSON output)' },
+  'browser.screenshot': { args: ['browser', 'screenshot'], danger: false, description: 'Take a screenshot of current tab' },
+  'browser.snapshot': { args: ['browser', 'snapshot'], danger: false, description: 'Get DOM snapshot of current tab' },
+  'browser.reset-profile': { args: ['browser', 'reset-profile'], danger: true, description: 'Reset browser profile (deletes all data)' },
 } as const
 
 export type AllowedCommandId = keyof typeof ALLOWED_COMMANDS

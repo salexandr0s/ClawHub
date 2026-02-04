@@ -1516,3 +1516,58 @@ export const logsApi = {
   getGatewayLogs: () =>
     apiGet<{ data: LogsResponse; receiptId?: string }>('/api/logs?source=gateway'),
 }
+
+// ============================================================================
+// BROWSER API
+// ============================================================================
+
+export interface BrowserStatus {
+  running: boolean
+  pid?: number
+  url?: string
+  profilePath?: string
+  version?: string
+}
+
+export interface BrowserTab {
+  id: string
+  title: string
+  url: string
+  active: boolean
+}
+
+export const browserApi = {
+  getStatus: () =>
+    apiGet<{ data: BrowserStatus; receiptId?: string }>('/api/browser'),
+
+  getTabs: () =>
+    apiGet<{ data: BrowserTab[]; receiptId?: string }>('/api/browser?action=tabs'),
+
+  start: (typedConfirmText?: string) =>
+    apiPost<{ data: { success: boolean }; receiptId?: string }>('/api/browser', {
+      action: 'start',
+      typedConfirmText,
+    }),
+
+  stop: (typedConfirmText?: string) =>
+    apiPost<{ data: { success: boolean }; receiptId?: string }>('/api/browser', {
+      action: 'stop',
+      typedConfirmText,
+    }),
+
+  screenshot: () =>
+    apiPost<{ data: { dataUrl: string }; receiptId?: string }>('/api/browser', {
+      action: 'screenshot',
+    }),
+
+  snapshot: () =>
+    apiPost<{ data: { html: string }; receiptId?: string }>('/api/browser', {
+      action: 'snapshot',
+    }),
+
+  resetProfile: (typedConfirmText?: string) =>
+    apiPost<{ data: { success: boolean }; receiptId?: string }>('/api/browser', {
+      action: 'reset-profile',
+      typedConfirmText,
+    }),
+}
