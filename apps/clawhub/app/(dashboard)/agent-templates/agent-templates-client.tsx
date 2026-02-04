@@ -83,7 +83,7 @@ const templateColumns: Column<AgentTemplate>[] = [
         <span
           className={cn(
             'w-2 h-2 rounded-full',
-            row.isValid ? 'bg-status-success' : 'bg-status-error'
+            row.isValid ? 'bg-status-success' : 'bg-status-danger'
           )}
         />
         <span className="text-fg-0">{row.name}</span>
@@ -470,7 +470,7 @@ export function AgentTemplatesClient({ templates: initialTemplates }: Props) {
             </div>
 
             {createError && (
-              <div className="mb-4 p-3 bg-status-error/10 border border-status-error/30 rounded-md text-sm text-status-error">
+              <div className="mb-4 p-3 bg-status-danger/10 border border-status-danger/30 rounded-md text-sm text-status-danger">
                 {createError}
               </div>
             )}
@@ -571,7 +571,7 @@ export function AgentTemplatesClient({ templates: initialTemplates }: Props) {
             </div>
 
             {importError && (
-              <div className="mb-4 p-3 bg-status-error/10 border border-status-error/30 rounded-md text-sm text-status-error">
+              <div className="mb-4 p-3 bg-status-danger/10 border border-status-danger/30 rounded-md text-sm text-status-danger">
                 {importError}
               </div>
             )}
@@ -695,7 +695,7 @@ function TemplateDetail({
             <tab.icon className="w-3.5 h-3.5" />
             {tab.label}
             {tab.id === 'validation' && !template.isValid && (
-              <span className="ml-1 w-2 h-2 rounded-full bg-status-error" />
+              <span className="ml-1 w-2 h-2 rounded-full bg-status-danger" />
             )}
           </button>
         ))}
@@ -703,7 +703,7 @@ function TemplateDetail({
 
       {/* Error Banner */}
       {error && (
-        <div className="mt-4 p-3 bg-status-error/10 border border-status-error/30 rounded-md text-sm text-status-error">
+        <div className="mt-4 p-3 bg-status-danger/10 border border-status-danger/30 rounded-md text-sm text-status-danger">
           {error}
         </div>
       )}
@@ -780,7 +780,7 @@ function OverviewTab({
           <button
             onClick={onDelete}
             disabled={isDeleting}
-            className="btn-secondary flex items-center gap-1.5 text-status-error"
+            className="btn-secondary flex items-center gap-1.5 text-status-danger"
           >
             {isDeleting ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -979,14 +979,14 @@ function ValidationTab({ template }: { template: TemplateWithFiles }) {
       {/* Errors */}
       {hasErrors && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-status-error flex items-center gap-2">
+          <h4 className="text-sm font-medium text-status-danger flex items-center gap-2">
             <XCircle className="w-4 h-4" />
             Errors ({template.validationErrors.length})
           </h4>
           {template.validationErrors.map((error, idx) => (
             <div
               key={idx}
-              className="p-3 bg-status-error/5 border border-status-error/30 rounded-md"
+              className="p-3 bg-status-danger/5 border border-status-danger/30 rounded-md"
             >
               <p className="text-sm text-fg-1 font-mono">{error}</p>
             </div>

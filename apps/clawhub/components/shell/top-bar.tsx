@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils'
 import { Search, Command } from 'lucide-react'
 import { StatusChipStrip, useDefaultStatusChips } from './status-chip-strip'
+import { MobileNav } from './mobile-nav'
 import { Kbd } from '../ui/kbd'
 
 interface TopBarProps {
@@ -29,8 +30,11 @@ export function TopBar({
         className
       )}
     >
+      {/* Mobile Nav Hamburger */}
+      <MobileNav />
+
       {/* Left: Breadcrumbs / Title - takes minimum space needed */}
-      <div className="flex items-center gap-2 min-w-0 shrink-0 max-w-[280px]">
+      <div className="flex items-center gap-2 min-w-0 shrink-0 max-w-[280px] hidden md:flex">
         {breadcrumbs && breadcrumbs.length > 0 ? (
           <nav className="flex items-center gap-1.5 text-sm min-w-0">
             {breadcrumbs.map((crumb, i) => (

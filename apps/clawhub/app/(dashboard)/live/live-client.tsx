@@ -235,7 +235,7 @@ function ConnectionStatus({
         state === 'connected' && 'bg-status-success/5 border-bd-1',
         state === 'connecting' && 'bg-status-warning/5 border-bd-1',
         state === 'disconnected' && 'bg-bg-2 border-bd-0',
-        state === 'error' && 'bg-status-error/5 border-bd-1'
+        state === 'error' && 'bg-status-danger/5 border-bd-1'
       )}
     >
       {state === 'connected' && (
@@ -264,8 +264,8 @@ function ConnectionStatus({
       )}
       {state === 'error' && (
         <>
-          <AlertCircle className="w-3.5 h-3.5 text-status-error" />
-          <span className="text-xs text-status-error">Connection error</span>
+          <AlertCircle className="w-3.5 h-3.5 text-status-danger" />
+          <span className="text-xs text-status-danger">Connection error</span>
           <button
             onClick={onReconnect}
             className="ml-2 text-xs text-status-progress hover:underline"

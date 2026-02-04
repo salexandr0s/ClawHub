@@ -170,9 +170,9 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
 
         {/* Error Banner */}
         {error && (
-          <div className="p-3 rounded-md border flex items-center gap-2 bg-status-error/10 border-status-error/30">
-            <XCircle className="w-4 h-4 text-status-error shrink-0" />
-            <span className="text-sm text-status-error">{error}</span>
+          <div className="p-3 rounded-md border flex items-center gap-2 bg-status-danger/10 border-status-danger/30">
+            <XCircle className="w-4 h-4 text-status-danger shrink-0" />
+            <span className="text-sm text-status-danger">{error}</span>
           </div>
         )}
 
@@ -264,13 +264,13 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
             <div className={cn(
               'p-4 rounded-[var(--radius-lg)] border flex items-center gap-3',
               report.summary.critical > 0
-                ? 'bg-status-error/10 border-status-error/30'
+                ? 'bg-status-danger/10 border-status-danger/30'
                 : report.summary.warn > 0
                   ? 'bg-status-warning/10 border-status-warning/30'
                   : 'bg-status-success/10 border-status-success/30'
             )}>
               {report.summary.critical > 0 ? (
-                <ShieldAlert className="w-8 h-8 text-status-error" />
+                <ShieldAlert className="w-8 h-8 text-status-danger" />
               ) : report.summary.warn > 0 ? (
                 <Shield className="w-8 h-8 text-status-warning" />
               ) : (
@@ -280,7 +280,7 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
                 <h3 className={cn(
                   'font-medium',
                   report.summary.critical > 0
-                    ? 'text-status-error'
+                    ? 'text-status-danger'
                     : report.summary.warn > 0
                       ? 'text-status-warning'
                       : 'text-status-success'
@@ -436,7 +436,7 @@ function SeverityCard({
   icon: React.ComponentType<{ className?: string }>
 }) {
   const colors = {
-    critical: 'bg-status-error/10 border-status-error/30 text-status-error',
+    critical: 'bg-status-danger/10 border-status-danger/30 text-status-danger',
     warn: 'bg-status-warning/10 border-status-warning/30 text-status-warning',
     info: 'bg-status-info/10 border-status-info/30 text-status-info',
   }
@@ -470,7 +470,7 @@ function FindingsGroup({
   const [expanded, setExpanded] = useState(severity === 'critical')
 
   const colors = {
-    critical: 'text-status-error',
+    critical: 'text-status-danger',
     warn: 'text-status-warning',
     info: 'text-status-info',
   }
@@ -516,7 +516,7 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
   const [expanded, setExpanded] = useState(false)
 
   const colors = {
-    critical: 'text-status-error',
+    critical: 'text-status-danger',
     warn: 'text-status-warning',
     info: 'text-status-info',
   }
@@ -574,18 +574,18 @@ function GatewayProbeCard({
       'p-4 rounded-[var(--radius-md)] border flex items-center gap-4',
       gateway.ok
         ? 'bg-status-success/10 border-status-success/30'
-        : 'bg-status-error/10 border-status-error/30'
+        : 'bg-status-danger/10 border-status-danger/30'
     )}>
       {gateway.ok ? (
         <Wifi className="w-8 h-8 text-status-success" />
       ) : (
-        <WifiOff className="w-8 h-8 text-status-error" />
+        <WifiOff className="w-8 h-8 text-status-danger" />
       )}
       <div className="flex-1">
         <div className="flex items-center gap-2">
           <span className={cn(
             'font-medium',
-            gateway.ok ? 'text-status-success' : 'text-status-error'
+            gateway.ok ? 'text-status-success' : 'text-status-danger'
           )}>
             {gateway.ok ? 'Gateway Reachable' : 'Gateway Unreachable'}
           </span>
@@ -595,7 +595,7 @@ function GatewayProbeCard({
         </div>
         <div className="text-sm text-fg-2 font-mono">{gateway.url}</div>
         {gateway.error && (
-          <div className="text-sm text-status-error mt-1">{gateway.error}</div>
+          <div className="text-sm text-status-danger mt-1">{gateway.error}</div>
         )}
         {gateway.close && (
           <div className="text-sm text-fg-2 mt-1">Close reason: {gateway.close}</div>
@@ -613,14 +613,14 @@ function FixActionsPanel({ fixResult }: { fixResult: FixResult }) {
         'p-3 rounded-[var(--radius-md)] border flex items-center gap-3',
         fixResult.ok
           ? 'bg-status-success/10 border-status-success/30'
-          : 'bg-status-error/10 border-status-error/30'
+          : 'bg-status-danger/10 border-status-danger/30'
       )}>
         {fixResult.ok ? (
           <CheckCircle className="w-5 h-5 text-status-success" />
         ) : (
-          <XCircle className="w-5 h-5 text-status-error" />
+          <XCircle className="w-5 h-5 text-status-danger" />
         )}
-        <span className={fixResult.ok ? 'text-status-success' : 'text-status-error'}>
+        <span className={fixResult.ok ? 'text-status-success' : 'text-status-danger'}>
           {fixResult.ok ? 'Fixes applied successfully' : 'Some fixes failed'}
         </span>
       </div>
@@ -660,9 +660,9 @@ function FixActionsPanel({ fixResult }: { fixResult: FixResult }) {
 
       {/* Errors */}
       {fixResult.errors.length > 0 && (
-        <div className="bg-status-error/10 border border-status-error/30 rounded-[var(--radius-md)] p-3">
-          <h4 className="text-sm font-medium text-status-error mb-2">Errors</h4>
-          <ul className="text-sm text-status-error space-y-1">
+        <div className="bg-status-danger/10 border border-status-danger/30 rounded-[var(--radius-md)] p-3">
+          <h4 className="text-sm font-medium text-status-danger mb-2">Errors</h4>
+          <ul className="text-sm text-status-danger space-y-1">
             {fixResult.errors.map((error, idx) => (
               <li key={idx}>{error}</li>
             ))}
@@ -683,7 +683,7 @@ function FixActionRow({ action }: { action: FixAction }) {
       ) : action.skipped ? (
         <span className="w-3 h-3 text-fg-3 shrink-0">-</span>
       ) : (
-        <XCircle className="w-3 h-3 text-status-error shrink-0" />
+        <XCircle className="w-3 h-3 text-status-danger shrink-0" />
       )}
       <span className="font-mono text-fg-2 truncate flex-1" title={action.path}>
         {action.path}
@@ -748,7 +748,7 @@ function RecommendationsChecklist({ findings }: { findings: AuditFinding[] }) {
             <span className={cn(
               'text-sm',
               rec.severity === 'critical'
-                ? 'text-status-error'
+                ? 'text-status-danger'
                 : rec.severity === 'warn'
                   ? 'text-status-warning'
                   : 'text-fg-1'

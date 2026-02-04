@@ -103,7 +103,7 @@ const createColumns = (
     width: '40px',
     render: (row) => {
       if (row.status === 'approved') return <CheckCircle className="w-4 h-4 text-status-success" />
-      if (row.status === 'rejected') return <XCircle className="w-4 h-4 text-status-error" />
+      if (row.status === 'rejected') return <XCircle className="w-4 h-4 text-status-danger" />
       return <Clock className="w-4 h-4 text-status-warning" />
     },
   },
@@ -526,7 +526,7 @@ function ApprovalDetail({
           <StatusPill tone="danger" label="Rejected" />
         )}
         {isDanger && (
-          <span className="px-2 py-0.5 text-xs bg-status-error/10 text-status-error rounded">
+          <span className="px-2 py-0.5 text-xs bg-status-danger/10 text-status-danger rounded">
             Danger
           </span>
         )}
@@ -560,7 +560,7 @@ function ApprovalDetail({
           <dd className="text-fg-1">{APPROVAL_TYPE_LABELS[approval.type]}</dd>
           <dt className="text-fg-2">Risk Level</dt>
           <dd className={cn(
-            isDanger ? 'text-status-error' : 'text-status-warning'
+            isDanger ? 'text-status-danger' : 'text-status-warning'
           )}>
             {isDanger ? 'Danger' : 'Caution'}
           </dd>
@@ -608,8 +608,8 @@ function ApprovalDetail({
           )}
 
           {error && (
-            <div className="mb-4 p-3 bg-status-error/10 border border-status-error/30 rounded-[var(--radius-md)]">
-              <p className="text-xs text-status-error">{error}</p>
+            <div className="mb-4 p-3 bg-status-danger/10 border border-status-danger/30 rounded-[var(--radius-md)]">
+              <p className="text-xs text-status-danger">{error}</p>
             </div>
           )}
 
@@ -617,7 +617,7 @@ function ApprovalDetail({
             <button
               onClick={() => handleResolve('rejected')}
               disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-status-error hover:bg-status-error/10 rounded-[var(--radius-md)] disabled:opacity-50"
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-status-danger hover:bg-status-danger/10 rounded-[var(--radius-md)] disabled:opacity-50"
             >
               <XCircle className="w-4 h-4" />
               Reject

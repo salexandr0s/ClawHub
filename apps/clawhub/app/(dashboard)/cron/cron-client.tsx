@@ -270,7 +270,7 @@ function CronDetail({
       {/* Actions */}
       <PageSection title="Actions">
         {error && (
-          <div className="mb-3 p-2 bg-status-error/10 rounded text-status-error text-sm">
+          <div className="mb-3 p-2 bg-status-danger/10 rounded text-status-danger text-sm">
             {error}
           </div>
         )}

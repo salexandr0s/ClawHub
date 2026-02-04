@@ -64,7 +64,7 @@ export default async function MaintenancePage() {
       </div>
 
       {response.status === 'unavailable' ? (
-        <div className="p-4 bg-status-error/10 rounded-md text-status-error mb-4">
+        <div className="p-4 bg-status-danger/10 rounded-md text-status-danger mb-4">
           <p className="font-medium">OpenClaw Unavailable</p>
           <p className="text-sm mt-1">{response.error ?? 'Unable to connect to gateway'}</p>
         </div>

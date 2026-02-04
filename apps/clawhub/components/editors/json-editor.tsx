@@ -237,7 +237,7 @@ export function JsonEditor({
                 'flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded',
                 isValid
                   ? 'bg-status-success/10 text-status-success'
-                  : 'bg-status-error/10 text-status-error'
+                  : 'bg-status-danger/10 text-status-danger'
               )}
             >
               {isValid ? (
@@ -297,9 +297,9 @@ export function JsonEditor({
 
       {/* Error Banner */}
       {(error || syntaxError) && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-status-error/10 border-b border-status-error/30">
-          <AlertCircle className="w-4 h-4 text-status-error shrink-0" />
-          <span className="text-xs text-status-error">{error || syntaxError}</span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-status-danger/10 border-b border-status-danger/30">
+          <AlertCircle className="w-4 h-4 text-status-danger shrink-0" />
+          <span className="text-xs text-status-danger">{error || syntaxError}</span>
         </div>
       )}
 

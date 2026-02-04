@@ -371,17 +371,17 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
             'p-3 rounded-md border flex items-center justify-between',
             lastResult.success
               ? 'bg-status-success/10 border-status-success/30'
-              : 'bg-status-error/10 border-status-error/30'
+              : 'bg-status-danger/10 border-status-danger/30'
           )}>
             <div className="flex items-center gap-2">
               {lastResult.success ? (
                 <CheckCircle className="w-4 h-4 text-status-success shrink-0" />
               ) : (
-                <XCircle className="w-4 h-4 text-status-error shrink-0" />
+                <XCircle className="w-4 h-4 text-status-danger shrink-0" />
               )}
               <span className={cn(
                 'text-sm',
-                lastResult.success ? 'text-status-success' : 'text-status-error'
+                lastResult.success ? 'text-status-success' : 'text-status-danger'
               )}>
                 {lastResult.message}
               </span>
@@ -676,7 +676,7 @@ function LiveActionCard({
         disabled && !isRunning
           ? 'bg-bg-3/50 border-bd-0/50 cursor-not-allowed opacity-60'
           : danger
-            ? 'bg-bg-3 border-bd-0 hover:bg-status-error/10 hover:border-status-error/30'
+            ? 'bg-bg-3 border-bd-0 hover:bg-status-danger/10 hover:border-status-danger/30'
             : 'bg-bg-3 border-bd-0 hover:bg-bg-2 hover:border-bd-1'
       )}
     >
@@ -685,13 +685,13 @@ function LiveActionCard({
       ) : (
         <Icon className={cn(
           'w-5 h-5 shrink-0 mt-0.5',
-          danger ? 'text-status-error' : 'text-fg-2'
+          danger ? 'text-status-danger' : 'text-fg-2'
         )} />
       )}
       <div>
         <h3 className={cn(
           'text-sm font-medium',
-          danger ? 'text-status-error' : 'text-fg-0'
+          danger ? 'text-status-danger' : 'text-fg-0'
         )}>
           {config.title}
         </h3>

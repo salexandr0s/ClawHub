@@ -133,9 +133,9 @@ export function ModelsClient() {
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3 rounded-md flex items-center gap-2 bg-status-error/10">
-          <XCircle className="w-4 h-4 text-status-error shrink-0" />
-          <span className="text-sm text-status-error">{error}</span>
+        <div className="p-3 rounded-md flex items-center gap-2 bg-status-danger/10">
+          <XCircle className="w-4 h-4 text-status-danger shrink-0" />
+          <span className="text-sm text-status-danger">{error}</span>
         </div>
       )}
 
@@ -274,14 +274,14 @@ function ProviderAuthCard({ providerAuth }: { providerAuth: ProviderAuth }) {
   const statusColors = {
     ok: 'bg-status-success/10',
     expiring: 'bg-status-warning/10',
-    expired: 'bg-status-error/10',
+    expired: 'bg-status-danger/10',
     missing: 'bg-bg-3',
   }
 
   const statusIconColors = {
     ok: 'text-status-success',
     expiring: 'text-status-warning',
-    expired: 'text-status-error',
+    expired: 'text-status-danger',
     missing: 'text-fg-3',
   }
 
@@ -355,7 +355,7 @@ function AuthStatusBadge({ status }: { status: 'ok' | 'expiring' | 'expired' | '
   const colors = {
     ok: 'bg-status-success/20 text-status-success',
     expiring: 'bg-status-warning/20 text-status-warning',
-    expired: 'bg-status-error/20 text-status-error',
+    expired: 'bg-status-danger/20 text-status-danger',
     missing: 'bg-bg-2 text-fg-3',
   }
 
@@ -391,7 +391,7 @@ function ModelRow({ model, isLast }: { model: ModelListItem; isLast: boolean }) 
         {model.available ? (
           <CheckCircle className="w-4 h-4 text-status-success" />
         ) : model.missing ? (
-          <XCircle className="w-4 h-4 text-status-error" />
+          <XCircle className="w-4 h-4 text-status-danger" />
         ) : (
           <AlertTriangle className="w-4 h-4 text-status-warning" />
         )}

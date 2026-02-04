@@ -57,7 +57,7 @@ function DoctorStatusIcon({ status }: { status?: PluginDoctorResult['status'] })
     case 'warning':
       return <AlertTriangle className="w-3.5 h-3.5 text-status-warning" />
     case 'unhealthy':
-      return <XCircle className="w-3.5 h-3.5 text-status-error" />
+      return <XCircle className="w-3.5 h-3.5 text-status-danger" />
   }
 }
 
@@ -87,7 +87,7 @@ const pluginColumns: Column<PluginDTO>[] = [
           className={cn(
             'w-2 h-2 rounded-full shrink-0',
             row.status === 'error'
-              ? 'bg-status-error'
+              ? 'bg-status-danger'
               : row.enabled
                 ? 'bg-status-success'
                 : 'bg-fg-3'
@@ -465,10 +465,10 @@ export function PluginsClient({ plugins: initialPlugins, meta: initialMeta }: Pr
 
         {/* Unsupported Banner */}
         {isUnsupported && (
-          <div className="p-3 bg-status-error/10 border border-status-error/30 rounded-md flex items-center gap-3">
-            <ServerOff className="w-5 h-5 text-status-error shrink-0" />
+          <div className="p-3 bg-status-danger/10 border border-status-danger/30 rounded-md flex items-center gap-3">
+            <ServerOff className="w-5 h-5 text-status-danger shrink-0" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-status-error">
+              <p className="text-sm font-medium text-status-danger">
                 Plugin Management Not Available
               </p>
               <p className="text-xs text-fg-2 mt-0.5">
@@ -608,7 +608,7 @@ export function PluginsClient({ plugins: initialPlugins, meta: initialMeta }: Pr
             </div>
 
             {installError && (
-              <div className="mb-4 p-3 bg-status-error/10 border border-status-error/30 rounded-md text-sm text-status-error">
+              <div className="mb-4 p-3 bg-status-danger/10 border border-status-danger/30 rounded-md text-sm text-status-danger">
                 {installError}
               </div>
             )}
@@ -765,7 +765,7 @@ function PluginDetail({
 
       {/* Error Banner */}
       {error && (
-        <div className="mt-4 p-3 bg-status-error/10 border border-status-error/30 rounded-md text-sm text-status-error">
+        <div className="mt-4 p-3 bg-status-danger/10 border border-status-danger/30 rounded-md text-sm text-status-danger">
           {error}
         </div>
       )}
@@ -844,7 +844,7 @@ function OverviewTab({
             title={!canToggle ? `${plugin.enabled ? 'Disable' : 'Enable'} not supported by OpenClaw` : undefined}
             className={cn(
               'btn-secondary flex items-center gap-1.5',
-              plugin.enabled ? 'text-status-error' : 'text-status-success'
+              plugin.enabled ? 'text-status-danger' : 'text-status-success'
             )}
           >
             {isToggling ? (
@@ -858,7 +858,7 @@ function OverviewTab({
             onClick={onUninstall}
             disabled={isUninstalling || !canUninstall}
             title={!canUninstall ? 'Uninstall not supported by OpenClaw' : undefined}
-            className="btn-secondary flex items-center gap-1.5 text-status-error"
+            className="btn-secondary flex items-center gap-1.5 text-status-danger"
           >
             {isUninstalling ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -872,8 +872,8 @@ function OverviewTab({
 
       {/* Last Error */}
       {plugin.lastError && (
-        <div className="p-3 bg-status-error/10 border border-status-error/30 rounded-md">
-          <p className="text-sm text-status-error font-medium">Last Error</p>
+        <div className="p-3 bg-status-danger/10 border border-status-danger/30 rounded-md">
+          <p className="text-sm text-status-danger font-medium">Last Error</p>
           <p className="text-sm text-fg-1 mt-1">{plugin.lastError}</p>
         </div>
       )}
@@ -986,7 +986,7 @@ function ConfigTab({
                 <code className="text-accent-primary font-mono">{key}</code>
                 <span className="text-fg-2">({prop.type})</span>
                 {plugin.configSchema?.required?.includes(key) && (
-                  <span className="text-xs px-1.5 py-0.5 bg-status-error/20 text-status-error rounded">
+                  <span className="text-xs px-1.5 py-0.5 bg-status-danger/20 text-status-danger rounded">
                     required
                   </span>
                 )}
@@ -1009,12 +1009,12 @@ function ConfigTab({
             className={cn(
               'w-full h-[200px] bg-bg-2 border rounded-md p-3 font-mono text-xs text-fg-0 resize-none focus:outline-none focus:ring-2',
               parseError
-                ? 'border-status-error focus:ring-status-error/50'
+                ? 'border-status-danger focus:ring-status-danger/50'
                 : 'border-bd-0 focus:ring-accent-primary/50'
             )}
           />
           {parseError && (
-            <p className="text-xs text-status-error">{parseError}</p>
+            <p className="text-xs text-status-danger">{parseError}</p>
           )}
         </div>
       </PageSection>
@@ -1082,7 +1082,7 @@ function DoctorTab({
                     : doctorResult.status === 'warning'
                       ? 'text-status-warning'
                       : doctorResult.status === 'unhealthy'
-                        ? 'text-status-error'
+                        ? 'text-status-danger'
                         : 'text-fg-2'
                 )}
               >
@@ -1119,7 +1119,7 @@ function DoctorTab({
                   ? 'bg-status-success/5 border-status-success/30'
                   : check.status === 'warn'
                     ? 'bg-status-warning/5 border-status-warning/30'
-                    : 'bg-status-error/5 border-status-error/30'
+                    : 'bg-status-danger/5 border-status-danger/30'
               )}
             >
               <div className="flex items-center gap-2">
@@ -1128,7 +1128,7 @@ function DoctorTab({
                 ) : check.status === 'warn' ? (
                   <AlertTriangle className="w-4 h-4 text-status-warning shrink-0" />
                 ) : (
-                  <XCircle className="w-4 h-4 text-status-error shrink-0" />
+                  <XCircle className="w-4 h-4 text-status-danger shrink-0" />
                 )}
                 <span className="text-sm font-medium text-fg-0">{check.name}</span>
               </div>

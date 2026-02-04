@@ -26,14 +26,14 @@ import {
 } from 'lucide-react'
 import type { Route } from 'next'
 
-interface NavItem {
+export interface NavItem {
   href: Route
   label: string
   icon: React.ComponentType<{ className?: string }>
 }
 
 // Routes cast to Route type - actual routes will be added incrementally
-const navItems: NavItem[] = [
+export const navItems: NavItem[] = [
   { href: '/now' as Route, label: 'Now', icon: LayoutDashboard },
   { href: '/work-orders' as Route, label: 'Work Orders', icon: ClipboardList },
   { href: '/approvals' as Route, label: 'Approvals', icon: ShieldCheck },
@@ -72,7 +72,11 @@ export function RailNav({ collapsed, onToggle }: RailNavProps) {
         "h-[var(--topbar-height)] flex items-center border-b border-bd-0 shrink-0",
         collapsed ? "justify-center px-0" : "px-4"
       )}>
-        <span className="text-sm font-semibold text-fg-0 tracking-wide">S</span>
+        {collapsed ? (
+          <span className="text-lg font-bold text-fg-0">c<span className="text-status-info">.</span></span>
+        ) : (
+          <span className="text-lg font-bold text-fg-0 tracking-tight">claw<span className="text-status-info">hub</span></span>
+        )}
       </div>
 
       {/* Nav Items */}

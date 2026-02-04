@@ -257,9 +257,9 @@ export function MarkdownEditor({
 
       {/* Error Banner */}
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-status-error/10 border-b border-status-error/30">
-          <AlertCircle className="w-4 h-4 text-status-error shrink-0" />
-          <span className="text-xs text-status-error">{error}</span>
+        <div className="flex items-center gap-2 px-3 py-2 bg-status-danger/10 border-b border-status-danger/30">
+          <AlertCircle className="w-4 h-4 text-status-danger shrink-0" />
+          <span className="text-xs text-status-danger">{error}</span>
         </div>
       )}
 

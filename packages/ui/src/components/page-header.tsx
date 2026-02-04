@@ -34,7 +34,7 @@ export function PageHeader({
   return (
     <header className={baseClass}>
       <div className="min-w-0">
-        <h1 className="text-lg font-semibold text-fg-0 truncate">{title}</h1>
+        <h1 className="text-page-title text-fg-0 truncate">{title}</h1>
         {subtitle && (
           <p className="text-sm text-fg-2 mt-0.5 truncate">{subtitle}</p>
         )}
