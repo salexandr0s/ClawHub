@@ -105,6 +105,16 @@ export const ALLOWED_COMMANDS = {
   'browser.screenshot': { args: ['browser', 'screenshot'], danger: false, description: 'Take a screenshot of current tab' },
   'browser.snapshot': { args: ['browser', 'snapshot'], danger: false, description: 'Get DOM snapshot of current tab' },
   'browser.reset-profile': { args: ['browser', 'reset-profile'], danger: true, description: 'Reset browser profile (deletes all data)' },
+
+  // Channels Management
+  'channels.list.json': { args: ['channels', 'list', '--json'], danger: false, description: 'List configured channels (JSON output)' },
+  'channels.status.json': { args: ['channels', 'status', '--json'], danger: false, description: 'Get channels status (JSON output)' },
+  'channels.check': { args: ['channels', 'check'], danger: false, description: 'Check health of all channels' },
+  'channels.check.json': { args: ['channels', 'check', '--json'], danger: false, description: 'Check health of all channels (JSON output)' },
+
+  // Memory Management
+  'memory.status.json': { args: ['memory', 'status', '--json'], danger: false, description: 'Get memory index status (JSON output)' },
+  'memory.index': { args: ['memory', 'index'], danger: true, description: 'Rebuild memory index' },
 } as const
 
 export type AllowedCommandId = keyof typeof ALLOWED_COMMANDS

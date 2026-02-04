@@ -26,6 +26,9 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  Info,
 } from 'lucide-react'
 
 interface Props {
@@ -37,6 +40,15 @@ interface Props {
     severity: 'info' | 'warn' | 'critical'
     modifiedAt: Date
   }>
+}
+
+// Doctor check result parsed from CLI output
+interface DoctorCheck {
+  category: string
+  name: string
+  status: 'pass' | 'warn' | 'fail'
+  message?: string
+  detail?: string
 }
 
 type MaintenanceAction = 'health' | 'doctor' | 'doctor-fix' | 'cache-clear' | 'sessions-reset' | 'gateway-restart' | 'recover'
@@ -107,6 +119,8 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
     message: string
     receiptId?: string
     playbookResult?: PlaybookRunResult
+    doctorOutput?: string
+    doctorChecks?: DoctorCheck[]
   } | null>(null)
   const [cliStatus, setCliStatus] = useState<{
     available: boolean
@@ -251,6 +265,16 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
           } else {
             const result = await maintenanceApi.runAction(action, typedConfirmText)
             const success = result.data.exitCode === 0
+
+            // Parse doctor output for better display
+            let doctorOutput: string | undefined
+            let doctorChecks: DoctorCheck[] | undefined
+
+            if (action === 'doctor' || action === 'doctor-fix') {
+              doctorOutput = result.data.stdout
+              doctorChecks = parseDoctorOutput(result.data.stdout)
+            }
+
             setLastResult({
               action,
               success,
@@ -258,6 +282,8 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
                 ? `${config.title} completed successfully`
                 : `${config.title} failed (exit code: ${result.data.exitCode})`,
               receiptId: result.data.receiptId,
+              doctorOutput,
+              doctorChecks,
             })
 
             // Refresh gateway status after health check
@@ -368,30 +394,42 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
         {/* Last Result Banner */}
         {lastResult && (
           <div className={cn(
-            'p-3 rounded-md border flex items-center justify-between',
+            'p-3 rounded-md border',
             lastResult.success
               ? 'bg-status-success/10 border-status-success/30'
               : 'bg-status-error/10 border-status-error/30'
           )}>
-            <div className="flex items-center gap-2">
-              {lastResult.success ? (
-                <CheckCircle className="w-4 h-4 text-status-success shrink-0" />
-              ) : (
-                <XCircle className="w-4 h-4 text-status-error shrink-0" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {lastResult.success ? (
+                  <CheckCircle className="w-4 h-4 text-status-success shrink-0" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-status-error shrink-0" />
+                )}
+                <span className={cn(
+                  'text-sm',
+                  lastResult.success ? 'text-status-success' : 'text-status-error'
+                )}>
+                  {lastResult.message}
+                </span>
+              </div>
+              {lastResult.receiptId && (
+                <span className="text-xs text-fg-2 font-mono">
+                  Receipt: {lastResult.receiptId}
+                </span>
               )}
-              <span className={cn(
-                'text-sm',
-                lastResult.success ? 'text-status-success' : 'text-status-error'
-              )}>
-                {lastResult.message}
-              </span>
             </div>
-            {lastResult.receiptId && (
-              <span className="text-xs text-fg-2 font-mono">
-                Receipt: {lastResult.receiptId}
-              </span>
-            )}
           </div>
+        )}
+
+        {/* Doctor Results Display */}
+        {lastResult && (lastResult.action === 'doctor' || lastResult.action === 'doctor-fix') && (lastResult.doctorChecks || lastResult.doctorOutput) && (
+          <PageSection title="Doctor Results" description="Diagnostic check results">
+            <DoctorResultsDisplay
+              checks={lastResult.doctorChecks || []}
+              rawOutput={lastResult.doctorOutput}
+            />
+          </PageSection>
         )}
 
         {/* Gateway Status */}
@@ -792,4 +830,257 @@ function formatRelativeTime(date: Date | string): string {
   if (mins < 60) return `${mins}m ago`
   if (hours < 24) return `${hours}h ago`
   return `${days}d ago`
+}
+
+/**
+ * Parse doctor CLI output into structured checks
+ * Common formats:
+ * - [✓] Check name - Description
+ * - [✗] Check name - Description
+ * - [!] Check name - Warning message
+ * - Category:
+ *   [✓] Check...
+ */
+function parseDoctorOutput(output: string): DoctorCheck[] {
+  const checks: DoctorCheck[] = []
+  const lines = output.split('\n')
+  let currentCategory = 'General'
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    // Check for category headers (lines ending with :)
+    if (/^[A-Z][a-z]+.*:$/.test(trimmed)) {
+      currentCategory = trimmed.replace(/:$/, '')
+      continue
+    }
+
+    // Parse check lines with status indicators
+    // Match: [✓] name or [✗] name or [!] name or [ ] name
+    const checkMatch = trimmed.match(/^\[(✓|✗|!|×|√| )\]\s*(.+)$/)
+    if (checkMatch) {
+      const [, statusChar, rest] = checkMatch
+      let status: 'pass' | 'warn' | 'fail' = 'pass'
+
+      if (statusChar === '✗' || statusChar === '×') {
+        status = 'fail'
+      } else if (statusChar === '!') {
+        status = 'warn'
+      } else if (statusChar === ' ') {
+        status = 'warn'
+      }
+
+      // Split name and message by common delimiters
+      const parts = rest.split(/\s*[-–:]\s*(.*)/)
+      const name = parts[0] || rest
+      const message = parts[1] || undefined
+
+      checks.push({
+        category: currentCategory,
+        name: name.trim(),
+        status,
+        message: message?.trim(),
+      })
+      continue
+    }
+
+    // Also match simpler formats: PASS/FAIL/WARN prefix
+    const simpleMatch = trimmed.match(/^(PASS|FAIL|WARN|OK|ERROR)\s*[:\-]\s*(.+)$/i)
+    if (simpleMatch) {
+      const [, statusWord, rest] = simpleMatch
+      let status: 'pass' | 'warn' | 'fail' = 'pass'
+
+      const statusLower = statusWord.toLowerCase()
+      if (statusLower === 'fail' || statusLower === 'error') {
+        status = 'fail'
+      } else if (statusLower === 'warn') {
+        status = 'warn'
+      }
+
+      checks.push({
+        category: currentCategory,
+        name: rest.trim(),
+        status,
+      })
+    }
+  }
+
+  return checks
+}
+
+/**
+ * Display doctor results with expandable categories
+ */
+function DoctorResultsDisplay({
+  checks,
+  rawOutput,
+}: {
+  checks: DoctorCheck[]
+  rawOutput?: string
+}) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+  const [showRaw, setShowRaw] = useState(false)
+
+  // Group checks by category
+  const byCategory = checks.reduce((acc, check) => {
+    if (!acc[check.category]) {
+      acc[check.category] = []
+    }
+    acc[check.category].push(check)
+    return acc
+  }, {} as Record<string, DoctorCheck[]>)
+
+  // Calculate summary
+  const summary = {
+    pass: checks.filter((c) => c.status === 'pass').length,
+    warn: checks.filter((c) => c.status === 'warn').length,
+    fail: checks.filter((c) => c.status === 'fail').length,
+  }
+
+  const toggleCategory = (category: string) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }))
+  }
+
+  if (checks.length === 0 && rawOutput) {
+    // Show raw output if parsing didn't find checks
+    return (
+      <div className="mt-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-fg-0">Doctor Output</span>
+        </div>
+        <pre className="text-xs text-fg-2 font-mono bg-bg-3 p-3 rounded-[var(--radius-md)] border border-bd-0 overflow-x-auto whitespace-pre-wrap max-h-64 overflow-y-auto">
+          {rawOutput}
+        </pre>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-4 space-y-4">
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="p-3 bg-status-success/10 border border-status-success/30 rounded-[var(--radius-md)]">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-status-success" />
+            <span className="text-lg font-bold text-status-success">{summary.pass}</span>
+          </div>
+          <span className="text-xs text-status-success/80">Passed</span>
+        </div>
+        <div className="p-3 bg-status-warning/10 border border-status-warning/30 rounded-[var(--radius-md)]">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 text-status-warning" />
+            <span className="text-lg font-bold text-status-warning">{summary.warn}</span>
+          </div>
+          <span className="text-xs text-status-warning/80">Warnings</span>
+        </div>
+        <div className="p-3 bg-status-error/10 border border-status-error/30 rounded-[var(--radius-md)]">
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-status-error" />
+            <span className="text-lg font-bold text-status-error">{summary.fail}</span>
+          </div>
+          <span className="text-xs text-status-error/80">Failed</span>
+        </div>
+      </div>
+
+      {/* Categories */}
+      <div className="space-y-2">
+        {Object.entries(byCategory).map(([category, categoryChecks]) => {
+          const isExpanded = expanded[category] ?? categoryChecks.some((c) => c.status === 'fail')
+          const categoryFails = categoryChecks.filter((c) => c.status === 'fail').length
+          const categoryWarns = categoryChecks.filter((c) => c.status === 'warn').length
+
+          return (
+            <div
+              key={category}
+              className="bg-bg-3 rounded-[var(--radius-md)] border border-bd-0 overflow-hidden"
+            >
+              <button
+                onClick={() => toggleCategory(category)}
+                className="w-full flex items-center gap-2 p-3 hover:bg-bg-2 transition-colors"
+              >
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4 text-fg-2" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-fg-2" />
+                )}
+                <span className="font-medium text-fg-0">{category}</span>
+                <span className="text-xs text-fg-3">({categoryChecks.length} checks)</span>
+                {categoryFails > 0 && (
+                  <span className="ml-auto px-1.5 py-0.5 text-xs rounded bg-status-error/20 text-status-error">
+                    {categoryFails} failed
+                  </span>
+                )}
+                {categoryWarns > 0 && categoryFails === 0 && (
+                  <span className="ml-auto px-1.5 py-0.5 text-xs rounded bg-status-warning/20 text-status-warning">
+                    {categoryWarns} warnings
+                  </span>
+                )}
+              </button>
+
+              {isExpanded && (
+                <div className="border-t border-bd-0">
+                  {categoryChecks.map((check, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2 p-3 border-b border-bd-0/50 last:border-b-0"
+                    >
+                      {check.status === 'pass' && (
+                        <CheckCircle className="w-4 h-4 text-status-success shrink-0 mt-0.5" />
+                      )}
+                      {check.status === 'warn' && (
+                        <AlertTriangle className="w-4 h-4 text-status-warning shrink-0 mt-0.5" />
+                      )}
+                      {check.status === 'fail' && (
+                        <XCircle className="w-4 h-4 text-status-error shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span
+                          className={cn(
+                            'text-sm',
+                            check.status === 'pass' && 'text-fg-0',
+                            check.status === 'warn' && 'text-status-warning',
+                            check.status === 'fail' && 'text-status-error'
+                          )}
+                        >
+                          {check.name}
+                        </span>
+                        {check.message && (
+                          <p className="text-xs text-fg-2 mt-0.5">{check.message}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Raw Output Toggle */}
+      {rawOutput && (
+        <div>
+          <button
+            onClick={() => setShowRaw(!showRaw)}
+            className="flex items-center gap-1.5 text-xs text-fg-2 hover:text-fg-0 transition-colors"
+          >
+            {showRaw ? (
+              <ChevronDown className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5" />
+            )}
+            View raw output
+          </button>
+          {showRaw && (
+            <pre className="mt-2 text-xs text-fg-2 font-mono bg-bg-2 p-3 rounded-[var(--radius-md)] border border-bd-0 overflow-x-auto whitespace-pre-wrap max-h-48 overflow-y-auto">
+              {rawOutput}
+            </pre>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }

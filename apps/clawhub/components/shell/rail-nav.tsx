@@ -26,6 +26,7 @@ import {
   Gauge,
   ScrollText,
   Globe,
+  Database,
 } from 'lucide-react'
 import type { Route } from 'next'
 
@@ -56,6 +57,8 @@ const navItems: NavItem[] = [
   { href: '/live' as Route, label: 'Live', icon: Activity },
   { href: '/skills' as Route, label: 'Skills', icon: Sparkles },
   { href: '/plugins' as Route, label: 'Plugins', icon: Puzzle },
+  { href: '/channels' as Route, label: 'Channels', icon: MessageSquare },
+  { href: '/memory' as Route, label: 'Memory', icon: Database },
 ]
 
 interface RailNavProps {

@@ -1571,3 +1571,91 @@ export const browserApi = {
       typedConfirmText,
     }),
 }
+
+// ============================================================================
+// CHANNELS API
+// ============================================================================
+
+export interface Channel {
+  id: string
+  name: string
+  type: string
+  status: 'connected' | 'disconnected' | 'error' | 'unknown'
+  lastActivity?: string
+  config?: Record<string, unknown>
+  error?: string
+}
+
+export interface ChannelHealthCheck {
+  id: string
+  name: string
+  type: string
+  healthy: boolean
+  latencyMs?: number
+  message?: string
+  lastChecked: string
+}
+
+export const channelsApi = {
+  getList: () =>
+    apiGet<{ data: Channel[]; receiptId?: string }>('/api/channels'),
+
+  getStatus: () =>
+    apiGet<{ data: Array<{ id: string; name?: string; type?: string; status: Channel['status']; lastActivity?: string }>; receiptId?: string }>('/api/channels?action=status'),
+
+  checkHealth: () =>
+    apiGet<{ data: ChannelHealthCheck[]; receiptId?: string }>('/api/channels?action=check'),
+}
+
+// ============================================================================
+// MEMORY API
+// ============================================================================
+
+export interface MemoryStatus {
+  filesIndexed: number
+  totalChunks: number
+  backend: string
+  lastIndexed?: string
+  indexSizeBytes?: number
+  workspacePath?: string
+}
+
+export interface MemorySearchResult {
+  path: string
+  snippet: string
+  score: number
+  line?: number
+}
+
+export interface DailyNoteInfo {
+  date: string
+  exists: boolean
+  eventCount?: number
+  sizeBytes?: number
+}
+
+export const memoryApi = {
+  getStatus: () =>
+    apiGet<{ data: MemoryStatus; receiptId?: string }>('/api/memory'),
+
+  search: (query: string) =>
+    apiGet<{ data: MemorySearchResult[]; receiptId?: string }>('/api/memory', {
+      action: 'search',
+      q: query,
+    }),
+
+  getDailyNotes: () =>
+    apiGet<{ data: DailyNoteInfo[]; receiptId?: string }>('/api/memory?action=daily-notes'),
+
+  getDailyNote: (date: string) =>
+    apiGet<{ data: { content: string | null }; receiptId?: string }>('/api/memory', {
+      action: 'daily-note',
+      date,
+    }),
+
+  rebuildIndex: (typedConfirmText?: string) =>
+    apiPost<{ data: { success: boolean }; receiptId?: string }>('/api/memory', {
+      action: 'rebuild',
+      typedConfirmText,
+    }),
+}
