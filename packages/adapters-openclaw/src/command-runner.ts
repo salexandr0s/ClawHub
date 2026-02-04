@@ -43,6 +43,11 @@ export const ALLOWED_COMMANDS = {
   // Logs
   'logs': { args: ['logs'], danger: false, description: 'View logs' },
   'logs.tail': { args: ['logs', '--follow'], danger: false, description: 'Tail logs' },
+  'logs.recent': { args: ['logs', '--tail', '300'], danger: false, description: 'View recent 300 log entries' },
+  'logs.json': { args: ['logs', '--json'], danger: false, description: 'View logs (JSON output)' },
+  'logs.recent.json': { args: ['logs', '--tail', '300', '--json'], danger: false, description: 'View recent 300 log entries (JSON output)' },
+  'gateway.logs': { args: ['gateway', 'logs'], danger: false, description: 'View gateway logs' },
+  'gateway.logs.json': { args: ['gateway', 'logs', '--json'], danger: false, description: 'View gateway logs (JSON output)' },
 
   // Cache & Sessions
   'cache.clear': { args: ['reset', '--scope', 'config', '--yes', '--non-interactive', '--dry-run'], danger: true, description: 'Clear cached config (dry-run preview)' },

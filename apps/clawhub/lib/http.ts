@@ -1491,3 +1491,28 @@ export const statusApi = {
 
   getHealth: () => apiGet<{ data: HealthReport; receiptId?: string }>('/api/status/health'),
 }
+
+// ============================================================================
+// LOGS API
+// ============================================================================
+
+export interface LogEntry {
+  timestamp: string
+  level: 'error' | 'warn' | 'info' | 'debug' | 'trace'
+  message: string
+  source?: string
+  context?: Record<string, unknown>
+}
+
+export interface LogsResponse {
+  entries: LogEntry[]
+  raw: string
+}
+
+export const logsApi = {
+  getRecentLogs: () =>
+    apiGet<{ data: LogsResponse; receiptId?: string }>('/api/logs'),
+
+  getGatewayLogs: () =>
+    apiGet<{ data: LogsResponse; receiptId?: string }>('/api/logs?source=gateway'),
+}
