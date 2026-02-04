@@ -1,12 +1,12 @@
 # OpenClaw Integration
 
-This document describes how SAVORG Mission Control integrates with [OpenClaw](https://github.com/openclaw/openclaw).
+This document describes how clawcontrol integrates with [OpenClaw](https://github.com/openclaw/openclaw).
 
 ---
 
 ## Overview
 
-OpenClaw is the CLI for orchestrating AI agents. Mission Control provides a visual interface on top of OpenClaw, enabling:
+OpenClaw is the CLI for orchestrating AI agents. clawcontrol provides a visual interface on top of OpenClaw, enabling:
 
 - **Visual work order management** — Track features through spec → build → QA → ship
 - **Agent oversight** — Monitor agent status and execution in real-time
@@ -19,7 +19,7 @@ OpenClaw is the CLI for orchestrating AI agents. Mission Control provides a visu
 
 ### Supported Binary
 
-Mission Control requires **OpenClaw** (the `openclaw` CLI):
+clawcontrol requires **OpenClaw** (the `openclaw` CLI):
 
 | Requirement | Value |
 |-------------|-------|
@@ -45,7 +45,7 @@ openclaw --version
 
 When `openclaw` is not found on PATH:
 
-- Mission Control runs in **demo mode** with mock data
+- clawcontrol runs in **demo mode** with mock data
 - All features remain accessible for UI exploration
 - No real commands are executed
 
@@ -53,7 +53,7 @@ When `openclaw` is not found on PATH:
 
 ## Command Allowlist
 
-Mission Control only executes pre-approved commands. All commands use the `openclaw` binary.
+clawcontrol only executes pre-approved commands. All commands use the `openclaw` binary.
 
 **Current Allowlist (18 commands):**
 
@@ -140,8 +140,8 @@ project-root/
 │   └── config.yaml          # OpenClaw configuration
 ├── agents/
 │   ├── AGENTS.md            # Agent registry
-│   ├── savorgBUILD.soul.md  # Agent soul file
-│   └── savorgBUILD.md       # Agent overlay
+│   ├── clawcontrolBUILD.soul.md  # Agent soul file
+│   └── clawcontrolBUILD.md       # Agent overlay
 ├── overlays/
 │   └── *.md                 # Shared overlays
 ├── skills/
@@ -167,7 +167,7 @@ project-root/
 
 ## Governor Policies
 
-Mission Control enforces Governor policies before OpenClaw execution:
+clawcontrol enforces Governor policies before OpenClaw execution:
 
 ### Policy Types
 
@@ -181,7 +181,7 @@ Mission Control enforces Governor policies before OpenClaw execution:
 ### Policy Evaluation
 
 ```typescript
-// apps/mission-control/lib/with-governor.ts
+// apps/clawcontrol/lib/with-governor.ts
 export async function enforceTypedConfirm(options: {
   actionKind: string
   typedConfirmText?: string
@@ -279,7 +279,7 @@ const child = spawn('openclaw', args, {
 
 ## Plugin Capabilities Probing
 
-Mission Control probes OpenClaw to detect which plugin commands are supported. This allows graceful degradation when running with OpenClaw versions that don't support certain features.
+clawcontrol probes OpenClaw to detect which plugin commands are supported. This allows graceful degradation when running with OpenClaw versions that don't support certain features.
 
 ### Capability Detection
 
@@ -439,15 +439,15 @@ This allows debugging "worked yesterday, not today" scenarios after OpenClaw upd
 
 ## Demo Mode Details
 
-When OpenClaw is unavailable, Mission Control provides:
+When OpenClaw is unavailable, clawcontrol provides:
 
 ### Mock Agents
 
 Pre-configured agents in `packages/core/src/mocks/`:
-- savorgSPEC — Specification agent
-- savorgBUILD — Build/implementation agent
-- savorgQA — Testing agent
-- savorgOPS — Operations agent
+- clawcontrolSPEC — Specification agent
+- clawcontrolBUILD — Build/implementation agent
+- clawcontrolQA — Testing agent
+- clawcontrolOPS — Operations agent
 
 ### Mock Workspace
 
@@ -472,7 +472,7 @@ Commands return simulated results:
 
 1. Verify installation: `which openclaw`
 2. Check PATH includes OpenClaw location
-3. Restart Mission Control after installing
+3. Restart clawcontrol after installing
 
 ### "Version below minimum"
 

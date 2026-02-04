@@ -1,14 +1,14 @@
-# AGENTS.md — Savorg Workspace Rules
+# AGENTS.md — clawcontrol Workspace Rules
 <!-- v3.0 | Updated: 2026-02-04 -->
 
-This repository defines Savorg's multi-agent behavior. These rules apply to every agent run.
+This repository defines clawcontrol's multi-agent behavior. These rules apply to every agent run.
 
 ---
 
 ## 1) Bootstrap (Every Run)
 
 - Read `agents/<agent_id>/SOUL.md` and `agents/<agent_id>/HEARTBEAT.md` if present.
-- If either is missing, continue in safe/minimal mode and notify savorgCEO.
+- If either is missing, continue in safe/minimal mode and notify clawcontrolCEO.
 
 ---
 
@@ -25,22 +25,22 @@ This repository defines Savorg's multi-agent behavior. These rules apply to ever
 - No skipping stages. Follow the configured workflow chain.
 - Build, UI, and Ops require an approved PlanReview before starting.
 - Security veto is absolute; no agent may override it.
-- savorgManager orchestrates; savorgCEO is the only agent that communicates with Alexandros.
+- clawcontrolManager orchestrates; clawcontrolCEO is the only agent that communicates with Alexandros.
 
 ---
 
-## 4) Mission Control (WorkOrders / Operations / Receipts)
+## 4) clawcontrol (WorkOrders / Operations / Receipts)
 
 - WorkOrders are the high-level unit of work.
 - Operations are executable tasks within a WorkOrder.
 - Receipts are evidence that an Operation completed (diffs, outputs, test results).
 
 Dispatch flow:
-- savorgCEO creates/updates WorkOrders and Operations in the DB.
-- savorgCEO spawns specialists with `sessions_spawn`.
+- clawcontrolCEO creates/updates WorkOrders and Operations in the DB.
+- clawcontrolCEO spawns specialists with `sessions_spawn`.
 - Session key must include `:op:<operationId>` for telemetry linkage.
 - Specialists execute and return a Receipt with evidence.
-- savorgCEO reviews Receipts, enforces QA gates, and reports to Alexandros.
+- clawcontrolCEO reviews Receipts, enforces QA gates, and reports to Alexandros.
 
 ---
 
@@ -75,7 +75,7 @@ Dispatch flow:
 
 ## 9) Heartbeats
 
-- Heartbeats are enabled only for savorgCEO by default.
+- Heartbeats are enabled only for clawcontrolCEO by default.
 - Specialists are event-driven and run on-demand via spawn.
 - Follow your agent-specific HEARTBEAT checklist when enabled.
 - If there is nothing to report, reply exactly `HEARTBEAT_OK`.
@@ -84,4 +84,4 @@ Dispatch flow:
 
 ## 10) Session Key Convention
 
-- Include `:op:<operationId>` in the session label when running a Mission Control operation.
+- Include `:op:<operationId>` in the session label when running a clawcontrol operation.

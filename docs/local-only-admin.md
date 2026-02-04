@@ -1,9 +1,9 @@
 # Local-only Admin Tools (Security Requirement)
 
-Mission Control and the OpenClaw Dashboard are **admin consoles**.
+clawcontrol and the OpenClaw Dashboard are **admin consoles**.
 They must **never** be exposed to LAN or the public internet.
 
-## Mission Control
+## clawcontrol
 - Must bind only to **127.0.0.1** (loopback)
 - Must not listen on `0.0.0.0` or any `192.168.x.x` interface
 - Refuses to start if `HOST`/`HOSTNAME` is set to a non-loopback value

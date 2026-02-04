@@ -1,12 +1,12 @@
-# savORG Multi-Agent Implementation Prompt
+# clawcontrol Multi-Agent Implementation Prompt
 
-> **Context:** This prompt implements the multi-agent orchestration system design from `savorg.config.yaml` and wires it into the existing SQLite/Prisma schema in `apps/mission-control/prisma/schema.prisma`.
+> **Context:** This prompt implements the multi-agent orchestration system design from `clawcontrol.config.yaml` and wires it into the existing SQLite/Prisma schema in `apps/clawcontrol/prisma/schema.prisma`.
 
 ---
 
 ## OBJECTIVE
 
-Implement the Savorg multi-agent orchestration layer that:
+Implement the clawcontrol multi-agent orchestration layer that:
 1. **Executes workflow chains** (feature_request, ui_feature, etc.) with proper state tracking
 2. **Enforces tool policies** per agent (Guard can't execute code, Build can)
 3. **Manages Operation lifecycle** through SQLite with atomic status transitions
@@ -20,20 +20,20 @@ Implement the Savorg multi-agent orchestration layer that:
 
 ### 1.1 Verify Agent Seeding
 
-The `Agent` model exists. Seed the database with agents from `savorg.config.yaml`:
+The `Agent` model exists. Seed the database with agents from `clawcontrol.config.yaml`:
 
 ```typescript
-// apps/mission-control/prisma/seed.ts
+// apps/clawcontrol/prisma/seed.ts
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 const AGENTS = [
   {
-    name: 'savorgguard',
+    name: 'clawcontrolguard',
     role: 'input_screener',
     station: 'screen',
-    sessionKey: 'agent:savorgguard:main',
+    sessionKey: 'agent:clawcontrolguard:main',
     wipLimit: 5,
     model: 'claude-haiku-4-5-20251001',
     capabilities: JSON.stringify({
@@ -44,10 +44,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgceo',
+    name: 'clawcontrolceo',
     role: 'strategic_interface',
     station: 'strategic',
-    sessionKey: 'agent:savorgceo:main',
+    sessionKey: 'agent:clawcontrolceo:main',
     wipLimit: 3,
     model: 'claude-opus-4-5-20251101',
     capabilities: JSON.stringify({
@@ -58,10 +58,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgmanager',
+    name: 'clawcontrolmanager',
     role: 'orchestrator',
     station: 'orchestration',
-    sessionKey: 'agent:savorgmanager:main',
+    sessionKey: 'agent:clawcontrolmanager:main',
     wipLimit: 5,
     model: 'claude-sonnet-4-5-20250929',
     capabilities: JSON.stringify({
@@ -72,10 +72,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgplan',
+    name: 'clawcontrolplan',
     role: 'planner',
     station: 'spec',
-    sessionKey: 'agent:savorgplan:main',
+    sessionKey: 'agent:clawcontrolplan:main',
     wipLimit: 3,
     model: 'claude-sonnet-4-5-20250929',
     capabilities: JSON.stringify({
@@ -84,10 +84,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgplanreview',
+    name: 'clawcontrolplanreview',
     role: 'plan_reviewer',
     station: 'spec',
-    sessionKey: 'agent:savorgplanreview:main',
+    sessionKey: 'agent:clawcontrolplanreview:main',
     wipLimit: 3,
     model: 'claude-sonnet-4-5-20250929',
     capabilities: JSON.stringify({
@@ -97,10 +97,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgbuild',
+    name: 'clawcontrolbuild',
     role: 'builder',
     station: 'build',
-    sessionKey: 'agent:savorgbuild:main',
+    sessionKey: 'agent:clawcontrolbuild:main',
     wipLimit: 2,
     model: 'claude-sonnet-4-5-20250929',
     capabilities: JSON.stringify({
@@ -110,10 +110,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgbuildreview',
+    name: 'clawcontrolbuildreview',
     role: 'build_reviewer',
     station: 'qa',
-    sessionKey: 'agent:savorgbuildreview:main',
+    sessionKey: 'agent:clawcontrolbuildreview:main',
     wipLimit: 3,
     model: 'claude-sonnet-4-5-20250929',
     capabilities: JSON.stringify({
@@ -124,10 +124,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgui',
+    name: 'clawcontrolui',
     role: 'ui_builder',
     station: 'build',
-    sessionKey: 'agent:savorgui:main',
+    sessionKey: 'agent:clawcontrolui:main',
     wipLimit: 2,
     model: 'claude-sonnet-4-5-20250929',
     capabilities: JSON.stringify({
@@ -138,10 +138,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorguireview',
+    name: 'clawcontroluireview',
     role: 'ui_reviewer',
     station: 'qa',
-    sessionKey: 'agent:savorguireview:main',
+    sessionKey: 'agent:clawcontroluireview:main',
     wipLimit: 3,
     model: 'claude-haiku-4-5-20251001',
     capabilities: JSON.stringify({
@@ -151,10 +151,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgops',
+    name: 'clawcontrolops',
     role: 'operations',
     station: 'ops',
-    sessionKey: 'agent:savorgops:main',
+    sessionKey: 'agent:clawcontrolops:main',
     wipLimit: 2,
     model: 'claude-sonnet-4-5-20250929',
     capabilities: JSON.stringify({
@@ -164,10 +164,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgsecurity',
+    name: 'clawcontrolsecurity',
     role: 'security_auditor',
     station: 'qa',
-    sessionKey: 'agent:savorgsecurity:main',
+    sessionKey: 'agent:clawcontrolsecurity:main',
     wipLimit: 3,
     model: 'claude-opus-4-5-20251101',
     capabilities: JSON.stringify({
@@ -178,10 +178,10 @@ const AGENTS = [
     }),
   },
   {
-    name: 'savorgresearch',
+    name: 'clawcontrolresearch',
     role: 'researcher',
     station: 'spec',
-    sessionKey: 'agent:savorgresearch:main',
+    sessionKey: 'agent:clawcontrolresearch:main',
     wipLimit: 3,
     model: 'claude-opus-4-5-20251101',
     capabilities: JSON.stringify({
@@ -248,7 +248,7 @@ model WorkOrder {
 
 Run migration:
 ```bash
-cd apps/mission-control
+cd apps/clawcontrol
 npx prisma migrate dev --name workflow_tracking
 ```
 
@@ -259,7 +259,7 @@ npx prisma migrate dev --name workflow_tracking
 ### 2.1 Create Workflow Definitions
 
 ```typescript
-// apps/mission-control/lib/workflows/definitions.ts
+// apps/clawcontrol/lib/workflows/definitions.ts
 
 export interface WorkflowStage {
   agent: string
@@ -281,13 +281,13 @@ export const WORKFLOWS: Record<string, Workflow> = {
     id: 'feature_request',
     description: 'Standard feature implementation',
     stages: [
-      { agent: 'savorgresearch', condition: 'unknowns_exist', optional: true },
-      { agent: 'savorgplan' },
-      { agent: 'savorgplanreview', loopTarget: 'savorgplan', maxIterations: 2 },
-      { agent: 'savorgbuild' },
-      { agent: 'savorgbuildreview', loopTarget: 'savorgbuild', maxIterations: 2 },
-      { agent: 'savorgsecurity', loopTarget: 'savorgbuild', maxIterations: 1, canVeto: true },
-      { agent: 'savorgops', condition: 'deployment_needed', optional: true },
+      { agent: 'clawcontrolresearch', condition: 'unknowns_exist', optional: true },
+      { agent: 'clawcontrolplan' },
+      { agent: 'clawcontrolplanreview', loopTarget: 'clawcontrolplan', maxIterations: 2 },
+      { agent: 'clawcontrolbuild' },
+      { agent: 'clawcontrolbuildreview', loopTarget: 'clawcontrolbuild', maxIterations: 2 },
+      { agent: 'clawcontrolsecurity', loopTarget: 'clawcontrolbuild', maxIterations: 1, canVeto: true },
+      { agent: 'clawcontrolops', condition: 'deployment_needed', optional: true },
     ],
   },
   
@@ -295,13 +295,13 @@ export const WORKFLOWS: Record<string, Workflow> = {
     id: 'ui_feature',
     description: 'UI/frontend feature',
     stages: [
-      { agent: 'savorgresearch', condition: 'unknowns_exist', optional: true },
-      { agent: 'savorgplan' },
-      { agent: 'savorgplanreview', loopTarget: 'savorgplan', maxIterations: 2 },
-      { agent: 'savorgui' },
-      { agent: 'savorguireview', loopTarget: 'savorgui', maxIterations: 2 },
-      { agent: 'savorgsecurity', loopTarget: 'savorgui', maxIterations: 1, canVeto: true },
-      { agent: 'savorgops', condition: 'deployment_needed', optional: true },
+      { agent: 'clawcontrolresearch', condition: 'unknowns_exist', optional: true },
+      { agent: 'clawcontrolplan' },
+      { agent: 'clawcontrolplanreview', loopTarget: 'clawcontrolplan', maxIterations: 2 },
+      { agent: 'clawcontrolui' },
+      { agent: 'clawcontroluireview', loopTarget: 'clawcontrolui', maxIterations: 2 },
+      { agent: 'clawcontrolsecurity', loopTarget: 'clawcontrolui', maxIterations: 1, canVeto: true },
+      { agent: 'clawcontrolops', condition: 'deployment_needed', optional: true },
     ],
   },
   
@@ -309,10 +309,10 @@ export const WORKFLOWS: Record<string, Workflow> = {
     id: 'bug_fix',
     description: 'Bug fix — abbreviated workflow',
     stages: [
-      { agent: 'savorgresearch', condition: 'unknowns_exist', optional: true },
-      { agent: 'savorgbuild' },
-      { agent: 'savorgbuildreview', loopTarget: 'savorgbuild', maxIterations: 2 },
-      { agent: 'savorgsecurity', condition: 'security_relevant', optional: true },
+      { agent: 'clawcontrolresearch', condition: 'unknowns_exist', optional: true },
+      { agent: 'clawcontrolbuild' },
+      { agent: 'clawcontrolbuildreview', loopTarget: 'clawcontrolbuild', maxIterations: 2 },
+      { agent: 'clawcontrolsecurity', condition: 'security_relevant', optional: true },
     ],
   },
   
@@ -320,9 +320,9 @@ export const WORKFLOWS: Record<string, Workflow> = {
     id: 'hotfix',
     description: 'Emergency hotfix — minimal gates',
     stages: [
-      { agent: 'savorgbuild' },
-      { agent: 'savorgsecurity' },
-      { agent: 'savorgops' },
+      { agent: 'clawcontrolbuild' },
+      { agent: 'clawcontrolsecurity' },
+      { agent: 'clawcontrolops' },
     ],
   },
   
@@ -330,7 +330,7 @@ export const WORKFLOWS: Record<string, Workflow> = {
     id: 'research_only',
     description: 'Pure research / question answering',
     stages: [
-      { agent: 'savorgresearch' },
+      { agent: 'clawcontrolresearch' },
     ],
   },
   
@@ -338,8 +338,8 @@ export const WORKFLOWS: Record<string, Workflow> = {
     id: 'security_audit',
     description: 'Standalone security audit',
     stages: [
-      { agent: 'savorgsecurity' },
-      { agent: 'savorgbuildreview', condition: 'code_review_needed', optional: true },
+      { agent: 'clawcontrolsecurity' },
+      { agent: 'clawcontrolbuildreview', condition: 'code_review_needed', optional: true },
     ],
   },
   
@@ -347,10 +347,10 @@ export const WORKFLOWS: Record<string, Workflow> = {
     id: 'ops_task',
     description: 'Infrastructure / ops changes',
     stages: [
-      { agent: 'savorgplan' },
-      { agent: 'savorgplanreview', loopTarget: 'savorgplan', maxIterations: 2 },
-      { agent: 'savorgops' },
-      { agent: 'savorgsecurity', canVeto: true },
+      { agent: 'clawcontrolplan' },
+      { agent: 'clawcontrolplanreview', loopTarget: 'clawcontrolplan', maxIterations: 2 },
+      { agent: 'clawcontrolops' },
+      { agent: 'clawcontrolsecurity', canVeto: true },
     ],
   },
 }
@@ -359,7 +359,7 @@ export const WORKFLOWS: Record<string, Workflow> = {
 ### 2.2 Workflow Executor
 
 ```typescript
-// apps/mission-control/lib/workflows/executor.ts
+// apps/clawcontrol/lib/workflows/executor.ts
 
 import { prisma } from '../db'
 import { WORKFLOWS, WorkflowStage } from './definitions'
@@ -501,7 +501,7 @@ async function escalateToCEO(
   })
   
   // Notify CEO via sessions_send
-  await sendToSession('agent:savorgceo:main', buildEscalationMessage(ctx, reason, result))
+  await sendToSession('agent:clawcontrolceo:main', buildEscalationMessage(ctx, reason, result))
   
   // Log activity
   await prisma.activity.create({
@@ -623,18 +623,18 @@ async function createOperationForStage(
 
 function mapAgentToStation(agentName: string): string {
   const stationMap: Record<string, string> = {
-    savorgguard: 'screen',
-    savorgceo: 'strategic',
-    savorgmanager: 'orchestration',
-    savorgresearch: 'spec',
-    savorgplan: 'spec',
-    savorgplanreview: 'spec',
-    savorgbuild: 'build',
-    savorgbuildreview: 'qa',
-    savorgui: 'build',
-    savorguireview: 'qa',
-    savorgops: 'ops',
-    savorgsecurity: 'qa',
+    clawcontrolguard: 'screen',
+    clawcontrolceo: 'strategic',
+    clawcontrolmanager: 'orchestration',
+    clawcontrolresearch: 'spec',
+    clawcontrolplan: 'spec',
+    clawcontrolplanreview: 'spec',
+    clawcontrolbuild: 'build',
+    clawcontrolbuildreview: 'qa',
+    clawcontrolui: 'build',
+    clawcontroluireview: 'qa',
+    clawcontrolops: 'ops',
+    clawcontrolsecurity: 'qa',
   }
   return stationMap[agentName] ?? 'build'
 }
@@ -684,7 +684,7 @@ async function markWorkOrderComplete(workOrderId: string): Promise<void> {
 ### 3.1 Policy Checker
 
 ```typescript
-// apps/mission-control/lib/policies/tool-policy.ts
+// apps/clawcontrol/lib/policies/tool-policy.ts
 
 import { prisma } from '../db'
 
@@ -740,7 +740,7 @@ export async function checkToolPolicy(request: ToolRequest): Promise<PolicyResul
   }
   
   // Special case: BuildReview exec allowlist
-  if (request.tool === 'exec' && request.agentName === 'savorgbuildreview') {
+  if (request.tool === 'exec' && request.agentName === 'clawcontrolbuildreview') {
     const allowlist = capabilities.exec_allowlist ?? []
     const command = String(request.args?.command ?? '')
     
@@ -799,7 +799,7 @@ export function withToolPolicy(handler: Function) {
 ### 4.1 Manager Service
 
 ```typescript
-// apps/mission-control/lib/services/manager.ts
+// apps/clawcontrol/lib/services/manager.ts
 
 import { prisma } from '../db'
 import { WORKFLOWS } from '../workflows/definitions'
@@ -897,7 +897,7 @@ export async function initiateWorkflow(
   await prisma.activity.create({
     data: {
       type: 'workflow.started',
-      actor: 'agent:savorgmanager',
+      actor: 'agent:clawcontrolmanager',
       entityType: 'work_order',
       entityId: workOrderId,
       summary: `Started workflow: ${workflowId}`,
@@ -1026,12 +1026,12 @@ async function notifyCEO(
     : `⚠️ **Work Order Update:** ${workOrder?.code}\n\nEvent: ${event}`
   
   // Send to CEO session
-  await sendToSession('agent:savorgceo:main', message)
+  await sendToSession('agent:clawcontrolceo:main', message)
   
   await prisma.activity.create({
     data: {
       type: `manager.notify_ceo`,
-      actor: 'agent:savorgmanager',
+      actor: 'agent:clawcontrolmanager',
       entityType: 'work_order',
       entityId: workOrderId,
       summary: `Notified CEO: ${event}`,
@@ -1059,10 +1059,10 @@ function evaluateCondition(condition: string, context: Record<string, unknown>):
 
 function mapAgentToStation(agentName: string): string {
   const map: Record<string, string> = {
-    savorgresearch: 'spec', savorgplan: 'spec', savorgplanreview: 'spec',
-    savorgbuild: 'build', savorgui: 'build',
-    savorgbuildreview: 'qa', savorguireview: 'qa', savorgsecurity: 'qa',
-    savorgops: 'ops',
+    clawcontrolresearch: 'spec', clawcontrolplan: 'spec', clawcontrolplanreview: 'spec',
+    clawcontrolbuild: 'build', clawcontrolui: 'build',
+    clawcontrolbuildreview: 'qa', clawcontroluireview: 'qa', clawcontrolsecurity: 'qa',
+    clawcontrolops: 'ops',
   }
   return map[agentName] ?? 'build'
 }
@@ -1075,7 +1075,7 @@ function mapAgentToStation(agentName: string): string {
 ### 5.1 Session Spawner
 
 ```typescript
-// apps/mission-control/lib/openclaw/sessions.ts
+// apps/clawcontrol/lib/openclaw/sessions.ts
 
 import { exec } from 'child_process'
 import { promisify } from 'util'
@@ -1182,7 +1182,7 @@ export async function syncAgentSessions(): Promise<void> {
 ### 6.1 Workflow API
 
 ```typescript
-// apps/mission-control/app/api/workflows/route.ts
+// apps/clawcontrol/app/api/workflows/route.ts
 
 import { NextResponse } from 'next/server'
 import { WORKFLOWS } from '@/lib/workflows/definitions'
@@ -1195,7 +1195,7 @@ export async function GET() {
 ```
 
 ```typescript
-// apps/mission-control/app/api/workflows/[id]/start/route.ts
+// apps/clawcontrol/app/api/workflows/[id]/start/route.ts
 
 import { NextResponse } from 'next/server'
 import { initiateWorkflow } from '@/lib/services/manager'
@@ -1233,7 +1233,7 @@ export async function POST(
 ### 6.2 Agent Completion Webhook
 
 ```typescript
-// apps/mission-control/app/api/agents/completion/route.ts
+// apps/clawcontrol/app/api/agents/completion/route.ts
 
 import { NextResponse } from 'next/server'
 import { handleAgentCompletion } from '@/lib/services/manager'
@@ -1264,7 +1264,7 @@ export async function POST(request: Request) {
 
 ## PHASE 7: Model Identifier Updates
 
-Update `savorg.config.yaml` with current model API names:
+Update `clawcontrol.config.yaml` with current model API names:
 
 ```yaml
 # CORRECT model identifiers (as of 2026-02)
@@ -1312,10 +1312,10 @@ models:
 - [ ] Test iteration cap → verify escalation
 
 ### Policy Tests
-- [ ] savorgbuild can use `exec` and `write`
-- [ ] savorgplanreview cannot use `exec`
-- [ ] savorgbuildreview can only use allowlisted commands
-- [ ] savorgsecurity cannot modify files
+- [ ] clawcontrolbuild can use `exec` and `write`
+- [ ] clawcontrolplanreview cannot use `exec`
+- [ ] clawcontrolbuildreview can only use allowlisted commands
+- [ ] clawcontrolsecurity cannot modify files
 
 ### Session Linkage Tests
 - [ ] Spawn agent with `:op:<id>` session key
@@ -1338,7 +1338,7 @@ models:
 | `app/api/workflows/route.ts` | Create |
 | `app/api/workflows/[id]/start/route.ts` | Create |
 | `app/api/agents/completion/route.ts` | Create |
-| `savorg.config.yaml` | Update model names |
+| `clawcontrol.config.yaml` | Update model names |
 
 ---
 
@@ -1353,4 +1353,4 @@ models:
 
 ---
 
-*Generated by SavorgCEO | 2026-02-04*
+*Generated by clawcontrolCEO | 2026-02-04*

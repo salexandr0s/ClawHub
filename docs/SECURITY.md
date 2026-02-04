@@ -1,12 +1,12 @@
 # Security Model
 
-This document describes SAVORG Mission Control's security architecture for operators and contributors.
+This document describes clawcontrol's security architecture for operators and contributors.
 
 ---
 
 ## Design Philosophy
 
-Mission Control is designed for **local-first, single-user** operation:
+clawcontrol is designed for **local-first, single-user** operation:
 
 - Runs on localhost (not exposed to network by default)
 - No authentication (trusts local user)
@@ -125,7 +125,7 @@ Workspace file operations are protected against path traversal attacks.
 ### Validation Rules
 
 ```typescript
-// apps/mission-control/lib/workspace.ts
+// apps/clawcontrol/lib/workspace.ts
 export function isValidWorkspacePath(path: string): boolean {
   // Must start with /
   if (!path.startsWith('/')) return false
@@ -268,7 +268,7 @@ SQLite with WAL mode supports single-writer, multiple-reader:
 
 1. **Keep localhost-only** — Don't expose to network without TLS and auth
 2. **Review activities** — Check `/now` regularly for unexpected actions
-3. **Backup database** — SQLite file at `data/mission-control.db`
+3. **Backup database** — SQLite file at `apps/clawcontrol/data/clawcontrol.db`
 4. **Update regularly** — Pull latest security patches
 
 ### For Contributors

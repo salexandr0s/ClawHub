@@ -1,13 +1,13 @@
 # OpenClaw Integration Guide
 
 ## Purpose
-This guide wires Savorg agent policy into OpenClaw using per-agent heartbeats and tool allowlists.
+This guide wires clawcontrol agent policy into OpenClaw using per-agent heartbeats and tool allowlists.
 
 ## Heartbeats
 - Configure heartbeats via `agents.defaults.heartbeat` or per-agent `agents.list[].heartbeat`.
 - `every: "0m"` disables heartbeats without removing the prompt.
 - The per-agent heartbeat prompts in `openclaw/openclaw.json5` point to `agents/<agent>/HEARTBEAT.md`.
-- Savorg is event-driven; only the CEO heartbeat is enabled by default.
+- clawcontrol is event-driven; only the CEO heartbeat is enabled by default.
 
 ## Per-Agent SOUL/HEARTBEAT Loading
 Use one of these patterns to ensure agent-specific files are applied:

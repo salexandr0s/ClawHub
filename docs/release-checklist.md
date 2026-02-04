@@ -1,6 +1,6 @@
 # Release Checklist
 
-Use this checklist when preparing a new release of SAVORG Mission Control.
+Use this checklist when preparing a new release of clawcontrol.
 
 ---
 
@@ -49,7 +49,7 @@ Use this checklist when preparing a new release of SAVORG Mission Control.
    }
    ```
 
-2. Update version in `apps/mission-control/package.json`:
+2. Update version in `apps/clawcontrol/package.json`:
    ```json
    {
      "version": "0.2.0"
@@ -192,7 +192,7 @@ npm run build
 
 ```bash
 # Start production server
-npm run start --prefix apps/mission-control
+npm run start --prefix apps/clawcontrol
 
 # Verify at http://localhost:3000
 ```

@@ -1,9 +1,9 @@
 {
-  // Savorg OpenClaw agent policy template
+  // clawcontrol OpenClaw agent policy template
   // Copy (or merge) into `~/.openclaw/openclaw.json`, then restart the gateway.
   //
   // Notes:
-  // - Many installs use the `main` agent as the CEO. If so, apply the `savorgceo`
+  // - Many installs use the `main` agent as the CEO. If so, apply the `clawcontrolceo`
   //   policy below to `main` instead.
   // - Per-agent tool access is enforced via `agents.list[].tools.allow/deny`.
   // - Guard MUST have zero tools. Research MUST have web tools.
@@ -17,13 +17,13 @@
     agentToAgent: {
       enabled: true,
       // Keep tight — only agents that must message other agents.
-      allow: ["savorgceo", "savorgmanager"],
+      allow: ["clawcontrolceo", "clawcontrolmanager"],
     },
   },
   agents: {
     defaults: {
       // Workspace root (must contain agents/, skills/, memory/, etc.)
-      workspace: "/Users/savorgserver/clawd",
+      workspace: "/Users/clawcontrolserver/clawd",
       tools: { profile: "minimal" },
       heartbeat: {
         // Disabled by default; CEO is enabled below.
@@ -39,8 +39,8 @@
     },
     list: [
       {
-        id: "savorgguard",
-        identity: { name: "savorgGuard", emoji: "🛡️", description: "Input security screener" },
+        id: "clawcontrolguard",
+        identity: { name: "clawcontrolGuard", emoji: "🛡️", description: "Input security screener" },
         heartbeat: { every: "0m", prompt: "Read agents/guard/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",
@@ -53,8 +53,8 @@
         }
       },
       {
-        id: "savorgceo",
-        identity: { name: "savorgCEO", emoji: "👑", description: "Strategic interface" },
+        id: "clawcontrolceo",
+        identity: { name: "clawcontrolCEO", emoji: "👑", description: "Strategic interface" },
         heartbeat: { every: "1h", prompt: "Read agents/ceo/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "full",
@@ -64,8 +64,8 @@
         }
       },
       {
-        id: "savorgmanager",
-        identity: { name: "savorgManager", emoji: "🧭", description: "Workflow orchestrator" },
+        id: "clawcontrolmanager",
+        identity: { name: "clawcontrolManager", emoji: "🧭", description: "Workflow orchestrator" },
         heartbeat: { every: "0m", prompt: "Read agents/manager/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",
@@ -75,8 +75,8 @@
         }
       },
       {
-        id: "savorgresearch",
-        identity: { name: "savorgResearch", emoji: "🔎", description: "Deep research" },
+        id: "clawcontrolresearch",
+        identity: { name: "clawcontrolResearch", emoji: "🔎", description: "Deep research" },
         heartbeat: { every: "0m", prompt: "Read agents/research/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",
@@ -87,8 +87,8 @@
         }
       },
       {
-        id: "savorgplan",
-        identity: { name: "savorgPlan", emoji: "🗺️", description: "Implementation planning" },
+        id: "clawcontrolplan",
+        identity: { name: "clawcontrolPlan", emoji: "🗺️", description: "Implementation planning" },
         heartbeat: { every: "0m", prompt: "Read agents/plan/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",
@@ -98,8 +98,8 @@
         }
       },
       {
-        id: "savorgplanreview",
-        identity: { name: "savorgPlanReview", emoji: "🧪", description: "Plan review" },
+        id: "clawcontrolplanreview",
+        identity: { name: "clawcontrolPlanReview", emoji: "🧪", description: "Plan review" },
         heartbeat: { every: "0m", prompt: "Read agents/planreview/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",
@@ -109,8 +109,8 @@
         }
       },
       {
-        id: "savorgbuild",
-        identity: { name: "savorgBuild", emoji: "🛠️", description: "Code implementation" },
+        id: "clawcontrolbuild",
+        identity: { name: "clawcontrolBuild", emoji: "🛠️", description: "Code implementation" },
         heartbeat: { every: "0m", prompt: "Read agents/build/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "coding",
@@ -120,8 +120,8 @@
         }
       },
       {
-        id: "savorgbuildreview",
-        identity: { name: "savorgBuildReview", emoji: "🔍", description: "Code QA" },
+        id: "clawcontrolbuildreview",
+        identity: { name: "clawcontrolBuildReview", emoji: "🔍", description: "Code QA" },
         heartbeat: { every: "0m", prompt: "Read agents/buildreview/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",
@@ -132,8 +132,8 @@
         }
       },
       {
-        id: "savorgui",
-        identity: { name: "savorgUI", emoji: "🎨", description: "Frontend implementation" },
+        id: "clawcontrolui",
+        identity: { name: "clawcontrolUI", emoji: "🎨", description: "Frontend implementation" },
         heartbeat: { every: "0m", prompt: "Read agents/ui/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "coding",
@@ -143,8 +143,8 @@
         }
       },
       {
-        id: "savorguireview",
-        identity: { name: "savorgUIReview", emoji: "✅", description: "UI QA" },
+        id: "clawcontroluireview",
+        identity: { name: "clawcontrolUIReview", emoji: "✅", description: "UI QA" },
         heartbeat: { every: "0m", prompt: "Read agents/uireview/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",
@@ -154,8 +154,8 @@
         }
       },
       {
-        id: "savorgops",
-        identity: { name: "savorgOps", emoji: "⚙️", description: "Operations" },
+        id: "clawcontrolops",
+        identity: { name: "clawcontrolOps", emoji: "⚙️", description: "Operations" },
         heartbeat: { every: "0m", prompt: "Read agents/ops/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "full",
@@ -165,8 +165,8 @@
         }
       },
       {
-        id: "savorgsecurity",
-        identity: { name: "savorgSecurity", emoji: "🔒", description: "Security auditor" },
+        id: "clawcontrolsecurity",
+        identity: { name: "clawcontrolSecurity", emoji: "🔒", description: "Security auditor" },
         heartbeat: { every: "0m", prompt: "Read agents/security/HEARTBEAT.md and follow it strictly. If nothing needs attention, reply HEARTBEAT_OK." },
         tools: {
           profile: "minimal",

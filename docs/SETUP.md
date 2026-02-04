@@ -1,4 +1,4 @@
-# SAVORG Mission Control Setup Guide
+# clawcontrol Setup Guide
 
 This guide covers detailed setup instructions for both demo mode and operational mode.
 
@@ -25,14 +25,14 @@ This guide covers detailed setup instructions for both demo mode and operational
 
 ```bash
 # Clone repository
-git clone https://github.com/salexandr0s/savORG.git
-cd savorg
+git clone https://github.com/salexandr0s/clawcontrol.git
+cd clawcontrol
 
 # Install dependencies
 npm install
 
 # Copy environment file
-cp apps/mission-control/.env.example apps/mission-control/.env
+cp apps/clawcontrol/.env.example apps/clawcontrol/.env
 
 # Initialize database
 npm run db:migrate
@@ -57,7 +57,7 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 source ~/.bashrc  # or ~/.zshrc
 
 # Install and use correct Node version
-cd savorg
+cd clawcontrol
 nvm install
 nvm use
 ```
@@ -72,7 +72,7 @@ npm install
 
 This installs dependencies for:
 - Root workspace
-- `apps/mission-control` (Next.js dashboard)
+- `apps/clawcontrol` (Next.js app)
 - `packages/core` (shared types and mocks)
 - `packages/ui` (shared components)
 - `packages/adapters-openclaw` (CLI adapter)
@@ -81,14 +81,14 @@ This installs dependencies for:
 
 ```bash
 # Copy the example environment file
-cp apps/mission-control/.env.example apps/mission-control/.env
+cp apps/clawcontrol/.env.example apps/clawcontrol/.env
 ```
 
 Edit `.env` if you need to customize:
 
 ```bash
 # Required: Database location
-DATABASE_URL="file:../data/mission-control.db"
+DATABASE_URL="file:../data/clawcontrol.db"
 
 # Optional: Force mock mode
 # USE_MOCK_DATA="true"
@@ -101,7 +101,7 @@ DATABASE_URL="file:../data/mission-control.db"
 npm run db:migrate
 ```
 
-This creates the SQLite database at `data/mission-control.db` with:
+This creates the SQLite database at `apps/clawcontrol/data/clawcontrol.db` with:
 - Work orders table
 - Agents table
 - Activities table (audit log)
@@ -149,7 +149,7 @@ openclaw --version
 
 ### 3. Configure Workspace
 
-Mission Control expects OpenClaw workspace structure at your current directory:
+clawcontrol expects OpenClaw workspace structure at your current directory:
 
 ```
 your-project/
@@ -166,14 +166,14 @@ your-project/
     └── *.md
 ```
 
-### 4. Start Mission Control
+### 4. Start clawcontrol
 
 ```bash
 cd your-project
-npm run dev --prefix /path/to/savorg/apps/mission-control
+npm run dev --prefix /path/to/clawcontrol/apps/clawcontrol
 ```
 
-Or symlink the Mission Control into your project for convenience.
+Or symlink clawcontrol into your project for convenience.
 
 ---
 
@@ -198,7 +198,7 @@ npm run db:reset
 ### Create New Migration
 
 ```bash
-cd apps/mission-control
+cd apps/clawcontrol
 npx prisma migrate dev --name your_migration_name
 ```
 
@@ -244,7 +244,7 @@ SQLite uses file-level locking. Ensure only one process accesses the database:
 
 ### OpenClaw Not Detected
 
-Mission Control checks `which openclaw` on startup. Ensure:
+clawcontrol checks `which openclaw` on startup. Ensure:
 
 1. OpenClaw is installed
 2. OpenClaw binary is on your PATH

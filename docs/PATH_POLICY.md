@@ -1,12 +1,12 @@
 # Workspace Path Policy
 
-This document describes the path safety rules enforced by SAVORG Mission Control when accessing workspace files.
+This document describes the path safety rules enforced by clawcontrol when accessing workspace files.
 
 ---
 
 ## Overview
 
-Mission Control provides a workspace file browser for managing agent files (souls, overlays, skills, etc.). To prevent path traversal attacks, all file operations are validated against a strict policy.
+clawcontrol provides a workspace file browser for managing agent files (souls, overlays, skills, etc.). To prevent path traversal attacks, all file operations are validated against a strict policy.
 
 ---
 
@@ -17,10 +17,10 @@ Mission Control provides a workspace file browser for managing agent files (soul
 All paths must start with `/` (the workspace root):
 
 ```
-✅ /agents/savorgBUILD.soul.md
+✅ /agents/clawcontrolBUILD.soul.md
 ✅ /skills/user/coding.md
-❌ agents/savorgBUILD.soul.md     (relative)
-❌ ./agents/savorgBUILD.soul.md   (relative)
+❌ agents/clawcontrolBUILD.soul.md     (relative)
+❌ ./agents/clawcontrolBUILD.soul.md   (relative)
 ```
 
 ### Rule 2: No Parent Directory Traversal
@@ -28,7 +28,7 @@ All paths must start with `/` (the workspace root):
 Paths cannot contain `..` sequences:
 
 ```
-✅ /agents/savorgBUILD.soul.md
+✅ /agents/clawcontrolBUILD.soul.md
 ❌ /agents/../../../etc/passwd
 ❌ /agents/../../secrets.txt
 ```
@@ -59,17 +59,17 @@ Files must be in approved directories:
 
 | Directory | Purpose | Examples |
 |-----------|---------|----------|
-| `/agents` | Agent souls and overlays | `savorgBUILD.soul.md`, `savorgQA.md` |
+| `/agents` | Agent souls and overlays | `clawcontrolBUILD.soul.md`, `clawcontrolQA.md` |
 | `/overlays` | Shared overlay files | `coding-standards.md` |
 | `/skills` | Skill definitions | `user/debugging.md` |
 | `/playbooks` | Automation playbooks | `deploy-staging.md` |
 | `/plugins` | Plugin manifests | `github-integration.json` |
-| `/agent-templates` | Template definitions | `savorg-build/template.json` |
+| `/agent-templates` | Template definitions | `clawcontrol-build/template.json` |
 
 Accessing other directories is rejected:
 
 ```
-✅ /agents/savorgBUILD.soul.md
+✅ /agents/clawcontrolBUILD.soul.md
 ✅ /skills/user/coding.md
 ❌ /etc/passwd
 ❌ /home/user/.ssh/id_rsa
@@ -83,7 +83,7 @@ Accessing other directories is rejected:
 ### Validation Function
 
 ```typescript
-// apps/mission-control/lib/workspace.ts
+// apps/clawcontrol/lib/workspace.ts
 
 const ALLOWED_SUBDIRS = ['agents', 'overlays', 'skills', 'playbooks', 'plugins', 'agent-templates'] as const
 
@@ -139,7 +139,7 @@ export async function PUT(request: NextRequest) {
 |------|-------|--------|
 | `/` | ✅ | Workspace root |
 | `/agents` | ✅ | Allowed directory |
-| `/agents/savorgBUILD.soul.md` | ✅ | File in allowed dir |
+| `/agents/clawcontrolBUILD.soul.md` | ✅ | File in allowed dir |
 | `/skills/user/coding.md` | ✅ | Nested in allowed dir |
 | `/plugins/my-plugin.json` | ✅ | File in allowed dir |
 | `/agent-templates/my-template/template.json` | ✅ | Template file |
@@ -182,7 +182,7 @@ For production filesystem implementations (vs. current mock):
 
 To add a new allowed directory:
 
-1. Edit `ALLOWED_SUBDIRS` in `apps/mission-control/lib/workspace.ts`:
+1. Edit `ALLOWED_SUBDIRS` in `apps/clawcontrol/lib/workspace.ts`:
 
 ```typescript
 const ALLOWED_SUBDIRS = [
