@@ -20,7 +20,7 @@ export function MobileNav() {
         className="p-2 -ml-2 text-fg-1 hover:text-fg-0 hover:bg-bg-3 rounded-[var(--radius-md)] transition-colors md:hidden"
         aria-label="Open navigation"
       >
-        <Menu className="w-5 h-5" />
+        <Menu className="w-icon-lg h-icon-lg" />
       </button>
 
       {/* Backdrop */}
@@ -48,7 +48,7 @@ export function MobileNav() {
             className="p-1.5 text-fg-2 hover:text-fg-0 hover:bg-bg-3 rounded-[var(--radius-md)] transition-colors"
             aria-label="Close navigation"
           >
-            <X className="w-4 h-4" />
+            <X className="w-icon-md h-icon-md" />
           </button>
         </div>
 
@@ -73,7 +73,7 @@ export function MobileNav() {
                   {isActive && (
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-status-info rounded-r" />
                   )}
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon className="w-icon-md h-icon-md shrink-0" />
                   <span className="text-sm font-medium">{item.label}</span>
                 </Link>
               )
@@ -93,7 +93,7 @@ export function MobileNav() {
                 : 'text-fg-1 hover:text-fg-0 hover:bg-bg-2'
             )}
           >
-            <Settings className="w-4 h-4 shrink-0" />
+            <Settings className="w-icon-md h-icon-md shrink-0" />
             <span className="text-sm font-medium">Settings</span>
           </Link>
         </div>

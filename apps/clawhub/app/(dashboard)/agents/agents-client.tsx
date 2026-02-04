@@ -409,7 +409,7 @@ export function AgentsClient() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
+        <Loader2 className="w-icon-xl h-icon-xl animate-spin text-fg-2" />
       </div>
     )
   }
@@ -444,7 +444,7 @@ export function AgentsClient() {
                   )}
                   title="Card view"
                 >
-                  <LayoutGrid className="w-4 h-4" />
+                  <LayoutGrid className="w-icon-md h-icon-md" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
@@ -456,22 +456,22 @@ export function AgentsClient() {
                   )}
                   title="List view"
                 >
-                  <List className="w-4 h-4" />
+                  <List className="w-icon-md h-icon-md" />
                 </button>
               </div>
 
               <button
                 onClick={() => setShowTemplateWizard(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] border border-bd-0 text-fg-1 hover:bg-bg-3 transition-colors"
+                className="btn-secondary flex items-center gap-1.5"
               >
-                <LayoutTemplate className="w-3.5 h-3.5" />
+                <LayoutTemplate className="w-icon-sm h-icon-sm" />
                 From Template
               </button>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-status-progress text-white hover:bg-status-progress/90 transition-colors"
+                className="btn-primary flex items-center gap-1.5"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-icon-sm h-icon-sm" />
                 Create Agent
               </button>
             </div>
@@ -490,9 +490,9 @@ export function AgentsClient() {
           >
             <div className="flex items-center gap-2">
               {createResult.success ? (
-                <Check className="w-4 h-4" />
+                <Check className="w-icon-md h-icon-md" />
               ) : (
-                <X className="w-4 h-4" />
+                <X className="w-icon-md h-icon-md" />
               )}
               <span className="text-sm">{createResult.message}</span>
             </div>
@@ -500,7 +500,7 @@ export function AgentsClient() {
               onClick={() => setCreateResult(null)}
               className="p-1 hover:bg-bg-3/50 rounded"
             >
-              <X className="w-4 h-4" />
+              <X className="w-icon-md h-icon-md" />
             </button>
           </div>
         )}
@@ -661,7 +661,7 @@ function CreateAgentModal({
             onClick={onClose}
             className="p-2 hover:bg-bg-3 rounded-[var(--radius-md)] text-fg-2"
           >
-            <X className="w-5 h-5" />
+            <X className="w-icon-lg h-icon-lg" />
           </button>
         </div>
 
@@ -755,14 +755,14 @@ function CreateAgentModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-fg-1 bg-bg-3 rounded-[var(--radius-md)] hover:bg-bg-3/80 transition-colors"
+              className="btn-secondary"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!role || !purpose}
-              className="px-4 py-2 text-sm font-medium text-white bg-status-progress rounded-[var(--radius-md)] hover:bg-status-progress/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary"
             >
               Create Agent
             </button>
@@ -913,7 +913,7 @@ function CreateFromTemplateWizard({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-bd-0 shrink-0">
           <div className="flex items-center gap-3">
-            <LayoutTemplate className="w-5 h-5 text-status-progress" />
+            <LayoutTemplate className="w-icon-lg h-icon-lg text-status-progress" />
             <div>
               <h2 className="text-lg font-semibold text-fg-0">Create Agent from Template</h2>
               <p className="text-sm text-fg-2">
@@ -925,7 +925,7 @@ function CreateFromTemplateWizard({
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-bg-3 rounded-[var(--radius-md)] text-fg-2">
-            <X className="w-5 h-5" />
+            <X className="w-icon-lg h-icon-lg" />
           </button>
         </div>
 
@@ -933,7 +933,7 @@ function CreateFromTemplateWizard({
         <div className="flex items-center gap-2 px-6 py-3 border-b border-bd-0 shrink-0">
           {(['select', 'params', 'preview'] as WizardStep[]).map((s, idx) => (
             <div key={s} className="flex items-center">
-              {idx > 0 && <ChevronRight className="w-4 h-4 text-fg-3 mx-1" />}
+              {idx > 0 && <ChevronRight className="w-icon-md h-icon-md text-fg-3 mx-1" />}
               <span
                 className={cn(
                   'px-3 py-1 text-xs font-medium rounded-full',
@@ -958,7 +958,7 @@ function CreateFromTemplateWizard({
 
           {loading && (
             <div className="flex items-center justify-center h-40">
-              <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
+              <Loader2 className="w-icon-xl h-icon-xl animate-spin text-fg-2" />
             </div>
           )}
 
@@ -1053,7 +1053,7 @@ function CreateFromTemplateWizard({
                   className="p-4 bg-bg-2 rounded-[var(--radius-md)] border border-bd-0"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <FileCode className="w-4 h-4 text-fg-2" />
+                    <FileCode className="w-icon-md h-icon-md text-fg-2" />
                     <span className="text-sm font-mono text-fg-1">{file.destination}</span>
                   </div>
                   <p className="text-xs text-fg-2">Source: {file.source}</p>
@@ -1071,7 +1071,7 @@ function CreateFromTemplateWizard({
                 onClick={() => setStep(step === 'preview' ? 'params' : 'select')}
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-fg-1 hover:bg-bg-3 rounded-[var(--radius-md)] transition-colors"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-icon-md h-icon-md" />
                 Back
               </button>
             )}
@@ -1089,7 +1089,7 @@ function CreateFromTemplateWizard({
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-status-progress rounded-[var(--radius-md)] hover:bg-status-progress/90 transition-colors"
               >
                 Preview
-                <Eye className="w-4 h-4" />
+                <Eye className="w-icon-md h-icon-md" />
               </button>
             )}
             {step === 'preview' && (
@@ -1098,7 +1098,7 @@ function CreateFromTemplateWizard({
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-status-progress rounded-[var(--radius-md)] hover:bg-status-progress/90 transition-colors"
               >
                 Create Agent
-                <Check className="w-4 h-4" />
+                <Check className="w-icon-md h-icon-md" />
               </button>
             )}
           </div>
@@ -1217,14 +1217,14 @@ function AgentDetail({
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-bg-3 text-fg-1 hover:bg-bg-3/80 transition-colors"
             >
-              <Upload className="w-3.5 h-3.5" />
+              <Upload className="w-icon-sm h-icon-sm" />
               Upload
             </button>
             <button
               onClick={onAvatarReset}
               className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-bg-3 text-fg-2 hover:text-fg-1 transition-colors"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-icon-sm h-icon-sm" />
               Reset
             </button>
           </div>
@@ -1246,14 +1246,14 @@ function AgentDetail({
             onClick={onProvision}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-status-warning/10 text-status-warning border border-status-warning/30 hover:bg-status-warning/20 transition-colors"
           >
-            <Zap className="w-3.5 h-3.5" />
+            <Zap className="w-icon-sm h-icon-sm" />
             Provision
           </button>
           <button
             onClick={onTest}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-status-progress/10 text-status-progress border border-status-progress/30 hover:bg-status-progress/20 transition-colors"
           >
-            <MessageSquare className="w-3.5 h-3.5" />
+            <MessageSquare className="w-icon-sm h-icon-sm" />
             Test
           </button>
         </div>
@@ -1268,7 +1268,7 @@ function AgentDetail({
               onClick={() => onEditFile(fileName)}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-[var(--radius-md)] bg-bg-3 text-fg-1 hover:bg-bg-3/80 border border-bd-0 transition-colors"
             >
-              <FileText className="w-3.5 h-3.5 text-fg-2" />
+              <FileText className="w-icon-sm h-icon-sm text-fg-2" />
               {fileName}
             </button>
           ))}
@@ -1280,7 +1280,7 @@ function AgentDetail({
         <div className="space-y-2">
           {loadingSkills ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-4 h-4 animate-spin text-fg-2" />
+              <Loader2 className="w-icon-md h-icon-md animate-spin text-fg-2" />
             </div>
           ) : agentSkills.length === 0 ? (
             <p className="text-xs text-fg-3">No skills assigned to this agent</p>
@@ -1300,7 +1300,7 @@ function AgentDetail({
             onClick={() => setShowSkillSelector(true)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-bg-3 text-fg-1 hover:bg-bg-3/80 transition-colors"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-icon-sm h-icon-sm" />
             Add Skills from Global
           </button>
         </div>
@@ -1397,7 +1397,7 @@ function AgentDetail({
                   <ModelBadge modelId={editModel} size="sm" />
                   <span>{AVAILABLE_MODELS.find((m) => m.id === editModel)?.name || 'Unknown'}</span>
                 </div>
-                <ChevronDown className={cn('w-4 h-4 text-fg-2 transition-transform', showModelSelector && 'rotate-180')} />
+                <ChevronDown className={cn('w-icon-md h-icon-md text-fg-2 transition-transform', showModelSelector && 'rotate-180')} />
               </button>
               {showModelSelector && (
                 <div className="absolute z-10 mt-1 w-full bg-bg-1 border border-bd-0 rounded-[var(--radius-md)] shadow-lg overflow-hidden">

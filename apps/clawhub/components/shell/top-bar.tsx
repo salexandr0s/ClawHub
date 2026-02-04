@@ -77,7 +77,7 @@ export function TopBar({
             'text-fg-2 hover:text-fg-1'
           )}
         >
-          <Search className="w-3.5 h-3.5" />
+          <Search className="w-icon-sm h-icon-sm" />
           <span className="text-xs hidden sm:inline">Search</span>
           <span className="hidden lg:flex items-center gap-0.5 ml-2">
             <Kbd>

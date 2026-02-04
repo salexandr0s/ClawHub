@@ -354,7 +354,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
 
         {(showCliTooOld || showCliUnknown) && (
           <div className="p-3 rounded-md border flex items-start gap-2 bg-status-warning/10 border-status-warning/30">
-            <AlertTriangle className="w-4 h-4 text-status-warning shrink-0 mt-0.5" />
+            <AlertTriangle className="w-icon-md h-icon-md text-status-warning shrink-0 mt-0.5" />
             <div className="text-sm text-status-warning">
               {showCliTooOld ? (
                 <>OpenClaw version too old: {cliVersionLabel} (min: {cliStatus?.minVersion}). Some commands may fail.</>
@@ -375,9 +375,9 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
           )}>
             <div className="flex items-center gap-2">
               {lastResult.success ? (
-                <CheckCircle className="w-4 h-4 text-status-success shrink-0" />
+                <CheckCircle className="w-icon-md h-icon-md text-status-success shrink-0" />
               ) : (
-                <XCircle className="w-4 h-4 text-status-danger shrink-0" />
+                <XCircle className="w-icon-md h-icon-md text-status-danger shrink-0" />
               )}
               <span className={cn(
                 'text-sm',
@@ -413,9 +413,9 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
                 className="btn-secondary flex items-center gap-1.5 text-xs"
               >
                 {runningAction === 'health' ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <Loader2 className="w-icon-xs h-icon-xs animate-spin" />
                 ) : (
-                  <RefreshCw className="w-3 h-3" />
+                  <RefreshCw className="w-icon-xs h-icon-xs" />
                 )}
                 Refresh
               </button>
@@ -447,7 +447,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
 
           {/* Connections */}
           <div className="pt-4 border-t border-bd-0">
-            <h3 className="text-xs font-medium text-fg-2 mb-3">Connections</h3>
+            <h3 className="terminal-header mb-3">Connections</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <ConnectionCard
                 label="OpenClaw"
@@ -510,7 +510,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
           <div className="p-4 bg-bg-3 rounded-[var(--radius-lg)] border border-bd-0">
             <div className="flex items-start gap-4">
               <div className="p-2 bg-status-warning/10 rounded-lg">
-                <Wrench className="w-6 h-6 text-status-warning" />
+                <Wrench className="w-icon-xl h-icon-xl text-status-warning" />
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-fg-0">Recover Gateway</h3>
@@ -530,9 +530,9 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
                 className="btn-primary flex items-center gap-1.5"
               >
                 {runningAction === 'recover' ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-icon-sm h-icon-sm animate-spin" />
                 ) : (
-                  <Wrench className="w-3.5 h-3.5" />
+                  <Wrench className="w-icon-sm h-icon-sm" />
                 )}
                 Run Recovery
               </button>
@@ -573,7 +573,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
+            <Loader2 className="w-icon-xl h-icon-xl animate-spin text-fg-2" />
           </div>
         ) : selectedPlaybook ? (
           <YamlEditor
@@ -617,7 +617,7 @@ function StatusCard({
   return (
     <div className="p-3 bg-bg-3 rounded-[var(--radius-md)] border border-bd-0">
       <div className="flex items-center gap-2 mb-1">
-        <Icon className="w-3.5 h-3.5 text-fg-2" />
+        <Icon className="w-icon-sm h-icon-sm text-fg-2" />
         <span className="text-xs text-fg-2">{label}</span>
       </div>
       <span className="font-mono text-sm text-fg-0">{value}</span>
@@ -637,7 +637,7 @@ function ConnectionCard({
   return (
     <div className="flex items-center justify-between p-3 bg-bg-3 rounded-[var(--radius-md)] border border-bd-0">
       <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 text-fg-2" />
+        <Icon className="w-icon-md h-icon-md text-fg-2" />
         <span className="text-sm text-fg-1">{label}</span>
       </div>
       <span className={cn(
@@ -681,10 +681,10 @@ function LiveActionCard({
       )}
     >
       {isRunning ? (
-        <Loader2 className="w-5 h-5 text-accent-primary shrink-0 mt-0.5 animate-spin" />
+        <Loader2 className="w-icon-lg h-icon-lg text-accent-primary shrink-0 mt-0.5 animate-spin" />
       ) : (
         <Icon className={cn(
-          'w-5 h-5 shrink-0 mt-0.5',
+          'w-icon-lg h-icon-lg shrink-0 mt-0.5',
           danger ? 'text-status-danger' : 'text-fg-2'
         )} />
       )}
@@ -729,7 +729,7 @@ function PlaybookCard({
     <div className="flex items-center justify-between p-3 bg-bg-3 rounded-[var(--radius-md)] border border-bd-0">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <FileCode className="w-4 h-4 text-fg-2 shrink-0" />
+          <FileCode className="w-icon-md h-icon-md text-fg-2 shrink-0" />
           <span className="font-mono text-sm text-fg-0">{name}</span>
           <span className={cn(
             'px-1.5 py-0.5 text-xs rounded',
@@ -747,7 +747,7 @@ function PlaybookCard({
           className="p-1.5 hover:bg-bg-2 rounded-[var(--radius-sm)] transition-colors"
           title="Edit playbook"
         >
-          <Edit3 className="w-3.5 h-3.5 text-fg-2" />
+          <Edit3 className="w-icon-sm h-icon-sm text-fg-2" />
         </button>
         <button
           onClick={onRun}
@@ -762,9 +762,9 @@ function PlaybookCard({
           title="Run playbook"
         >
           {isRunning ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="w-icon-xs h-icon-xs animate-spin" />
           ) : (
-            <Play className="w-3 h-3" />
+            <Play className="w-icon-xs h-icon-xs" />
           )}
           Run
         </button>

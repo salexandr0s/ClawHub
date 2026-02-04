@@ -89,7 +89,7 @@ export function AgentCard({
 
       {/* Last Seen */}
       <div className="flex items-center gap-1.5 text-xs text-fg-3 mb-3">
-        <Clock className="w-3 h-3" />
+        <Clock className="w-icon-xs h-icon-xs" />
         <span>Last seen {formatRelativeTime(agent.lastSeenAt)}</span>
       </div>
 
@@ -113,9 +113,9 @@ export function AgentCard({
             e.stopPropagation()
             onProvision?.()
           }}
-          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium bg-status-warning/10 hover:bg-status-warning/20 text-status-warning rounded-[var(--radius-md)] transition-colors"
+          className="btn-warning flex-1 flex items-center justify-center gap-1.5"
         >
-          <Zap className="w-3.5 h-3.5" />
+          <Zap className="w-icon-sm h-icon-sm" />
           Provision
         </button>
         <button
@@ -123,9 +123,9 @@ export function AgentCard({
             e.stopPropagation()
             onTest?.()
           }}
-          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium bg-status-progress/10 hover:bg-status-progress/20 text-status-progress rounded-[var(--radius-md)] transition-colors"
+          className="btn-primary flex-1 flex items-center justify-center gap-1.5"
         >
-          <MessageSquare className="w-3.5 h-3.5" />
+          <MessageSquare className="w-icon-sm h-icon-sm" />
           Test
         </button>
       </div>

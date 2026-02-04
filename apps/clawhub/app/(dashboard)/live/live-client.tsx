@@ -81,7 +81,7 @@ export function LiveClient() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
+        <Loader2 className="w-icon-xl h-icon-xl animate-spin text-fg-2" />
       </div>
     )
   }
@@ -89,7 +89,7 @@ export function LiveClient() {
   if (error) {
     return (
       <EmptyState
-        icon={<ActivityIcon className="w-8 h-8" />}
+        icon={<ActivityIcon className="w-icon-xl h-icon-xl" />}
         title="Error loading activities"
         description={error}
       />
@@ -125,7 +125,7 @@ export function LiveClient() {
                     : 'text-fg-2 hover:text-fg-1'
                 )}
               >
-                <List className="w-3.5 h-3.5" />
+                <List className="w-icon-sm h-icon-sm" />
                 Timeline
               </button>
               <button
@@ -137,7 +137,7 @@ export function LiveClient() {
                     : 'text-fg-2 hover:text-fg-1'
                 )}
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
+                <LayoutGrid className="w-icon-sm h-icon-sm" />
                 Visualizer
               </button>
             </div>
@@ -170,9 +170,9 @@ export function LiveClient() {
                   )}
                 >
                   {tailMode ? (
-                    <Pause className="w-3.5 h-3.5" />
+                    <Pause className="w-icon-sm h-icon-sm" />
                   ) : (
-                    <Play className="w-3.5 h-3.5" />
+                    <Play className="w-icon-sm h-icon-sm" />
                   )}
                   Tail
                 </button>
@@ -205,7 +205,7 @@ export function LiveClient() {
               </div>
             ) : (
               <EmptyState
-                icon={<ActivityIcon className="w-8 h-8" />}
+                icon={<ActivityIcon className="w-icon-xl h-icon-xl" />}
                 title="No activity"
                 description="Events will appear here as they happen"
               />
@@ -240,19 +240,19 @@ function ConnectionStatus({
     >
       {state === 'connected' && (
         <>
-          <Wifi className="w-3.5 h-3.5 text-status-success" />
+          <Wifi className="w-icon-sm h-icon-sm text-status-success" />
           <span className="text-xs text-status-success">Connected — streaming live updates</span>
         </>
       )}
       {state === 'connecting' && (
         <>
-          <Loader2 className="w-3.5 h-3.5 text-status-warning animate-spin" />
+          <Loader2 className="w-icon-sm h-icon-sm text-status-warning animate-spin" />
           <span className="text-xs text-status-warning">Connecting...</span>
         </>
       )}
       {state === 'disconnected' && (
         <>
-          <WifiOff className="w-3.5 h-3.5 text-fg-3" />
+          <WifiOff className="w-icon-sm h-icon-sm text-fg-3" />
           <span className="text-xs text-fg-2">Disconnected</span>
           <button
             onClick={onReconnect}
@@ -264,7 +264,7 @@ function ConnectionStatus({
       )}
       {state === 'error' && (
         <>
-          <AlertCircle className="w-3.5 h-3.5 text-status-danger" />
+          <AlertCircle className="w-icon-sm h-icon-sm text-status-danger" />
           <span className="text-xs text-status-danger">Connection error</span>
           <button
             onClick={onReconnect}
@@ -311,7 +311,7 @@ function ActivityRow({
           typeKey === 'receipt' && 'bg-status-info/10 text-status-info'
         )}
       >
-        <Icon className="w-3.5 h-3.5" />
+        <Icon className="w-icon-sm h-icon-sm" />
       </div>
 
       {/* Content */}

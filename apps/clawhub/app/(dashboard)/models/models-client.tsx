@@ -119,13 +119,9 @@ export function ModelsClient() {
           <button
             onClick={() => fetchData(true)}
             disabled={isRefreshing}
-            className={cn(
-              'flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-sm)] text-sm font-medium transition-colors',
-              'bg-bg-3 text-fg-0 hover:bg-bg-2',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
+            className="btn-secondary flex items-center gap-2"
           >
-            <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
+            <RefreshCw className={cn('w-icon-md h-icon-md', isRefreshing && 'animate-spin')} />
             Refresh
           </button>
         }
@@ -134,7 +130,7 @@ export function ModelsClient() {
       {/* Error Banner */}
       {error && (
         <div className="p-3 rounded-md flex items-center gap-2 bg-status-danger/10">
-          <XCircle className="w-4 h-4 text-status-danger shrink-0" />
+          <XCircle className="w-icon-md h-icon-md text-status-danger shrink-0" />
           <span className="text-sm text-status-danger">{error}</span>
         </div>
       )}
@@ -142,7 +138,7 @@ export function ModelsClient() {
       {/* Loading State */}
       {isLoading && (
         <div className="p-8 text-center bg-bg-2 rounded-[var(--radius-lg)]">
-          <Loader2 className="w-12 h-12 mx-auto mb-4 text-status-info animate-spin" />
+          <Loader2 className="w-icon-xl h-icon-xl mx-auto mb-4 text-status-info animate-spin" />
           <h3 className="text-lg font-medium text-fg-0 mb-2">Loading Models...</h3>
           <p className="text-sm text-fg-2">Fetching model configuration and auth status</p>
         </div>
@@ -183,7 +179,7 @@ export function ModelsClient() {
               ))}
               {status.auth.missingProvidersInUse.length > 0 && (
                 <div className="p-3 rounded-[var(--radius-md)] bg-status-warning/10 flex items-center gap-3">
-                  <AlertTriangle className="w-5 h-5 text-status-warning shrink-0" />
+                  <AlertTriangle className="w-icon-lg h-icon-lg text-status-warning shrink-0" />
                   <div>
                     <div className="text-sm font-medium text-status-warning">Missing Providers</div>
                     <div className="text-xs text-fg-2">
@@ -210,9 +206,9 @@ export function ModelsClient() {
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-bg-2 transition-colors"
                     >
                       {isExpanded ? (
-                        <ChevronDown className="w-4 h-4 text-fg-3" />
+                        <ChevronDown className="w-icon-md h-icon-md text-fg-3" />
                       ) : (
-                        <ChevronRight className="w-4 h-4 text-fg-3" />
+                        <ChevronRight className="w-icon-md h-icon-md text-fg-3" />
                       )}
                       <span className="font-medium text-fg-0">{provider}</span>
                       <span className="text-xs text-fg-3">
@@ -237,7 +233,7 @@ export function ModelsClient() {
 
               {Object.keys(modelsByProvider).length === 0 && (
                 <div className="p-6 text-center text-fg-2">
-                  <Cpu className="w-12 h-12 mx-auto mb-2 text-fg-3" />
+                  <Cpu className="w-icon-xl h-icon-xl mx-auto mb-2 text-fg-3" />
                   <p>No models configured</p>
                 </div>
               )}
@@ -307,7 +303,7 @@ function ProviderAuthCard({ providerAuth }: { providerAuth: ProviderAuth }) {
       'px-4 py-3 rounded-[var(--radius-md)] flex items-center gap-4',
       statusColors[status]
     )}>
-      <StatusIcon className={cn('w-5 h-5 shrink-0', statusIconColors[status])} />
+      <StatusIcon className={cn('w-icon-lg h-icon-lg shrink-0', statusIconColors[status])} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-fg-0">{provider}</span>
@@ -389,11 +385,11 @@ function ModelRow({ model, isLast }: { model: ModelListItem; isLast: boolean }) 
       {/* Status indicator */}
       <div className="shrink-0">
         {model.available ? (
-          <CheckCircle className="w-4 h-4 text-status-success" />
+          <CheckCircle className="w-icon-md h-icon-md text-status-success" />
         ) : model.missing ? (
-          <XCircle className="w-4 h-4 text-status-danger" />
+          <XCircle className="w-icon-md h-icon-md text-status-danger" />
         ) : (
-          <AlertTriangle className="w-4 h-4 text-status-warning" />
+          <AlertTriangle className="w-icon-md h-icon-md text-status-warning" />
         )}
       </div>
 

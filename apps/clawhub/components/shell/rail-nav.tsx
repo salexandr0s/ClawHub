@@ -105,10 +105,7 @@ export function RailNav({ collapsed, onToggle }: RailNavProps) {
                 {!collapsed && isActive && (
                   <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-status-info rounded-r" />
                 )}
-                <Icon className={cn(
-                  "shrink-0",
-                  collapsed ? "w-[18px] h-[18px]" : "w-4 h-4"
-                )} />
+                <Icon className="w-icon-md h-icon-md shrink-0" />
                 {!collapsed && (
                   <span className="text-[13px] truncate">{item.label}</span>
                 )}
@@ -133,10 +130,7 @@ export function RailNav({ collapsed, onToggle }: RailNavProps) {
               : 'text-fg-1 hover:bg-bg-3/50 hover:text-fg-0'
           )}
         >
-          <Settings className={cn(
-            "shrink-0",
-            collapsed ? "w-[18px] h-[18px]" : "w-4 h-4"
-          )} />
+          <Settings className="w-icon-md h-icon-md shrink-0" />
           {!collapsed && <span className="text-[13px]">Settings</span>}
         </Link>
 
@@ -148,10 +142,10 @@ export function RailNav({ collapsed, onToggle }: RailNavProps) {
           )}
         >
           {collapsed ? (
-            <ChevronRight className="w-[18px] h-[18px]" />
+            <ChevronRight className="w-icon-md h-icon-md" />
           ) : (
             <>
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-icon-md h-icon-md" />
               <span className="text-xs">Collapse</span>
             </>
           )}

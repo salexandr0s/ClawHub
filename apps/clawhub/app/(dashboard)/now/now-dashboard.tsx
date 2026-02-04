@@ -132,7 +132,7 @@ const approvalColumns: Column<PendingApproval>[] = [
     render: (row) => {
       const Icon = row.type === 'ship_gate' ? CheckCircle : row.type === 'risky_action' ? AlertTriangle : FileText
       const colorClass = row.type === 'ship_gate' ? 'text-status-success' : row.type === 'risky_action' ? 'text-status-warning' : 'text-fg-2'
-      return <Icon className={cn("w-3.5 h-3.5", colorClass)} />
+      return <Icon className={cn("w-icon-sm h-icon-sm", colorClass)} />
     },
   },
   {
@@ -290,11 +290,11 @@ function StatCard({
 
   return (
     <div className="bg-bg-2 rounded-[var(--radius-md)] border border-bd-0 p-3 flex flex-col items-center justify-center text-center h-[72px]">
-      <Icon className={cn('w-[18px] h-[18px] mb-1.5', statusColors[status])} />
+      <Icon className={cn('w-icon-md h-icon-md mb-1.5', statusColors[status])} />
       <div className={cn('font-mono text-sm font-semibold leading-none', statusColors[status])}>
         {value}
       </div>
-      <div className="text-[11px] text-fg-2 mt-1 uppercase tracking-wide">{label}</div>
+      <div className="terminal-header mt-1">{label}</div>
     </div>
   )
 }
@@ -352,7 +352,7 @@ function ActivityRow({ event }: { event: ActivityEvent }) {
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 hover:bg-bg-3/50 transition-colors">
-      <Icon className="w-3.5 h-3.5 text-fg-2 shrink-0" />
+      <Icon className="w-icon-sm h-icon-sm text-fg-2 shrink-0" />
       <span className="flex-1 text-[13px] text-fg-1 truncate">{event.message}</span>
       {event.agent && (
         <span className="font-mono text-xs text-status-progress">{event.agent}</span>

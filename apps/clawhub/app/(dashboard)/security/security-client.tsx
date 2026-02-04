@@ -171,7 +171,7 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
         {/* Error Banner */}
         {error && (
           <div className="p-3 rounded-md border flex items-center gap-2 bg-status-danger/10 border-status-danger/30">
-            <XCircle className="w-4 h-4 text-status-danger shrink-0" />
+            <XCircle className="w-icon-md h-icon-md text-status-danger shrink-0" />
             <span className="text-sm text-status-danger">{error}</span>
           </div>
         )}
@@ -181,16 +181,12 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
           <button
             onClick={() => runAudit('basic')}
             disabled={isRunning}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] font-medium transition-colors',
-              'bg-status-info text-white hover:bg-status-info/90',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
+            className="btn-primary flex items-center gap-2"
           >
             {isRunning && auditType === 'basic' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-icon-md h-icon-md animate-spin" />
             ) : (
-              <Play className="w-4 h-4" />
+              <Play className="w-icon-md h-icon-md" />
             )}
             Run Audit
           </button>
@@ -198,16 +194,12 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
           <button
             onClick={() => runAudit('deep')}
             disabled={isRunning}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] font-medium transition-colors',
-              'bg-bg-3 text-fg-0 hover:bg-bg-2',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
+            className="btn-secondary flex items-center gap-2"
           >
             {isRunning && auditType === 'deep' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-icon-md h-icon-md animate-spin" />
             ) : (
-              <Zap className="w-4 h-4" />
+              <Zap className="w-icon-md h-icon-md" />
             )}
             Deep Audit
           </button>
@@ -216,16 +208,12 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
             onClick={() => runAudit('fix')}
             disabled={isRunning || !report}
             title={!report ? 'Run an audit first to see what needs fixing' : undefined}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-[var(--radius-md)] font-medium transition-colors',
-              'bg-status-warning/10 text-status-warning hover:bg-status-warning/20',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
+            className="btn-warning flex items-center gap-2"
           >
             {isRunning && auditType === 'fix' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-icon-md h-icon-md animate-spin" />
             ) : (
-              <Wrench className="w-4 h-4" />
+              <Wrench className="w-icon-md h-icon-md" />
             )}
             Apply Fixes
           </button>
@@ -372,15 +360,15 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
             </p>
             <div className="flex flex-col gap-2 text-sm text-fg-2 max-w-sm mx-auto text-left">
               <div className="flex items-start gap-2">
-                <Play className="w-4 h-4 mt-0.5 text-accent-primary shrink-0" />
+                <Play className="w-icon-md h-icon-md mt-0.5 text-accent-primary shrink-0" />
                 <span><strong>Run Audit</strong> - Basic security check</span>
               </div>
               <div className="flex items-start gap-2">
-                <Zap className="w-4 h-4 mt-0.5 text-fg-2 shrink-0" />
+                <Zap className="w-icon-md h-icon-md mt-0.5 text-fg-2 shrink-0" />
                 <span><strong>Deep Audit</strong> - Includes live Gateway probe</span>
               </div>
               <div className="flex items-start gap-2">
-                <Wrench className="w-4 h-4 mt-0.5 text-status-warning shrink-0" />
+                <Wrench className="w-icon-md h-icon-md mt-0.5 text-status-warning shrink-0" />
                 <span><strong>Apply Fixes</strong> - Auto-fix file permissions</span>
               </div>
             </div>
@@ -490,11 +478,11 @@ function FindingsGroup({
         className="w-full flex items-center gap-2 p-3 hover:bg-bg-2 transition-colors"
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 text-fg-2" />
+          <ChevronDown className="w-icon-md h-icon-md text-fg-2" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-fg-2" />
+          <ChevronRight className="w-icon-md h-icon-md text-fg-2" />
         )}
-        <Icon className={cn('w-4 h-4', colors[severity])} />
+        <Icon className={cn('w-icon-md h-icon-md', colors[severity])} />
         <span className={cn('font-medium', colors[severity])}>
           {severity.charAt(0).toUpperCase() + severity.slice(1)}
         </span>
@@ -535,7 +523,7 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-start gap-2 p-3 text-left hover:bg-bg-2/50 transition-colors"
       >
-        <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', colors[finding.severity])} />
+        <Icon className={cn('w-icon-md h-icon-md mt-0.5 shrink-0', colors[finding.severity])} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-xs text-fg-3 bg-bg-2 px-1.5 py-0.5 rounded">
@@ -545,9 +533,9 @@ function FindingCard({ finding }: { finding: AuditFinding }) {
           </div>
         </div>
         {expanded ? (
-          <ChevronDown className="w-4 h-4 text-fg-3 shrink-0" />
+          <ChevronDown className="w-icon-md h-icon-md text-fg-3 shrink-0" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-fg-3 shrink-0" />
+          <ChevronRight className="w-icon-md h-icon-md text-fg-3 shrink-0" />
         )}
       </button>
 
@@ -616,9 +604,9 @@ function FixActionsPanel({ fixResult }: { fixResult: FixResult }) {
           : 'bg-status-danger/10 border-status-danger/30'
       )}>
         {fixResult.ok ? (
-          <CheckCircle className="w-5 h-5 text-status-success" />
+          <CheckCircle className="w-icon-lg h-icon-lg text-status-success" />
         ) : (
-          <XCircle className="w-5 h-5 text-status-danger" />
+          <XCircle className="w-icon-lg h-icon-lg text-status-danger" />
         )}
         <span className={fixResult.ok ? 'text-status-success' : 'text-status-danger'}>
           {fixResult.ok ? 'Fixes applied successfully' : 'Some fixes failed'}
@@ -629,7 +617,7 @@ function FixActionsPanel({ fixResult }: { fixResult: FixResult }) {
       {fixResult.changes.length > 0 && (
         <div className="bg-bg-3 rounded-[var(--radius-md)] border border-bd-0 p-3">
           <h4 className="text-sm font-medium text-fg-0 mb-2 flex items-center gap-2">
-            <FileText className="w-4 h-4" />
+            <FileText className="w-icon-md h-icon-md" />
             Config Changes
           </h4>
           <ul className="text-sm text-fg-2 space-y-1">
@@ -647,7 +635,7 @@ function FixActionsPanel({ fixResult }: { fixResult: FixResult }) {
       {fixResult.actions.length > 0 && (
         <div className="bg-bg-3 rounded-[var(--radius-md)] border border-bd-0 p-3">
           <h4 className="text-sm font-medium text-fg-0 mb-2 flex items-center gap-2">
-            <FileKey className="w-4 h-4" />
+            <FileKey className="w-icon-md h-icon-md" />
             Permission Changes
           </h4>
           <div className="space-y-1">
@@ -743,7 +731,7 @@ function RecommendationsChecklist({ findings }: { findings: AuditFinding[] }) {
           <label key={idx} className="flex items-start gap-3 cursor-pointer group">
             <input
               type="checkbox"
-              className="mt-0.5 w-4 h-4 rounded border-bd-1 bg-bg-2 text-accent-primary focus:ring-accent-primary"
+              className="mt-0.5 w-icon-md h-icon-md rounded border-bd-1 bg-bg-2 text-accent-primary focus:ring-accent-primary"
             />
             <span className={cn(
               'text-sm',
