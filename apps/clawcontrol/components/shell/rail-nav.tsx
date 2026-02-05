@@ -77,7 +77,7 @@ export function RailNav({ collapsed, onToggle }: RailNavProps) {
         ) : (
           <div className="flex items-center gap-2">
             <img src="/images/logo-icon.png" alt="ClawControl" className="w-7 h-7 object-contain" />
-            <span className="text-sm font-semibold text-fg-0 tracking-wide">ClawControl</span>
+            <span className="font-bold text-fg-0">ClawControl</span>
           </div>
         )}
       </div>
