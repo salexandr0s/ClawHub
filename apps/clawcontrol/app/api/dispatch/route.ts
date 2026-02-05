@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { runManagerDispatchLoop } from '@/lib/services/dispatcher'
+import { runAutomatedDispatchLoop } from '@/lib/services/dispatcher'
 
 interface DispatchRequestBody {
   limit?: number
@@ -9,7 +9,7 @@ interface DispatchRequestBody {
 /**
  * POST /api/dispatch
  *
- * Runs the manager dispatch loop for planned work orders.
+ * Runs the automated dispatch loop for planned work orders.
  */
 export async function POST(request: NextRequest) {
   let body: DispatchRequestBody = {}
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const result = await runManagerDispatchLoop({
+  const result = await runAutomatedDispatchLoop({
     limit: requestedLimit,
     dryRun: Boolean(body.dryRun),
   })

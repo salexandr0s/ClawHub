@@ -812,8 +812,8 @@ export function WorkOrdersClient() {
                 dispatchCron?.available === false
                   ? dispatchCron.error || 'Dispatch cron is unavailable'
                   : dispatchCron?.enabled
-                    ? 'Disable manager dispatch cron'
-                    : 'Enable manager dispatch cron'
+                    ? 'Disable automated dispatch cron'
+                    : 'Enable automated dispatch cron'
               }
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] border transition-colors',
@@ -826,12 +826,12 @@ export function WorkOrdersClient() {
               )}
             >
               {dispatchCronBusy
-                ? 'Dispatch Cron...'
+                ? 'Auto Dispatch...'
                 : dispatchCron?.available === false
-                  ? 'Dispatch Cron Unavailable'
+                  ? 'Auto Dispatch Unavailable'
                   : dispatchCron?.enabled
-                    ? 'Dispatch Cron On'
-                    : 'Dispatch Cron Off'}
+                    ? 'Auto Dispatch On'
+                    : 'Auto Dispatch Off'}
             </button>
             <button
               onClick={() => setFilterDrawerOpen(true)}
@@ -863,7 +863,7 @@ export function WorkOrdersClient() {
 
       {dispatchCronError && (
         <div className="p-2 rounded-[var(--radius-md)] border border-status-warning/20 bg-status-warning/10 text-status-warning text-xs">
-          Dispatch cron: {dispatchCronError}
+          Automated dispatch: {dispatchCronError}
         </div>
       )}
 

@@ -3,11 +3,28 @@ import 'server-only'
 import { prisma } from '../db'
 import { dispatchToAgent, mapAgentToStation } from '../workflows/executor'
 
+/**
+ * Automated Dispatch System
+ *
+ * Responsibilities:
+ * - Poll planned queue on schedule
+ * - Match work orders to eligible agents using specialty heuristics
+ * - Spawn agent sessions for the selected operation
+ * - Update work orders from planned -> active with assigned owner
+ * - Write dispatch activity receipts
+ *
+ * Does NOT:
+ * - Evaluate work quality/completion
+ * - Advance review/shipping decisions
+ * - Resolve blocker exceptions on behalf of manager workflows
+ */
+
 type DispatchSpecialty = 'plan' | 'build' | 'review' | 'research' | 'security' | 'ops' | 'ui'
 
 const ACTIVE_OPERATION_STATUSES = ['todo', 'in_progress', 'review', 'rework'] as const
 const ACTIVE_SESSION_MAX_AGE_MS = 5 * 60 * 1000
 const DEFAULT_LIMIT = 25
+const DISPATCH_ACTIVITY_ACTOR = 'system'
 
 let dispatchLoopInFlight = false
 
@@ -326,7 +343,7 @@ async function createDispatchOperation(input: {
   return operation.id
 }
 
-export async function runManagerDispatchLoop(options?: {
+export async function runAutomatedDispatchLoop(options?: {
   limit?: number
   dryRun?: boolean
   allowConcurrent?: boolean
@@ -471,7 +488,7 @@ export async function runManagerDispatchLoop(options?: {
         operationId,
         task,
         context: {
-          source: 'manager_dispatch_loop',
+          source: 'automated_dispatch_loop',
           workOrderId: workOrder.id,
           operationId,
           routingTemplate: workOrder.routingTemplate,
@@ -499,11 +516,11 @@ export async function runManagerDispatchLoop(options?: {
 
         await tx.activity.create({
           data: {
-            type: 'manager.dispatch.assigned',
-            actor: 'agent:clawcontrolmanager',
+            type: 'dispatch.assigned',
+            actor: DISPATCH_ACTIVITY_ACTOR,
             entityType: 'work_order',
             entityId: workOrder.id,
-            summary: `Dispatched ${workOrder.code} to ${selectedAgent.name}`,
+            summary: `Auto-dispatched ${workOrder.code} to ${selectedAgent.name}`,
             payloadJson: JSON.stringify({
               operationId,
               agent: selectedAgent.name,
@@ -534,40 +551,28 @@ export async function runManagerDispatchLoop(options?: {
       const reason = error instanceof Error ? error.message : String(error)
 
       if (operationId) {
-        await prisma.$transaction(async (tx) => {
-          await tx.operation.update({
-            where: { id: operationId! },
-            data: {
-              status: 'blocked',
-              blockedReason: reason,
-            },
-          })
-
-          await tx.workOrder.update({
-            where: { id: workOrder.id },
-            data: {
-              state: 'blocked',
-              blockedReason: reason,
-            },
-          })
-
-          await tx.activity.create({
-            data: {
-              type: 'manager.dispatch.failed',
-              actor: 'agent:clawcontrolmanager',
-              entityType: 'work_order',
-              entityId: workOrder.id,
-              summary: `Dispatch failed for ${workOrder.code}`,
-              payloadJson: JSON.stringify({
-                operationId,
-                agent: selectedAgent.name,
-                specialty,
-                error: reason,
-              }),
-            },
-          })
-        })
+        // Dispatch stays strictly in routing/spawn scope. If spawn fails, keep
+        // work order in planned queue for retry and clean up the transient op.
+        await prisma.operation
+          .delete({ where: { id: operationId } })
+          .catch(() => {})
       }
+
+      await prisma.activity.create({
+        data: {
+          type: 'dispatch.failed',
+          actor: DISPATCH_ACTIVITY_ACTOR,
+          entityType: 'work_order',
+          entityId: workOrder.id,
+          summary: `Auto-dispatch failed for ${workOrder.code}`,
+          payloadJson: JSON.stringify({
+            operationId,
+            agent: selectedAgent.name,
+            specialty,
+            error: reason,
+          }),
+        },
+      })
 
       failures.push({
         workOrderId: workOrder.id,
@@ -600,3 +605,8 @@ export async function runManagerDispatchLoop(options?: {
     dispatchLoopInFlight = false
   }
 }
+
+/**
+ * Backward-compatible alias used by existing imports.
+ */
+export const runManagerDispatchLoop = runAutomatedDispatchLoop

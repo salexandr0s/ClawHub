@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runCommandJson, runDynamicCommandJson } from '@clawcontrol/adapters-openclaw'
 
-const DISPATCH_CRON_NAME = 'manager-dispatch-loop'
-const DISPATCH_CRON_LEGACY_NAMES = new Set([DISPATCH_CRON_NAME, 'manager-dispatch'])
+const DISPATCH_CRON_NAME = 'automated-dispatch-loop'
+const DISPATCH_CRON_LEGACY_NAMES = new Set([
+  DISPATCH_CRON_NAME,
+  'manager-dispatch-loop',
+  'manager-dispatch',
+])
 
 const DISPATCH_DEFAULT_EVERY = '20m'
-const DISPATCH_AGENT_ID_CANDIDATES = ['savorgmanager', 'clawcontrolmanager']
+const DISPATCH_AGENT_ID_CANDIDATES = [
+  'savorgdispatch',
+  'clawcontroldispatch',
+  'savorgmanager',
+  'clawcontrolmanager',
+]
 const DISPATCH_SESSION_TARGET = 'isolated'
 const DISPATCH_WAKE_MODE = 'next-heartbeat'
-const DISPATCH_MESSAGE = 'Run dispatch loop: check planned queue and assign to available agents.'
+const DISPATCH_MESSAGE =
+  'Run automated dispatch loop: route planned work orders to available specialists.'
 const DISPATCH_DESCRIPTION =
-  'Dispatch planned work orders to available specialists (serialized by dispatch lock).'
+  'Automated queue routing only: planned -> active assignment with availability/WIP checks.'
 
 interface CronJobListItem {
   id: string
@@ -153,7 +163,7 @@ async function setJobEnabled(jobId: string, enabled: boolean): Promise<{ ok: tru
 /**
  * GET /api/dispatch/cron
  *
- * Returns the status of the manager dispatch cron job.
+ * Returns the status of the automated dispatch cron job.
  */
 export async function GET() {
   const jobs = await loadDispatchJobs()
@@ -168,7 +178,7 @@ export async function GET() {
  * POST /api/dispatch/cron
  *
  * Body: { enabled: boolean }
- * Enables/disables the manager dispatch cron job.
+ * Enables/disables the automated dispatch cron job.
  */
 export async function POST(request: NextRequest) {
   let body: SetDispatchCronBody
