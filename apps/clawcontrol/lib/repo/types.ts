@@ -79,6 +79,7 @@ export interface AgentDTO {
   wipLimit: number
   avatarPath: string | null
   model: string | null
+  fallbacks: string[]
   lastSeenAt: Date | null
   lastHeartbeatAt: Date | null
   createdAt: Date

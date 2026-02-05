@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepos } from '@/lib/repo'
 import { enforceTypedConfirm } from '@/lib/with-governor'
+import { syncAgentModelToOpenClaw } from '@/lib/services/openclaw-config'
 import type { ActionKind } from '@clawcontrol/core'
 
 interface RouteContext {
@@ -55,7 +56,7 @@ export async function PATCH(
 
   try {
     const body = await request.json()
-    const { status, currentWorkOrderId, role, station, capabilities, wipLimit, sessionKey, typedConfirmText } = body
+    const { status, currentWorkOrderId, role, station, capabilities, wipLimit, sessionKey, model, fallbacks, typedConfirmText } = body
 
     const repos = getRepos()
 
@@ -89,7 +90,9 @@ export async function PATCH(
       station !== undefined ||
       capabilities !== undefined ||
       wipLimit !== undefined ||
-      sessionKey !== undefined
+      sessionKey !== undefined ||
+      model !== undefined ||
+      fallbacks !== undefined
 
     if (wantsAdminEdit) {
       protectedAction = protectedAction ?? 'agent.edit'
@@ -125,6 +128,16 @@ export async function PATCH(
       })
     }
 
+    // Normalize fallbacks to JSON string for DB storage
+    const fallbacksForDb = fallbacks !== undefined
+      ? (typeof fallbacks === 'string' ? fallbacks : JSON.stringify(fallbacks))
+      : undefined
+    
+    // Parse fallbacks array for OpenClaw sync
+    const fallbacksArray = fallbacks !== undefined
+      ? (typeof fallbacks === 'string' ? JSON.parse(fallbacks) : fallbacks)
+      : undefined
+
     const data = await repos.agents.update(id, {
       status,
       currentWorkOrderId,
@@ -133,7 +146,24 @@ export async function PATCH(
       capabilities,
       wipLimit,
       sessionKey,
+      model,
+      fallbacks: fallbacksForDb,
     })
+
+    // Sync model/fallbacks to OpenClaw config if changed
+    if (data && (model !== undefined || fallbacks !== undefined)) {
+      const syncResult = await syncAgentModelToOpenClaw(
+        data.sessionKey,
+        model ?? data.model,
+        fallbacksArray
+      )
+      
+      if (!syncResult.ok) {
+        console.warn('[api/agents/:id] OpenClaw sync warning:', syncResult.error)
+      } else if (syncResult.restartNeeded) {
+        console.log('[api/agents/:id] OpenClaw config updated, gateway restart recommended')
+      }
+    }
 
     return NextResponse.json({ data })
   } catch (error) {

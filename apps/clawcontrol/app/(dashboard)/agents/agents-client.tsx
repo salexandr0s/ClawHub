@@ -251,6 +251,7 @@ export function AgentsClient() {
     capabilities?: Record<string, boolean>
     sessionKey?: string
     model?: string
+    fallbacks?: string[]
   }) => {
     triggerProtectedAction({
       actionKind: 'agent.edit',
@@ -1185,6 +1186,7 @@ function AgentDetail({
     capabilities?: Record<string, boolean>
     sessionKey?: string
     model?: string
+    fallbacks?: string[]
   }) => void
   onAvatarUpload: (file: File) => void
   onAvatarReset: () => void
@@ -1206,6 +1208,8 @@ function AgentDetail({
   const [editSessionKey, setEditSessionKey] = useState(agent.sessionKey)
   const [editCaps, setEditCaps] = useState<Record<string, boolean>>(agent.capabilities)
   const [editModel, setEditModel] = useState(agent.model || DEFAULT_MODEL)
+  const [editFallbacks, setEditFallbacks] = useState<string[]>(agent.fallbacks ?? [])
+  const [showFallbackSelector, setShowFallbackSelector] = useState(false)
   const [showModelSelector, setShowModelSelector] = useState(false)
   const [showStationSelector, setShowStationSelector] = useState(false)
   const [showCreateStation, setShowCreateStation] = useState(false)
@@ -1225,6 +1229,8 @@ function AgentDetail({
     setEditSessionKey(agent.sessionKey)
     setEditCaps(agent.capabilities)
     setEditModel(agent.model || DEFAULT_MODEL)
+    setEditFallbacks((agent.fallbacks ?? []).filter((m) => m !== (agent.model || DEFAULT_MODEL)))
+    setShowFallbackSelector(false)
     setShowStationSelector(false)
     loadAgentSkills()
   }, [agent.id])
@@ -1470,6 +1476,7 @@ function AgentDetail({
                       selected={editModel === model.id}
                       onClick={() => {
                         setEditModel(model.id)
+                        setEditFallbacks((prev) => prev.filter((m) => m !== model.id))
                         setShowModelSelector(false)
                       }}
                     />
@@ -1477,6 +1484,115 @@ function AgentDetail({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Fallbacks */}
+          <div className="space-y-2">
+            <label className="text-xs text-fg-2">Fallbacks</label>
+
+            <div className="flex flex-wrap gap-2">
+              {editFallbacks.length === 0 ? (
+                <span className="text-xs text-fg-3">None</span>
+              ) : (
+                editFallbacks.map((fb, idx) => (
+                  <span
+                    key={`${fb}-${idx}`}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 bg-bg-3 rounded-[var(--radius-md)] border border-bd-0"
+                  >
+                    <ModelBadge modelId={fb} size="sm" />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (idx === 0) return
+                        setEditFallbacks((prev) => {
+                          const next = [...prev]
+                          const tmp = next[idx - 1]
+                          next[idx - 1] = next[idx]
+                          next[idx] = tmp
+                          return next
+                        })
+                      }}
+                      className={cn(
+                        'px-1 py-0.5 text-xs rounded bg-bg-2 border border-bd-0 hover:border-bd-1',
+                        idx === 0 && 'opacity-40 pointer-events-none'
+                      )}
+                      title="Move up"
+                    >
+                      ↑
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (idx === editFallbacks.length - 1) return
+                        setEditFallbacks((prev) => {
+                          const next = [...prev]
+                          const tmp = next[idx + 1]
+                          next[idx + 1] = next[idx]
+                          next[idx] = tmp
+                          return next
+                        })
+                      }}
+                      className={cn(
+                        'px-1 py-0.5 text-xs rounded bg-bg-2 border border-bd-0 hover:border-bd-1',
+                        idx === editFallbacks.length - 1 && 'opacity-40 pointer-events-none'
+                      )}
+                      title="Move down"
+                    >
+                      ↓
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setEditFallbacks((prev) => prev.filter((_, i) => i !== idx))}
+                      className="px-1 py-0.5 text-xs rounded bg-bg-2 border border-bd-0 hover:border-bd-1"
+                      title="Remove"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))
+              )}
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowFallbackSelector(!showFallbackSelector)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-bg-2 border border-bd-0 rounded-[var(--radius-md)] text-sm text-fg-0 hover:border-bd-1 transition-colors"
+              >
+                <span className="text-xs text-fg-2">Add fallback…</span>
+                <ChevronDown
+                  className={cn('w-4 h-4 text-fg-2 transition-transform', showFallbackSelector && 'rotate-180')}
+                />
+              </button>
+
+              {showFallbackSelector && (
+                <div className="absolute z-10 mt-1 w-full bg-bg-1 border border-bd-0 rounded-[var(--radius-md)] shadow-lg overflow-hidden">
+                  {AVAILABLE_MODELS
+                    .filter((m) => m.id !== editModel)
+                    .filter((m) => !editFallbacks.includes(m.id))
+                    .map((m) => (
+                      <ModelOption
+                        key={m.id}
+                        modelId={m.id}
+                        selected={false}
+                        onClick={() => {
+                          setEditFallbacks((prev) => [...prev, m.id])
+                          setShowFallbackSelector(false)
+                        }}
+                      />
+                    ))}
+
+                  {AVAILABLE_MODELS.filter((m) => m.id !== editModel).filter((m) => !editFallbacks.includes(m.id)).length === 0 && (
+                    <div className="px-3 py-2 text-xs text-fg-3">No more models available</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <p className="text-[11px] text-fg-3">Tried in order if primary fails. Stored as a JSON array of model IDs.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
@@ -1592,6 +1708,7 @@ function AgentDetail({
                 sessionKey: editSessionKey,
                 capabilities: editCaps,
                 model: editModel,
+                fallbacks: editFallbacks,
               })}
               className="px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-status-warning/10 text-status-warning border border-status-warning/30 hover:bg-status-warning/20 transition-colors"
             >
