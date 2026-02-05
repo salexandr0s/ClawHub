@@ -438,7 +438,7 @@ export function WorkOrdersClient() {
       const stored = localStorage.getItem(VIEW_STORAGE_KEY)
       if (stored === 'table' || stored === 'board') return stored
     }
-    return 'table'
+    return 'board'
   })
 
   // Drawer state for board view
