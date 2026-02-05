@@ -286,6 +286,8 @@ export const agentsApi = {
     capabilities: Record<string, boolean>
     wipLimit: number
     sessionKey: string
+    model: string
+    fallbacks: string[] | string
     typedConfirmText: string
   }>) => apiPatch<{ data: AgentDTO }>(`/api/agents/${id}`, data),
 

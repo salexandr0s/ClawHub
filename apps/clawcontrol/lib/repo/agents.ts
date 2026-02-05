@@ -25,6 +25,7 @@ export interface UpdateAgentInput {
   sessionKey?: string
   avatarPath?: string | null
   model?: string | null
+  fallbacks?: string | null
 }
 
 export interface CreateAgentInput {
@@ -118,6 +119,7 @@ export function createDbAgentsRepo(): AgentsRepo {
       if (input.sessionKey !== undefined) updateData.sessionKey = input.sessionKey
       if (input.avatarPath !== undefined) updateData.avatarPath = input.avatarPath
       if (input.model !== undefined) updateData.model = input.model
+      if (input.fallbacks !== undefined) updateData.fallbacks = input.fallbacks
 
       const row = await prisma.agent.update({
         where: { id },
@@ -238,6 +240,7 @@ interface PrismaAgentRow {
   capabilities: string
   wipLimit: number
   avatarPath?: string | null
+  fallbacks?: string | null
   model?: string | null
   lastSeenAt: Date | null
   lastHeartbeatAt: Date | null
@@ -257,6 +260,7 @@ function toDTO(row: PrismaAgentRow): AgentDTO {
     wipLimit: row.wipLimit,
     avatarPath: row.avatarPath ?? null,
     model: row.model ?? null,
+    fallbacks: JSON.parse(row.fallbacks ?? "[]"),
     lastSeenAt: row.lastSeenAt,
     lastHeartbeatAt: row.lastHeartbeatAt,
     createdAt: row.createdAt,
@@ -275,7 +279,8 @@ function mockToDTO(agent: typeof mockAgents[number]): AgentDTO {
     capabilities: agent.capabilities,
     wipLimit: agent.wipLimit,
     avatarPath: null, // Mock agents don't have custom avatars
-    model: 'claude-sonnet-4-20250514', // Default model for mock agents
+    model: "anthropic/claude-sonnet-4-5",
+    fallbacks: [],
     lastSeenAt: agent.lastSeenAt,
     lastHeartbeatAt: agent.lastHeartbeatAt,
     createdAt: agent.createdAt,

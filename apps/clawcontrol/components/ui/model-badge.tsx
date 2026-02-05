@@ -15,6 +15,7 @@ const COLOR_CLASSES = {
   info: 'bg-status-info/10 text-status-info border-transparent',
   progress: 'bg-status-progress/10 text-status-progress border-transparent',
   success: 'bg-status-success/10 text-status-success border-transparent',
+  default: "bg-bg-3 text-fg-2 border-bd-0",
 } as const
 
 export function ModelBadge({
