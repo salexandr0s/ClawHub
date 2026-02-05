@@ -25,7 +25,7 @@ Use this checklist when preparing a new release of clawcontrol.
 
 - [ ] Migrations are up to date: `npm run db:migrate`
 - [ ] Schema matches Prisma client: `npx prisma generate`
-- [ ] Seed data works: `npm run db:seed`
+- [ ] Fresh install shows empty states (no demo/mock records)
 - [ ] No pending schema changes
 
 ### Documentation

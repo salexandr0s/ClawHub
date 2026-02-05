@@ -1,6 +1,6 @@
 # clawcontrol Setup Guide
 
-This guide covers detailed setup instructions for both demo mode and operational mode.
+This guide covers setup instructions for running clawcontrol and connecting it to OpenClaw for real data.
 
 ---
 
@@ -13,7 +13,7 @@ This guide covers detailed setup instructions for both demo mode and operational
 | Node.js | 20+ | `node -v` |
 | npm | 10+ | `npm -v` |
 
-### Optional (for Operational Mode)
+### Recommended (for OpenClaw-backed features)
 
 | Tool | Version | Check Command |
 |------|---------|---------------|
@@ -73,7 +73,7 @@ npm install
 This installs dependencies for:
 - Root workspace
 - `apps/clawcontrol` (Next.js app)
-- `packages/core` (shared types and mocks)
+- `packages/core` (shared types and Governor)
 - `packages/ui` (shared components)
 - `packages/adapters-openclaw` (CLI adapter)
 
@@ -89,9 +89,6 @@ Edit `.env` if you need to customize:
 ```bash
 # Required: Database location
 DATABASE_URL="file:../data/clawcontrol.db"
-
-# Optional: Force mock mode
-# USE_MOCK_DATA="true"
 ```
 
 ### 4. Initialize Database
@@ -108,18 +105,9 @@ This creates the SQLite database at `apps/clawcontrol/data/clawcontrol.db` with:
 - Receipts table (command logs)
 - Approvals table (pending gates)
 
-### 5. Seed Demo Data (Optional)
+clawcontrol does not ship with seed/demo data. A fresh database will show empty states until you connect OpenClaw or create records through the UI.
 
-```bash
-npm run db:seed
-```
-
-Populates the database with:
-- Sample work orders at various stages
-- Example agents
-- Historical activities
-
-### 6. Start Development Server
+### 5. Start Development Server
 
 ```bash
 npm run dev
@@ -155,9 +143,12 @@ clawcontrol expects OpenClaw workspace structure at your current directory:
 your-project/
 ├── .openclaw/
 │   └── config.yaml
+├── AGENTS.md
 ├── agents/
-│   ├── AGENTS.md
-│   └── *.soul.md
+│   ├── <agent_id>/
+│   │   ├── SOUL.md
+│   │   └── HEARTBEAT.md
+│   └── <agent_id>.md
 ├── overlays/
 │   └── *.md
 ├── skills/
@@ -214,7 +205,6 @@ npx prisma migrate dev --name your_migration_name
 | `npm run typecheck` | TypeScript type checking |
 | `npm run db:migrate` | Apply database migrations |
 | `npm run db:push` | Push schema without migration history |
-| `npm run db:seed` | Seed demo data |
 | `npm run db:studio` | Open Prisma Studio |
 
 ---
@@ -249,6 +239,8 @@ clawcontrol checks `which openclaw` on startup. Ensure:
 1. OpenClaw is installed
 2. OpenClaw binary is on your PATH
 3. Restart the development server after installing
+
+If OpenClaw is not available, clawcontrol will still run, but OpenClaw-backed pages will show empty states and related actions will return availability errors until OpenClaw is configured.
 
 ### Type Errors After Pulling
 

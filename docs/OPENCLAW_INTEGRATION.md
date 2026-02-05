@@ -45,9 +45,9 @@ openclaw --version
 
 When `openclaw` is not found on PATH:
 
-- clawcontrol runs in **demo mode** with mock data
-- All features remain accessible for UI exploration
-- No real commands are executed
+- clawcontrol does **not** generate mock/demo data
+- OpenClaw-backed features (gateway status, cron, plugins, sessions) report **Unavailable** and the UI shows empty states
+- Actions that require OpenClaw will return availability errors until OpenClaw is installed and configured
 
 ---
 
@@ -138,10 +138,12 @@ OpenClaw expects this workspace structure:
 project-root/
 ├── .openclaw/
 │   └── config.yaml          # OpenClaw configuration
+├── AGENTS.md                # Agent registry / workspace rules
 ├── agents/
-│   ├── AGENTS.md            # Agent registry
-│   ├── clawcontrolBUILD.soul.md  # Agent soul file
-│   └── clawcontrolBUILD.md       # Agent overlay
+│   ├── <agent_id>/
+│   │   ├── SOUL.md
+│   │   └── HEARTBEAT.md
+│   └── <agent_id>.md        # Agent overlay / station summary
 ├── overlays/
 │   └── *.md                 # Shared overlays
 ├── skills/
@@ -157,8 +159,9 @@ project-root/
 
 | File Type | Location | Purpose |
 |-----------|----------|---------|
-| Soul | `agents/<name>.soul.md` | Agent identity and core behaviors |
-| Overlay | `agents/<name>.md` or `overlays/` | Custom instructions and constraints |
+| Soul | `agents/<agent_id>/SOUL.md` | Agent identity and core behaviors |
+| Heartbeat | `agents/<agent_id>/HEARTBEAT.md` | Agent heartbeat checklist and reporting rules |
+| Overlay | `agents/<agent_id>.md` or `overlays/` | Custom instructions and constraints |
 | Skill | `skills/` | Reusable agent capabilities |
 | Playbook | `playbooks/` | Multi-step automation scripts |
 | Plugin | `plugins/` | External tool integrations |
@@ -233,12 +236,7 @@ Activity types include:
 
 When OpenClaw is not on PATH:
 
-```typescript
-// Returns mock data instead of real execution
-if (!isCliAvailable()) {
-  return mockCommandResult(command)
-}
-```
+OpenClaw-backed repositories return an explicit **unavailable** status (and `data: null`) rather than falling back to fake/demo content. The UI should treat empty arrays / nulls as valid and render empty states.
 
 ### Version Below Minimum
 
@@ -306,7 +304,7 @@ All plugin API endpoints return a `meta` object with capability information:
 
 ```typescript
 interface PluginResponseMeta {
-  source: 'openclaw_cli' | 'mock' | 'unsupported'
+  source: 'openclaw_cli' | 'openclaw_status' | 'cache' | 'unsupported'
   capabilities: PluginCapabilities
   degraded: boolean
   message?: string
@@ -437,32 +435,9 @@ This allows debugging "worked yesterday, not today" scenarios after OpenClaw upd
 
 ---
 
-## Demo Mode Details
+## No Demo Mode
 
-When OpenClaw is unavailable, clawcontrol provides:
-
-### Mock Agents
-
-Pre-configured agents in `packages/core/src/mocks/`:
-- clawcontrolSPEC — Specification agent
-- clawcontrolBUILD — Build/implementation agent
-- clawcontrolQA — Testing agent
-- clawcontrolOPS — Operations agent
-
-### Mock Workspace
-
-Virtual filesystem with sample files:
-- Soul files
-- Overlays
-- Skills
-- Playbooks
-
-### Mock Execution
-
-Commands return simulated results:
-- Status checks return healthy
-- List commands return mock data
-- Run commands simulate execution with receipts
+clawcontrol intentionally does not ship with demo fixtures. When OpenClaw is unavailable, clawcontrol shows empty states and returns explicit availability errors for OpenClaw-backed actions.
 
 ---
 
