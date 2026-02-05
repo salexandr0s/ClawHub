@@ -2,9 +2,11 @@
 
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { useSyncStatus } from '@/lib/hooks/useSyncStatus'
+import { useGatewayStatus } from '@/lib/hooks/useGatewayStatus'
 
 export function SyncBanner() {
   const { status, loading, syncing, triggerSync } = useSyncStatus()
+  const { isOnline, loading: gatewayLoading } = useGatewayStatus()
 
   if (loading || !status) return null
 
@@ -28,7 +30,7 @@ export function SyncBanner() {
     )
   }
 
-  if (!status.gatewayConnected) {
+  if (!gatewayLoading && !isOnline) {
     return (
       <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-status-danger bg-status-danger/10 px-3 py-2 text-xs text-status-danger">
         <AlertTriangle className="h-4 w-4 shrink-0" />

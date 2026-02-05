@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import type { Route } from 'next'
 import {
   WorkOrderStatePill,
   PriorityPill,
 } from '@/components/ui/status-pill'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { MetricCard } from '@/components/ui/metric-card'
+import { useGatewayStatus } from '@/lib/hooks/useGatewayStatus'
 import { cn } from '@/lib/utils'
 import {
   Activity,
@@ -48,7 +51,9 @@ interface PendingApproval {
 
 interface ActivityEvent {
   id: string
-  type: 'work_order' | 'operation' | 'agent' | 'system'
+  type: string
+  entityType: string
+  entityId: string
   message: string
   timestamp: string
   agent?: string
@@ -69,12 +74,12 @@ interface GatewaySummary {
   error?: string
 }
 
-interface NowDashboardProps {
+interface DashboardProps {
   workOrders: WorkOrder[]
   approvals: PendingApproval[]
   activities: ActivityEvent[]
   stats: DashboardStats
-  gateway: GatewaySummary
+  initialGateway: GatewaySummary
 }
 
 // ============================================================================
@@ -157,27 +162,40 @@ const approvalColumns: Column<PendingApproval>[] = [
 ]
 
 // ============================================================================
-// NOW DASHBOARD
+// DASHBOARD
 // ============================================================================
 
-export function NowDashboard({
+export function Dashboard({
   workOrders,
   approvals,
   activities,
   stats,
-  gateway,
-}: NowDashboardProps) {
+  initialGateway,
+}: DashboardProps) {
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<string | undefined>()
+  const gatewayStatus = useGatewayStatus({
+    initialStatus: initialGateway.status,
+    initialLatencyMs: initialGateway.latencyMs,
+    initialError: initialGateway.error ?? null,
+  })
+
+  const resolvedGatewayStatus = gatewayStatus.loading ? initialGateway.status : gatewayStatus.status
+  const resolvedGatewayLatencyMs =
+    gatewayStatus.loading
+      ? initialGateway.latencyMs
+      : gatewayStatus.latencyMs ?? initialGateway.latencyMs
 
   const gatewayValue =
-    gateway.status === 'ok'
+    resolvedGatewayStatus === 'ok'
       ? 'Live'
-      : 'Error'
+      : resolvedGatewayStatus === 'degraded'
+        ? 'Degraded'
+        : 'Offline'
 
   const gatewayTone =
-    gateway.status === 'ok'
+    resolvedGatewayStatus === 'ok'
       ? 'success'
-      : gateway.status === 'degraded'
+      : resolvedGatewayStatus === 'degraded'
         ? 'warning'
         : 'danger'
 
@@ -192,7 +210,7 @@ export function NowDashboard({
             <div className="text-sm font-medium text-fg-0">Connect to OpenClaw to see your agents</div>
             <div className="text-xs text-fg-2 mt-1">
               Gateway status: {gatewayValue}
-              {gateway.status !== 'unavailable' ? ` (${gateway.latencyMs}ms)` : ''}
+              {resolvedGatewayStatus !== 'unavailable' && resolvedGatewayLatencyMs !== null ? ` (${resolvedGatewayLatencyMs}ms)` : ''}
             </div>
           </div>
         </div>
@@ -322,6 +340,8 @@ function Card({
 }
 
 function ActivityRow({ event }: { event: ActivityEvent }) {
+  const router = useRouter()
+
   const typeIconMap = {
     work_order: FileText,
     operation: Settings,
@@ -332,10 +352,32 @@ function ActivityRow({ event }: { event: ActivityEvent }) {
     approval: CheckSquare,
   }
 
-  const Icon = typeIconMap[event.type] ?? LayoutDashboard
+  const iconType = event.entityType || event.type
+  const Icon = typeIconMap[iconType as keyof typeof typeIconMap] ?? LayoutDashboard
+  const href = getActivityHref(event)
+
+  const onActivate = () => {
+    if (!href) return
+    router.push(href as Route)
+  }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 hover:bg-bg-3/50 transition-colors">
+    <div
+      role={href ? 'button' : undefined}
+      tabIndex={href ? 0 : undefined}
+      onClick={onActivate}
+      onKeyDown={(e) => {
+        if (!href) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onActivate()
+        }
+      }}
+      className={cn(
+        'flex items-center gap-3 px-4 py-2 transition-colors',
+        href ? 'cursor-pointer hover:bg-bg-3/50 focus:outline-none focus:bg-bg-3/50' : 'hover:bg-bg-3/50'
+      )}
+    >
       <Icon className="w-3.5 h-3.5 text-fg-2 shrink-0" />
       <span className="flex-1 text-[13px] text-fg-1 truncate">{event.message}</span>
       {event.agent && (
@@ -344,4 +386,23 @@ function ActivityRow({ event }: { event: ActivityEvent }) {
       <span className="text-xs text-fg-2 shrink-0 tabular-nums">{event.timestamp}</span>
     </div>
   )
+}
+
+function getActivityHref(event: ActivityEvent): string | null {
+  if (!event.entityId) return null
+
+  if (event.entityType === 'work_order') {
+    return `/work-orders/${event.entityId}`
+  }
+  if (event.entityType === 'operation') {
+    return `/work-orders?operation=${encodeURIComponent(event.entityId)}`
+  }
+  if (event.entityType === 'agent') {
+    return `/agents?agentId=${encodeURIComponent(event.entityId)}`
+  }
+  if (event.entityType === 'approval') {
+    return `/approvals?approvalId=${encodeURIComponent(event.entityId)}`
+  }
+
+  return null
 }

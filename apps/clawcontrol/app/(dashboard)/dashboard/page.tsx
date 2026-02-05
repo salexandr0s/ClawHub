@@ -7,12 +7,12 @@ import {
   getDashboardStats,
   getGatewayStatus,
 } from '@/lib/data'
-import { NowDashboard } from './now-dashboard'
+import { Dashboard } from './dashboard'
 
 // Enable WAL mode on first request
 let walEnabled = false
 
-export default async function NowPage() {
+export default async function DashboardPage() {
   // Enable WAL mode on first request
   if (!walEnabled) {
     await enableWalMode()
@@ -57,7 +57,9 @@ export default async function NowPage() {
   // Transform activities for display
   const transformedActivities = activities.map((act) => ({
     id: act.id,
-    type: act.entityType as 'work_order' | 'operation' | 'agent' | 'system',
+    type: act.type,
+    entityType: act.entityType,
+    entityId: act.entityId,
     message: act.summary,
     timestamp: formatRelativeTime(act.ts),
     agent: act.actor.startsWith('agent:') ? act.actor.replace('agent:', '') : undefined,
@@ -65,12 +67,12 @@ export default async function NowPage() {
 
   return (
     <Suspense fallback={<div className="animate-pulse">Loading...</div>}>
-      <NowDashboard
+      <Dashboard
         workOrders={transformedWorkOrders}
         approvals={transformedApprovals}
         activities={transformedActivities}
         stats={stats}
-        gateway={{
+        initialGateway={{
           status: gateway.status,
           latencyMs: gateway.latencyMs,
           error: gateway.error ?? undefined,

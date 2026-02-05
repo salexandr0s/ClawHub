@@ -34,7 +34,7 @@ interface NavItem {
 
 // Routes cast to Route type - actual routes will be added incrementally
 const navItems: NavItem[] = [
-  { href: '/now' as Route, label: 'Now', icon: LayoutDashboard },
+  { href: '/dashboard' as Route, label: 'Dashboard', icon: LayoutDashboard },
   { href: '/work-orders' as Route, label: 'Work Orders', icon: ClipboardList },
   { href: '/approvals' as Route, label: 'Approvals', icon: ShieldCheck },
   { href: '/console' as Route, label: 'Chat', icon: MessageSquare },

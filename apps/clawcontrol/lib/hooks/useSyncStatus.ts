@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export interface SyncStepStatus {
   success: boolean
@@ -26,6 +26,9 @@ export interface SyncStatusResponse {
 interface UseSyncStatusOptions {
   polling?: boolean
 }
+
+const STATUS_POLL_INTERVAL_MS = 60_000
+const SYNC_POLL_INTERVAL_MS = 5 * 60_000
 
 async function fetchSyncStatus(): Promise<SyncStatusResponse | null> {
   const res = await fetch('/api/sync/status', { cache: 'no-store' })
@@ -76,24 +79,37 @@ export function useSyncStatus(options: UseSyncStatusOptions = {}) {
     }
   }, [refresh])
 
-  useEffect(() => {
-    void refresh()
+  const refreshRef = useRef(refresh)
+  const triggerSyncRef = useRef(triggerSync)
 
+  useEffect(() => {
+    refreshRef.current = refresh
+  }, [refresh])
+
+  useEffect(() => {
+    triggerSyncRef.current = triggerSync
+  }, [triggerSync])
+
+  useEffect(() => {
+    void refreshRef.current()
+  }, [])
+
+  useEffect(() => {
     if (!polling) return
 
     const statusInterval = window.setInterval(() => {
-      void refresh()
-    }, 60_000)
+      void refreshRef.current()
+    }, STATUS_POLL_INTERVAL_MS)
 
     const syncInterval = window.setInterval(() => {
-      void triggerSync('poll')
-    }, 5 * 60_000)
+      void triggerSyncRef.current('poll')
+    }, SYNC_POLL_INTERVAL_MS)
 
     return () => {
       window.clearInterval(statusInterval)
       window.clearInterval(syncInterval)
     }
-  }, [polling, refresh, triggerSync])
+  }, [polling])
 
   return {
     status,

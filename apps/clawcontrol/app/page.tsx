@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
+import type { Route } from 'next'
 
 export default function RootPage() {
-  redirect('/now')
+  redirect('/dashboard' as Route)
 }

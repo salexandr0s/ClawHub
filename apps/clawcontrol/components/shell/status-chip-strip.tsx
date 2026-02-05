@@ -8,6 +8,7 @@ import {
   AlertOctagon,
 } from 'lucide-react'
 import type { StatusTone } from '@clawcontrol/ui/theme'
+import { useGatewayStatus } from '@/lib/hooks/useGatewayStatus'
 
 type ChipStatus = 'ok' | 'degraded' | 'down' | 'unknown'
 
@@ -101,14 +102,44 @@ export function StatusChipStrip({
   )
 }
 
-// Default chips for the Now page
+// Default chips for the dashboard page
 export function useDefaultStatusChips(): StatusChip[] {
-  // In a real app, this would fetch from API/context
+  const { status, loading, lastCheck } = useGatewayStatus()
+  const gatewayStatus: ChipStatus = loading
+    ? 'unknown'
+    : status === 'ok'
+      ? 'ok'
+      : status === 'degraded'
+        ? 'degraded'
+        : 'down'
+  const gatewayValue = loading
+    ? '...'
+    : status === 'ok'
+      ? 'OK'
+      : status === 'degraded'
+        ? 'Degraded'
+        : 'Offline'
+  const gatewayAge = lastCheck ? formatAge(lastCheck) : undefined
+
   return [
-    { id: 'gateway', label: 'Gateway', value: 'OK', status: 'ok', age: '12s' },
+    { id: 'gateway', label: 'Gateway', value: gatewayValue, status: gatewayStatus, age: gatewayAge },
     { id: 'live', label: 'Live', value: 'OK', status: 'ok' },
     { id: 'approvals', label: 'Approvals', value: 0, status: 'ok' },
     { id: 'running', label: 'Running', value: 0, status: 'ok' },
     { id: 'incidents', label: 'Incidents', value: 0, status: 'ok' },
   ]
+}
+
+function formatAge(timestamp: string): string {
+  const ageMs = Date.now() - new Date(timestamp).getTime()
+  if (ageMs < 1000) return '<1s'
+
+  const seconds = Math.floor(ageMs / 1000)
+  if (seconds < 60) return `${seconds}s`
+
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m`
+
+  const hours = Math.floor(minutes / 60)
+  return `${hours}h`
 }

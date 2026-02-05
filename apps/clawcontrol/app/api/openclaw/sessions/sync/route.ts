@@ -26,6 +26,8 @@ type OpenClawStatusAll = {
   }
 }
 
+const OPENCLAW_STATUS_TIMEOUT_MS = 15_000
+
 function deriveState(s: { abortedLastRun?: boolean; age?: number }): string {
   if (s.abortedLastRun) return 'error'
   // Consider anything updated within the last 2 minutes as active-ish
@@ -47,7 +49,9 @@ export async function POST() {
 
   try {
     phase.step = 'openclaw.status'
-    const res = await runCommandJson<OpenClawStatusAll>('status.all.json')
+    const res = await runCommandJson<OpenClawStatusAll>('status.all.json', {
+      timeout: OPENCLAW_STATUS_TIMEOUT_MS,
+    })
 
     if (res.error || !res.data) {
       phase.step = 'openclaw.status.error'

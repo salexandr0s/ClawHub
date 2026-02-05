@@ -8,6 +8,7 @@ import { getWsConsoleClient } from './console-client'
 import { runCommandJson } from '@clawcontrol/adapters-openclaw'
 
 const execFileAsync = promisify(execFile)
+const OPENCLAW_STATUS_TIMEOUT_MS = 15_000
 
 export interface SpawnOptions {
   agentId: string
@@ -185,7 +186,9 @@ function deriveState(s: { abortedLastRun?: boolean; age?: number }): string {
  * Telemetry only — never canonical.
  */
 export async function syncAgentSessions(): Promise<{ seen: number; upserted: number }> {
-  const res = await runCommandJson<OpenClawStatusAll>('status.all.json')
+  const res = await runCommandJson<OpenClawStatusAll>('status.all.json', {
+    timeout: OPENCLAW_STATUS_TIMEOUT_MS,
+  })
   if (res.error || !res.data) {
     throw new Error(res.error ?? 'OpenClaw status.all.json returned no data')
   }
