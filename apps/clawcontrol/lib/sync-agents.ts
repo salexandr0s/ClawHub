@@ -45,7 +45,9 @@ export async function syncAgentsFromOpenClaw(
 
     const name = inferDisplayName(agent)
     const sessionKey = inferSessionKey(agent.id)
-    const existing = await repos.agents.getBySessionKey(sessionKey)
+    const existing =
+      (await repos.agents.getBySessionKey(sessionKey)) ??
+      (await repos.agents.getByName(agent.id))
 
     if (!existing) {
       await repos.agents.create({

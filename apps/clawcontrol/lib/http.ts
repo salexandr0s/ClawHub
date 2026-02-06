@@ -46,6 +46,8 @@ function formatApiErrorMessage(error: string): string {
       return 'This action is not implemented in ClawControl yet.'
     case 'OPENCLAW_UNAVAILABLE':
       return 'OpenClaw is unavailable. Check your OpenClaw installation/connection.'
+    case 'OPENCLAW_REGISTER_FAILED':
+      return 'Failed to register the agent in OpenClaw. Check ~/.openclaw/openclaw.json permissions/format.'
     default:
       return error
   }

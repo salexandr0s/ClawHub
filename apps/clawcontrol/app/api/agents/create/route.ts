@@ -7,6 +7,7 @@ import {
   createAgentFiles,
   AGENT_ROLE_MAP,
 } from '@/lib/workspace'
+import { upsertAgentToOpenClaw, removeAgentFromOpenClaw } from '@/lib/services/openclaw-config'
 import { buildUniqueSlug, slugifyDisplayName } from '@/lib/agent-identity'
 import type { StationId } from '@clawcontrol/core'
 
@@ -98,6 +99,10 @@ export async function POST(request: NextRequest) {
     commandArgs: { displayName: resolvedDisplayName, slug, role, station, purpose },
   })
 
+  let createdAgentId: string | null = null
+  let openClawAgentId: string | null = null
+  let openClawEntryCreated = false
+
   try {
     // Step 1: Create workspace files
     await repos.receipts.append(receipt.id, {
@@ -151,7 +156,33 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Step 2: Create agent in database
+    // Step 2: Register/update in OpenClaw config so runtime can see the agent
+    await repos.receipts.append(receipt.id, {
+      stream: 'stdout',
+      chunk: 'Registering agent in OpenClaw config...\n',
+    })
+
+    const openClawSync = await upsertAgentToOpenClaw({
+      agentId: slug,
+      runtimeAgentId: slug,
+      slug,
+      displayName: resolvedDisplayName,
+      sessionKey,
+    })
+
+    if (!openClawSync.ok) {
+      throw new Error(`Failed to register agent in OpenClaw: ${openClawSync.error}`)
+    }
+
+    openClawAgentId = openClawSync.agentId ?? slug
+    openClawEntryCreated = Boolean(openClawSync.created)
+
+    await repos.receipts.append(receipt.id, {
+      stream: 'stdout',
+      chunk: `  OpenClaw entry: ${openClawSync.created ? 'created' : 'updated'} (${openClawAgentId})\n`,
+    })
+
+    // Step 3: Create agent in database
     await repos.receipts.append(receipt.id, {
       stream: 'stdout',
       chunk: `Creating agent record...\n`,
@@ -161,7 +192,7 @@ export async function POST(request: NextRequest) {
       name: resolvedDisplayName,
       displayName: resolvedDisplayName,
       slug,
-      runtimeAgentId: slug,
+      runtimeAgentId: openClawAgentId,
       nameSource: displayName || customName ? 'user' : 'system',
       role,
       station,
@@ -169,6 +200,7 @@ export async function POST(request: NextRequest) {
       capabilities: capabilitiesObj,
       wipLimit: 2,
     })
+    createdAgentId = agent.id
 
     await repos.receipts.append(receipt.id, {
       stream: 'stdout',
@@ -190,6 +222,8 @@ export async function POST(request: NextRequest) {
         role,
         station,
         sessionKey,
+        openClawAgentId,
+        openClawSynced: true,
         files: filesResult.files,
       },
     })
@@ -208,6 +242,7 @@ export async function POST(request: NextRequest) {
         station,
         purpose,
         capabilities,
+        openClawAgentId,
         receiptId: receipt.id,
       },
     })
@@ -219,6 +254,16 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Agent creation failed'
+
+    if (!createdAgentId && openClawEntryCreated && openClawAgentId) {
+      const rollback = await removeAgentFromOpenClaw(openClawAgentId)
+      await repos.receipts.append(receipt.id, {
+        stream: rollback.ok ? 'stdout' : 'stderr',
+        chunk: rollback.ok
+          ? `Rolled back OpenClaw entry for ${openClawAgentId} after DB failure.\n`
+          : `Failed to roll back OpenClaw entry for ${openClawAgentId}: ${rollback.error}\n`,
+      })
+    }
 
     await repos.receipts.append(receipt.id, {
       stream: 'stderr',

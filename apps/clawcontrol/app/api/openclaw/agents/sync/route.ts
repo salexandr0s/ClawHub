@@ -89,7 +89,9 @@ export async function POST() {
     openclawSessionKeys.add(sessionKey)
 
     // Upsert by sessionKey (unique)
-    const existing = await repos.agents.getBySessionKey(sessionKey)
+    const existing =
+      (await repos.agents.getBySessionKey(sessionKey)) ??
+      (await repos.agents.getByName(a.id))
 
     if (!existing) {
       await repos.agents.create({

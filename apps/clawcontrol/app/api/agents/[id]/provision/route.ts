@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { enforceTypedConfirm } from '@/lib/with-governor'
 import { getRepos } from '@/lib/repo'
+import { upsertAgentToOpenClaw } from '@/lib/services/openclaw-config'
 import {
   checkOpenClawAvailable,
 } from '@clawcontrol/adapters-openclaw'
@@ -84,20 +85,80 @@ export async function POST(
     }
 
     await repos.receipts.append(receipt.id, {
-      stream: 'stderr',
-      chunk: 'Agent provisioning is not implemented in ClawControl. Configure provisioning in OpenClaw.\n',
+      stream: 'stdout',
+      chunk: `Registering ${agent.displayName} in OpenClaw config...\n`,
+    })
+
+    const upsert = await upsertAgentToOpenClaw({
+      agentId: agent.runtimeAgentId,
+      runtimeAgentId: agent.runtimeAgentId,
+      slug: agent.slug,
+      displayName: agent.displayName,
+      sessionKey: agent.sessionKey,
+      model: agent.model,
+      fallbacks: agent.fallbacks,
+    })
+
+    if (!upsert.ok) {
+      await repos.receipts.append(receipt.id, {
+        stream: 'stderr',
+        chunk: `Failed to register agent in OpenClaw: ${upsert.error}\n`,
+      })
+
+      await repos.receipts.finalize(receipt.id, {
+        exitCode: 1,
+        durationMs: 0,
+        parsedJson: {
+          error: 'OPENCLAW_REGISTER_FAILED',
+          detail: upsert.error,
+          agentId: id,
+          agentName: agent.displayName,
+        },
+      })
+
+      return NextResponse.json(
+        { error: 'OPENCLAW_REGISTER_FAILED', detail: upsert.error, receiptId: receipt.id },
+        { status: 502 }
+      )
+    }
+
+    await repos.receipts.append(receipt.id, {
+      stream: 'stdout',
+      chunk: `OpenClaw entry ${upsert.created ? 'created' : 'updated'} for ${upsert.agentId}.\n`,
     })
 
     await repos.receipts.finalize(receipt.id, {
-      exitCode: 1,
+      exitCode: 0,
       durationMs: 0,
-      parsedJson: { error: 'NOT_IMPLEMENTED', agentId: id, agentName: agent.name },
+      parsedJson: {
+        provisioned: true,
+        mode: 'openclaw_config',
+        openClawAgentId: upsert.agentId,
+        action: upsert.created ? 'created' : 'updated',
+      },
     })
 
-    return NextResponse.json(
-      { error: 'NOT_IMPLEMENTED', receiptId: receipt.id },
-      { status: 501 }
-    )
+    await repos.activities.create({
+      type: 'agent.provisioned',
+      actor: 'user',
+      entityType: 'agent',
+      entityId: id,
+      summary: `Provisioned agent ${agent.displayName} in OpenClaw`,
+      payloadJson: {
+        openClawAgentId: upsert.agentId,
+        action: upsert.created ? 'created' : 'updated',
+        receiptId: receipt.id,
+      },
+    })
+
+    return NextResponse.json({
+      data: {
+        mode: 'openclaw_config',
+        provisioned: true,
+        message: `Agent ${agent.displayName} is registered in OpenClaw (${upsert.created ? 'created' : 'updated'}).`,
+      },
+      receiptId: receipt.id,
+    })
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Provisioning failed'
 

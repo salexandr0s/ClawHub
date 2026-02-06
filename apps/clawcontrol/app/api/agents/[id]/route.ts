@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepos } from '@/lib/repo'
 import { enforceTypedConfirm } from '@/lib/with-governor'
-import { syncAgentModelToOpenClaw } from '@/lib/services/openclaw-config'
+import { upsertAgentToOpenClaw } from '@/lib/services/openclaw-config'
 import type { ActionKind } from '@clawcontrol/core'
 
 interface RouteContext {
@@ -174,14 +174,18 @@ export async function PATCH(
       fallbacks: fallbacksForDb,
     })
 
-    // Sync model/fallbacks to OpenClaw config if changed
-    if (data && (model !== undefined || fallbacks !== undefined)) {
-      const syncResult = await syncAgentModelToOpenClaw(
-        data.sessionKey,
-        model ?? data.model,
-        fallbacksArray
-      )
-      
+    // Sync identity/model to OpenClaw config if changed.
+    if (data && (displayName !== undefined || model !== undefined || fallbacks !== undefined)) {
+      const syncResult = await upsertAgentToOpenClaw({
+        agentId: data.runtimeAgentId,
+        runtimeAgentId: data.runtimeAgentId,
+        slug: data.slug,
+        displayName: data.displayName,
+        sessionKey: data.sessionKey,
+        model: model ?? data.model,
+        fallbacks: fallbacksArray ?? data.fallbacks,
+      })
+
       if (!syncResult.ok) {
         console.warn('[api/agents/:id] OpenClaw sync warning:', syncResult.error)
       } else if (syncResult.restartNeeded) {
