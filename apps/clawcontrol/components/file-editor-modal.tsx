@@ -23,6 +23,17 @@ const PROTECTED_FILES: Record<string, ActionKind> = {
   'routing.yaml': 'config.routing_template.edit',
 }
 
+function encodeWorkspacePathId(path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const bytes = new TextEncoder().encode(normalizedPath)
+  let binary = ''
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte)
+  }
+
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+}
+
 export function FileEditorModal({
   isOpen,
   onClose,
@@ -51,7 +62,7 @@ export function FileEditorModal({
       setError(null)
       try {
         // Encode the path to get the file ID
-        const fileId = Buffer.from(filePath, 'utf8').toString('base64url')
+        const fileId = encodeWorkspacePathId(filePath)
         const result = await workspaceApi.get(fileId)
         setContent(result.data.content || '')
         setOriginalContent(result.data.content || '')
@@ -74,7 +85,7 @@ export function FileEditorModal({
     setError(null)
 
     try {
-      const fileId = Buffer.from(filePath, 'utf8').toString('base64url')
+      const fileId = encodeWorkspacePathId(filePath)
       await workspaceApi.update(fileId, { content, typedConfirmText })
       setOriginalContent(content)
       onSaved?.()
@@ -104,77 +115,86 @@ export function FileEditorModal({
 
   return (
     <>
-      {/* Full-screen modal */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-bg-0">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-bd-0 bg-bg-1">
-          <div className="flex items-center gap-3">
-            <FileCode className="w-5 h-5 text-fg-2" />
-            <div>
-              <h2 className="text-sm font-semibold text-fg-0">{fileName}</h2>
-              <p className="text-xs text-fg-3">{filePath}</p>
+      {/* In-page overlay modal */}
+      <div className="absolute inset-0 z-50">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+          aria-label="Close editor"
+        />
+
+        <div className="absolute inset-2 sm:inset-4 md:inset-6 flex flex-col rounded-[var(--radius-lg)] border border-bd-0 bg-bg-0 shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-bd-0 bg-bg-1">
+            <div className="flex items-center gap-3 min-w-0">
+              <FileCode className="w-5 h-5 text-fg-2 shrink-0" />
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-fg-0 truncate">{fileName}</h2>
+                <p className="text-xs text-fg-3 truncate">{filePath}</p>
+              </div>
+              {isProtected && (
+                <span className="px-2 py-0.5 text-[10px] uppercase tracking-wide bg-status-warning/10 text-status-warning rounded shrink-0">
+                  Protected
+                </span>
+              )}
             </div>
-            {isProtected && (
-              <span className="px-2 py-0.5 text-[10px] uppercase tracking-wide bg-status-warning/10 text-status-warning rounded">
-                Protected
-              </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveClick}
+                disabled={!hasChanges || saving}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-colors',
+                  hasChanges
+                    ? 'bg-status-progress text-white hover:bg-status-progress/90'
+                    : 'bg-bg-3 text-fg-3 cursor-not-allowed'
+                )}
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-bg-3 rounded-[var(--radius-md)] text-fg-2 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Error banner */}
+          {error && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-status-danger/10 text-status-danger text-sm">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </div>
+          )}
+
+          {/* Editor */}
+          <div className="flex-1 overflow-hidden">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
+              </div>
+            ) : (
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full h-full p-4 font-mono text-sm bg-bg-0 text-fg-0 border-none outline-none resize-none"
+                spellCheck={false}
+              />
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleSaveClick}
-              disabled={!hasChanges || saving}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-[var(--radius-md)] transition-colors',
-                hasChanges
-                  ? 'bg-status-progress text-white hover:bg-status-progress/90'
-                  : 'bg-bg-3 text-fg-3 cursor-not-allowed'
-              )}
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              Save
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-bg-3 rounded-[var(--radius-md)] text-fg-2 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+
+          {/* Status bar */}
+          <div className="flex items-center justify-between px-4 py-2 border-t border-bd-0 bg-bg-1 text-xs text-fg-3">
+            <span>{content.split('\n').length} lines</span>
+            <span>{hasChanges ? 'Modified' : 'Saved'}</span>
           </div>
-        </div>
-
-        {/* Error banner */}
-        {error && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-status-danger/10 text-status-danger text-sm">
-            <AlertCircle className="w-4 h-4" />
-            {error}
-          </div>
-        )}
-
-        {/* Editor */}
-        <div className="flex-1 overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-            </div>
-          ) : (
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full h-full p-4 font-mono text-sm bg-bg-0 text-fg-0 border-none outline-none resize-none"
-              spellCheck={false}
-            />
-          )}
-        </div>
-
-        {/* Status bar */}
-        <div className="flex items-center justify-between px-4 py-2 border-t border-bd-0 bg-bg-1 text-xs text-fg-3">
-          <span>{content.split('\n').length} lines</span>
-          <span>{hasChanges ? 'Modified' : 'Saved'}</span>
         </div>
       </div>
 

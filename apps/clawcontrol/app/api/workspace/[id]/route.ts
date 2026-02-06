@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { enforceTypedConfirm } from '@/lib/with-governor'
 import type { ActionKind } from '@clawcontrol/core'
-import { readWorkspaceFileById, writeWorkspaceFileById, deleteWorkspaceEntry } from '@/lib/fs/workspace-fs'
+import { readWorkspaceFileById, writeWorkspaceFileById, deleteWorkspaceEntry, decodeWorkspaceId } from '@/lib/fs/workspace-fs'
 
 // Protected file mapping
 const PROTECTED_FILES: Record<string, ActionKind> = {
@@ -11,7 +11,7 @@ const PROTECTED_FILES: Record<string, ActionKind> = {
 
 function getFileNameFromWorkspaceId(id: string): string | undefined {
   try {
-    const decoded = Buffer.from(id, 'base64url').toString('utf8')
+    const decoded = decodeWorkspaceId(id)
     return decoded.split('/').filter(Boolean).pop()
   } catch {
     return undefined

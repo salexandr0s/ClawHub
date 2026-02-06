@@ -3,7 +3,7 @@
 import { useState, useMemo, useDeferredValue } from 'react'
 import { Bot, Clock, AlertCircle, CheckCircle, Pause, RefreshCw, Search, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { StationIcon } from '@/components/station-icon'
+import { AgentAvatar } from '@/components/ui/agent-avatar'
 import type { ConsoleSessionDTO } from '@/app/api/openclaw/console/sessions/route'
 import type { AvailabilityStatus } from '@/lib/openclaw/availability'
 import type { AgentDTO } from '@/lib/repo'
@@ -20,7 +20,7 @@ interface SessionListProps {
   agentsBySessionKey: Record<string, AgentDTO>
   onSync: () => void
   syncing: boolean
-  onEndSession: (sessionId: string) => void
+  onEndSession: (session: ConsoleSessionDTO) => void
   endingSessionIds: Record<string, boolean>
 }
 
@@ -83,11 +83,13 @@ export function SessionList({
       const agent = agentsBySessionKey[s.sessionKey]
       const displayName = (agent?.name || s.agentId || '').toLowerCase()
       const sessionKey = (s.sessionKey || '').toLowerCase()
+      const source = (s.source || '').toLowerCase()
       const kind = (s.kind || '').toLowerCase()
       const model = (s.model || '').toLowerCase()
       return (
         displayName.includes(q) ||
         sessionKey.includes(q) ||
+        source.includes(q) ||
         kind.includes(q) ||
         model.includes(q)
       )
@@ -181,8 +183,8 @@ export function SessionList({
             {filteredSessions.map((session) => {
               const agent = agentsBySessionKey[session.sessionKey]
               const displayName = agent?.name || session.agentId
+              const sessionTitle = session.sessionKey || session.sessionId
               const ending = Boolean(endingSessionIds[session.sessionId])
-              const canEnd = session.sessionKey !== 'main'
 
               return (
                 <div
@@ -199,12 +201,23 @@ export function SessionList({
                   {/* Agent name + state */}
                   <div className="flex items-center gap-2">
                     {agent ? (
-                      <StationIcon stationId={agent.station} size="md" className="flex-shrink-0" />
+                      <AgentAvatar
+                        agentId={agent.id}
+                        name={agent.displayName || agent.name || session.agentId}
+                        size="sm"
+                        className="flex-shrink-0"
+                      />
                     ) : (
                       <Bot className="w-4 h-4 text-status-progress flex-shrink-0" />
                     )}
-                    <span className="text-sm font-mono text-fg-0 truncate">
-                      {displayName}
+                    <span
+                      className="text-xs font-mono text-fg-0 break-all line-clamp-2 leading-snug"
+                      title={session.sessionKey}
+                    >
+                      {sessionTitle}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-[var(--radius-sm)] text-[10px] font-medium bg-bg-2 text-fg-2 flex-shrink-0">
+                      {session.source}
                     </span>
                     <div className="ml-auto flex-shrink-0">
                       {getStateIcon(session.state)}
@@ -213,6 +226,8 @@ export function SessionList({
 
                   {/* Session info */}
                   <div className="mt-1.5 flex items-center gap-2 text-xs text-fg-3">
+                    <span className="truncate">{displayName}</span>
+                    <span className="text-fg-3/50">·</span>
                     <span className="truncate">{session.kind}</span>
                     <span className="text-fg-3/50">·</span>
                     <span className="flex-shrink-0">
@@ -255,17 +270,17 @@ export function SessionList({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation()
-                      if (!canEnd || ending) return
-                      onEndSession(session.sessionId)
+                      if (ending) return
+                      onEndSession(session)
                     }}
-                    disabled={!canEnd || ending}
+                    disabled={ending}
                     className={cn(
                       'absolute top-2.5 right-2.5 p-1 rounded-[var(--radius-sm)] transition-colors',
-                      !canEnd || ending
+                      ending
                         ? 'text-fg-3/60 cursor-not-allowed'
                         : 'text-fg-3 hover:text-status-danger hover:bg-bg-1'
                     )}
-                    title={canEnd ? 'End session' : 'Main session cannot be ended'}
+                    title="End session"
                   >
                     {ending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
                   </button>

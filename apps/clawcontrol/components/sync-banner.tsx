@@ -1,10 +1,11 @@
 'use client'
 
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useSyncStatus } from '@/lib/hooks/useSyncStatus'
 import { useGatewayStatus } from '@/lib/hooks/useGatewayStatus'
 
-export function SyncBanner() {
+export function SyncBanner({ className, withMargin = true }: { className?: string; withMargin?: boolean }) {
   const { status, loading, syncing, triggerSync } = useSyncStatus()
   const { isOnline, loading: gatewayLoading } = useGatewayStatus()
 
@@ -12,7 +13,13 @@ export function SyncBanner() {
 
   if (!gatewayLoading && !isOnline) {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-status-danger bg-status-danger/10 px-3 py-2 text-xs text-status-danger">
+      <div
+        className={cn(
+          withMargin && 'mb-3',
+          'flex items-center gap-2 rounded-[var(--radius-md)] border border-status-danger bg-status-danger/10 px-3 py-2 text-xs text-status-danger',
+          className
+        )}
+      >
         <AlertTriangle className="h-4 w-4 shrink-0" />
         <span>OpenClaw gateway is offline. Data may be stale.</span>
       </div>
@@ -23,7 +30,13 @@ export function SyncBanner() {
 
   if (bootError) {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-status-warning bg-status-warning/10 px-3 py-2 text-xs text-status-warning">
+      <div
+        className={cn(
+          withMargin && 'mb-3',
+          'flex items-center gap-2 rounded-[var(--radius-md)] border border-status-warning bg-status-warning/10 px-3 py-2 text-xs text-status-warning',
+          className
+        )}
+      >
         <AlertTriangle className="h-4 w-4 shrink-0" />
         <span className="truncate">OpenClaw sync failed at boot: {bootError}</span>
         <button
@@ -41,7 +54,13 @@ export function SyncBanner() {
 
   if (status.stale) {
     return (
-      <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-md)] border border-status-warning bg-status-warning/10 px-3 py-2 text-xs text-status-warning">
+      <div
+        className={cn(
+          withMargin && 'mb-3',
+          'flex items-center gap-2 rounded-[var(--radius-md)] border border-status-warning bg-status-warning/10 px-3 py-2 text-xs text-status-warning',
+          className
+        )}
+      >
         <AlertTriangle className="h-4 w-4 shrink-0" />
         <span>OpenClaw data is stale.</span>
         <button

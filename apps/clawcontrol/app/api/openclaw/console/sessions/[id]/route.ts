@@ -68,6 +68,7 @@ export async function GET(
 
 interface EndSessionRequestBody {
   deleteTranscript?: boolean
+  sessionKey?: string
 }
 
 /**
@@ -91,14 +92,30 @@ export async function DELETE(
   }
 
   const deleteTranscript = body.deleteTranscript !== false
+  const bodySessionKey = typeof body.sessionKey === 'string' ? body.sessionKey.trim() : ''
+  const idLooksLikeSessionKey = sessionId.includes(':')
 
-  const session = await prisma.agentSession.findUnique({
+  const sessionById = await prisma.agentSession.findUnique({
     where: { sessionId },
   })
+  const sessionByBodyKey = !sessionById && bodySessionKey
+    ? await prisma.agentSession.findFirst({
+        where: { sessionKey: bodySessionKey },
+        orderBy: { updatedAt: 'desc' },
+      })
+    : null
+  const sessionByRouteKey = !sessionById && !sessionByBodyKey && idLooksLikeSessionKey
+    ? await prisma.agentSession.findFirst({
+        where: { sessionKey: sessionId },
+        orderBy: { updatedAt: 'desc' },
+      })
+    : null
+  const session = sessionById ?? sessionByBodyKey ?? sessionByRouteKey
+  const targetSessionKey = bodySessionKey || session?.sessionKey || (idLooksLikeSessionKey ? sessionId : '')
 
-  if (!session) {
+  if (!targetSessionKey) {
     return NextResponse.json(
-      { ok: false, error: 'Session not found', code: 'SESSION_NOT_FOUND' },
+      { ok: false, error: 'Session not found', code: 'SESSION_NOT_FOUND_OR_KEY_MISSING' },
       { status: 404 }
     )
   }
@@ -120,14 +137,14 @@ export async function DELETE(
   const startTime = Date.now()
 
   const receipt = await repos.receipts.create({
-    workOrderId: session.workOrderId ?? 'console',
-    operationId: session.operationId,
+    workOrderId: session?.workOrderId ?? 'console',
+    operationId: session?.operationId,
     kind: 'manual',
     commandName: 'console.session.end',
     commandArgs: {
       sessionId,
-      sessionKey: session.sessionKey,
-      agentId: session.agentId,
+      sessionKey: targetSessionKey,
+      agentId: session?.agentId ?? 'unknown',
       deleteTranscript,
     },
   })
@@ -136,13 +153,13 @@ export async function DELETE(
     type: 'openclaw.session.end',
     actor: actor || 'operator:unknown',
     entityType: 'session',
-    entityId: session.sessionKey,
-    summary: `End session ${session.sessionKey}`,
+    entityId: targetSessionKey,
+    summary: `End session ${targetSessionKey}`,
     payloadJson: {
       receiptId: receipt.id,
       sessionId,
-      sessionKey: session.sessionKey,
-      agentId: session.agentId,
+      sessionKey: targetSessionKey,
+      agentId: session?.agentId ?? 'unknown',
       deleteTranscript,
     },
   })
@@ -150,7 +167,7 @@ export async function DELETE(
   try {
     const client = getWsConsoleClient()
     const result = await client.sessionsDelete({
-      key: session.sessionKey,
+      key: targetSessionKey,
       deleteTranscript,
     })
 
@@ -166,7 +183,7 @@ export async function DELETE(
     })
 
     // Keep telemetry cache aligned with gateway result.
-    await prisma.agentSession.delete({ where: { sessionId } }).catch(() => {})
+    await prisma.agentSession.deleteMany({ where: { sessionKey: targetSessionKey } }).catch(() => {})
 
     return NextResponse.json({
       ok: true,
@@ -183,7 +200,7 @@ export async function DELETE(
       parsedJson: {
         error: message,
         sessionId,
-        sessionKey: session.sessionKey,
+        sessionKey: targetSessionKey,
       },
     })
 

@@ -12,6 +12,7 @@ export interface ConsoleSessionDTO {
   id: string
   sessionId: string
   sessionKey: string
+  source: string
   agentId: string
   kind: string
   model: string | null
@@ -36,6 +37,43 @@ interface SessionsResponse {
 const AUTO_SYNC_TTL_MS = 4000
 let lastAutoSyncAtMs = 0
 let autoSyncInFlight: Promise<{ seen: number; upserted: number }> | null = null
+
+function normalizeSourceLabel(value: string): string {
+  const key = value.trim().toLowerCase()
+  if (!key) return 'unknown'
+
+  const map: Record<string, string> = {
+    agent: 'overlay',
+    webchat: 'web',
+    browser: 'web',
+    telegram: 'telegram',
+    discord: 'discord',
+    signal: 'signal',
+    whatsapp: 'whatsapp',
+    matrix: 'matrix',
+    slack: 'slack',
+    teams: 'teams',
+  }
+
+  return map[key] ?? key
+}
+
+function deriveSessionSource(sessionKey: string, rawJson: string): string {
+  // Prefer explicit channel/chatType from telemetry payload when present.
+  try {
+    const parsed = JSON.parse(rawJson) as Record<string, unknown>
+    const channel = typeof parsed.channel === 'string' ? parsed.channel : null
+    const chatType = typeof parsed.chatType === 'string' ? parsed.chatType : null
+    if (channel) return normalizeSourceLabel(channel)
+    if (chatType) return normalizeSourceLabel(chatType)
+  } catch {
+    // ignore malformed telemetry payload
+  }
+
+  // Fallback to session key prefix convention: "<source>:<agent>:<label>"
+  const first = sessionKey.split(':')[0] ?? ''
+  return normalizeSourceLabel(first)
+}
 
 async function ensureSessionsSynced(): Promise<{ ok: true } | { ok: false; error: string }> {
   const now = Date.now()
@@ -117,6 +155,7 @@ export async function GET(request: NextRequest) {
       id: r.id,
       sessionId: r.sessionId,
       sessionKey: r.sessionKey,
+      source: deriveSessionSource(r.sessionKey, r.rawJson),
       agentId: r.agentId,
       kind: r.kind,
       model: r.model,

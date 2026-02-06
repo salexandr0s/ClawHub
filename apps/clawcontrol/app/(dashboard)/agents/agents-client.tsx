@@ -464,7 +464,7 @@ export function AgentsClient() {
 
   return (
     <>
-      <div className="w-full space-y-4">
+      <div className={cn('relative w-full space-y-4', editingFile && 'min-h-[70vh]')}>
         <PageHeader
           title="Agents"
           subtitle={activeTab === 'agents' ? `${agents.length} agents configured` : `${stations.length} stations configured`}
@@ -592,6 +592,7 @@ export function AgentsClient() {
                     <AgentCard
                       key={agent.id}
                       agent={agent}
+                      selected={selectedId === agent.id}
                       onProvision={() => handleProvisionAgent(agent)}
                       onTest={() => handleTestAgent(agent)}
                       onEditFile={(filePath, fileName) => handleFileEdit(filePath, fileName)}
@@ -621,6 +622,17 @@ export function AgentsClient() {
             )}
           </>
         )}
+
+        {/* File Editor Modal (contained within page content area) */}
+        {editingFile && (
+          <FileEditorModal
+            isOpen={!!editingFile}
+            onClose={() => setEditingFile(null)}
+            filePath={editingFile.filePath}
+            fileName={editingFile.fileName}
+            onSaved={handleFileSaved}
+          />
+        )}
       </div>
 
       {activeTab === 'agents' && (
@@ -638,17 +650,6 @@ export function AgentsClient() {
             onClose={() => setShowTemplateWizard(false)}
             onSubmit={handleCreateFromTemplate}
           />
-
-          {/* File Editor Modal */}
-          {editingFile && (
-            <FileEditorModal
-              isOpen={!!editingFile}
-              onClose={() => setEditingFile(null)}
-              filePath={editingFile.filePath}
-              fileName={editingFile.fileName}
-              onSaved={handleFileSaved}
-            />
-          )}
 
           {/* Detail Drawer */}
           <RightDrawer

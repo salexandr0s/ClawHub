@@ -25,14 +25,24 @@ export interface WorkspaceEntryWithContent extends WorkspaceEntry {
   content: string
 }
 
+function toBase64Url(base64: string): string {
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+}
+
+function fromBase64Url(base64url: string): string {
+  const normalized = base64url.replace(/-/g, '+').replace(/_/g, '/')
+  const padding = (4 - (normalized.length % 4)) % 4
+  return normalized + '='.repeat(padding)
+}
+
 // We encode the workspace-relative full path (e.g. "/agents/foo.md") as id.
 export function encodeWorkspaceId(fullPath: string): string {
   const normalized = fullPath.startsWith('/') ? fullPath : `/${fullPath}`
-  return Buffer.from(normalized, 'utf8').toString('base64url')
+  return toBase64Url(Buffer.from(normalized, 'utf8').toString('base64'))
 }
 
 export function decodeWorkspaceId(id: string): string {
-  const decoded = Buffer.from(id, 'base64url').toString('utf8')
+  const decoded = Buffer.from(fromBase64Url(id), 'base64').toString('utf8')
   if (!decoded.startsWith('/')) return `/${decoded}`
   return decoded
 }

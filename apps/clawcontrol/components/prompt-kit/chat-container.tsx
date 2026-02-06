@@ -23,7 +23,10 @@ export function ChatContainer({ children, className, contentClassName }: ChatCon
         ref={scrollRef}
         className="h-full overflow-y-auto"
       >
-        <div ref={contentRef} className={cn('space-y-4', contentClassName)}>
+        <div
+          ref={contentRef}
+          className={cn('space-y-4 px-4 py-4 md:px-5', contentClassName)}
+        >
           {children}
         </div>
       </div>

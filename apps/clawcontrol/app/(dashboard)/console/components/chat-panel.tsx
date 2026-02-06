@@ -1,8 +1,9 @@
 'use client'
 
+import { useCallback, useRef, useState, type DragEvent } from 'react'
 import { Terminal, Bot, XCircle, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { StationIcon } from '@/components/station-icon'
+import { AgentAvatar } from '@/components/ui/agent-avatar'
 import { ChatContainer, Message, PromptInput, type PromptSubmitPayload } from '@/components/prompt-kit'
 import { SessionActivity } from './session-activity'
 import type { ConsoleSessionDTO } from '@/app/api/openclaw/console/sessions/route'
@@ -47,6 +48,11 @@ export function ChatPanel({
   loading,
   onRefresh,
 }: ChatPanelProps) {
+  const [externalDropBatch, setExternalDropBatch] = useState<{ id: number; files: File[] } | null>(null)
+  const [isPanelDragOver, setIsPanelDragOver] = useState(false)
+  const dragDepthRef = useRef(0)
+  const dropBatchIdRef = useRef(0)
+
   const headerAgent = session ? agentsBySessionKey[session.sessionKey] : undefined
   const headerName = session ? (headerAgent?.name || session.agentId) : ''
 
@@ -68,13 +74,64 @@ export function ChatPanel({
     : gatewayStatus === 'degraded' ? 'Gateway degraded'
     : 'Gateway unavailable'
 
+  const hasFileDrag = useCallback((event: DragEvent<HTMLElement>): boolean => {
+    const types = event.dataTransfer?.types
+    if (!types) return false
+    return Array.from(types).includes('Files')
+  }, [])
+
+  const handlePanelDragEnter = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    dragDepthRef.current += 1
+    setIsPanelDragOver(true)
+  }, [hasFileDrag])
+
+  const handlePanelDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+    setIsPanelDragOver(true)
+  }, [hasFileDrag])
+
+  const handlePanelDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+    if (dragDepthRef.current === 0) {
+      setIsPanelDragOver(false)
+    }
+  }, [hasFileDrag])
+
+  const handlePanelDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    dragDepthRef.current = 0
+    setIsPanelDragOver(false)
+    const files = Array.from(event.dataTransfer.files ?? [])
+    if (files.length === 0) return
+    dropBatchIdRef.current += 1
+    setExternalDropBatch({ id: dropBatchIdRef.current, files })
+  }, [hasFileDrag])
+
   return (
-    <div className="flex-1 flex flex-col bg-bg-0 min-w-0">
+    <div
+      className="relative flex-1 flex flex-col bg-bg-0 min-w-0"
+      onDragEnter={handlePanelDragEnter}
+      onDragOver={handlePanelDragOver}
+      onDragLeave={handlePanelDragLeave}
+      onDrop={handlePanelDrop}
+    >
       {/* Session header - only show when session selected */}
       {session && (
         <div className="px-4 py-3 border-b border-bd-0 flex items-center gap-3">
           {headerAgent ? (
-            <StationIcon stationId={headerAgent.station} size="md" className="w-5 h-5" />
+            <AgentAvatar
+              agentId={headerAgent.id}
+              name={headerAgent.displayName || headerAgent.name || session.agentId}
+              size="sm"
+              className="w-5 h-5"
+            />
           ) : (
             <Bot className="w-5 h-5 text-status-progress" />
           )}
@@ -212,7 +269,16 @@ export function ChatPanel({
         onSubmit={onSend}
         disabled={inputDisabled}
         placeholder={getPlaceholder()}
+        externalDropBatch={externalDropBatch}
       />
+
+      {isPanelDragOver && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-bg-0/35">
+          <div className="rounded-[var(--radius-lg)] border border-status-info/50 bg-bg-1/95 px-4 py-2 text-sm text-fg-1 shadow-md shadow-black/20">
+            Drop images to attach
+          </div>
+        </div>
+      )}
     </div>
   )
 }

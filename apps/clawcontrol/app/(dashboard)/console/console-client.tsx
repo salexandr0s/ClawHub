@@ -42,6 +42,7 @@ function areConsoleSessionsEquivalent(a: ConsoleSessionDTO[], b: ConsoleSessionD
     const prev = a[i]
     const next = b[i]
     if (prev.sessionId !== next.sessionId) return false
+    if (prev.source !== next.source) return false
     if (prev.state !== next.state) return false
     if (prev.percentUsed !== next.percentUsed) return false
     if (prev.abortedLastRun !== next.abortedLastRun) return false
@@ -229,19 +230,27 @@ export function ConsoleClient() {
     await abort(selectedSessionId, currentRunId)
   }, [abort, currentRunId, isStreaming, selectedSessionId])
 
-  const handleEndSession = useCallback(async (sessionId: string) => {
+  const handleEndSession = useCallback(async (session: ConsoleSessionDTO) => {
+    const sessionId = session.sessionId
+    const sessionKey = session.sessionKey
     setEndingSessionIds((prev) => ({ ...prev, [sessionId]: true }))
     try {
       const res = await fetch(`/api/openclaw/console/sessions/${sessionId}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionKey }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => null)
         throw new Error(data?.error || 'Failed to end session')
       }
 
-      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId))
-      if (selectedSessionId === sessionId) {
+      setSessions((prev) => prev.filter((s) => s.sessionKey !== sessionKey))
+
+      const selectedSession = sessions.find((s) => s.sessionId === selectedSessionId) ?? null
+      if (selectedSession?.sessionKey === sessionKey) {
         setSelectedSessionId(null)
         resetChat()
       }
@@ -257,7 +266,7 @@ export function ConsoleClient() {
         return next
       })
     }
-  }, [fetchSessions, resetChat, selectedSessionId])
+  }, [fetchSessions, resetChat, selectedSessionId, sessions])
 
   // ============================================================================
   // RENDER

@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type DragEvent,
   type KeyboardEvent,
 } from 'react'
 import Image from 'next/image'
@@ -33,6 +34,7 @@ export interface PromptInputProps {
   maxLength?: number
   className?: string
   showCharCount?: boolean
+  externalDropBatch?: { id: number; files: File[] } | null
 }
 
 const DEFAULT_MAX_LEN = 10_000
@@ -47,13 +49,16 @@ export function PromptInput({
   maxLength = DEFAULT_MAX_LEN,
   className,
   showCharCount = true,
+  externalDropBatch = null,
 }: PromptInputProps) {
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<PromptInputAttachment[]>([])
   const [attachmentError, setAttachmentError] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const dragDepthRef = useRef(0)
 
   const canSend = useMemo(() => {
     return !disabled && !isSubmitting && (value.trim().length > 0 || attachments.length > 0)
@@ -107,10 +112,8 @@ export function PromptInput({
     fileInputRef.current?.click()
   }, [disabled, isSubmitting])
 
-  const onFilesChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? [])
+  const addFiles = useCallback(async (files: File[]) => {
     if (files.length === 0) return
-
     const slotsLeft = Math.max(0, MAX_ATTACHMENTS - attachments.length)
     const selected = files.slice(0, slotsLeft)
     const next: PromptInputAttachment[] = []
@@ -150,18 +153,77 @@ export function PromptInput({
     } else if (errorMessage) {
       setAttachmentError(errorMessage)
     }
+  }, [attachments.length])
+
+  const onFilesChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? [])
+    await addFiles(files)
 
     if (event.target) {
       event.target.value = ''
     }
-  }, [attachments.length])
+  }, [addFiles])
+
+  useEffect(() => {
+    if (!externalDropBatch || externalDropBatch.files.length === 0) return
+    void addFiles(externalDropBatch.files)
+  }, [addFiles, externalDropBatch])
+
+  const hasFileDrag = (event: DragEvent): boolean => {
+    const types = event.dataTransfer?.types
+    if (!types) return false
+    return Array.from(types).includes('Files')
+  }
+
+  const handleDragEnter = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    dragDepthRef.current += 1
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1)
+    if (dragDepthRef.current === 0) {
+      setIsDragOver(false)
+    }
+  }, [])
+
+  const handleDrop = useCallback(async (event: DragEvent<HTMLDivElement>) => {
+    if (!hasFileDrag(event)) return
+    event.preventDefault()
+    event.stopPropagation()
+    dragDepthRef.current = 0
+    setIsDragOver(false)
+    const files = Array.from(event.dataTransfer.files ?? [])
+    await addFiles(files)
+  }, [addFiles])
 
   const removeAttachment = useCallback((index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index))
   }, [])
 
   return (
-    <div className={cn('border-t border-bd-0 bg-bg-1 px-4 py-3', className)}>
+    <div
+      className={cn(
+        'border-t border-bd-0 bg-bg-1 px-4 pt-3 pb-2',
+        isDragOver && 'bg-bg-2/70',
+        className
+      )}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {attachments.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2">
           {attachments.map((attachment, idx) => (
@@ -195,7 +257,8 @@ export function PromptInput({
 
       <div
         className={cn(
-          'flex items-end gap-2 rounded-[var(--radius-lg)] border px-3 py-2.5',
+          'flex items-center gap-2 rounded-[var(--radius-lg)] border px-3 py-2.5',
+          isDragOver && 'border-status-info/50',
           disabled
             ? 'border-bd-0 bg-bg-2 opacity-80'
             : 'border-bd-0 bg-bg-0 shadow-sm shadow-black/10'
@@ -237,7 +300,7 @@ export function PromptInput({
           maxLength={maxLength}
           className={cn(
             'flex-1 resize-none bg-transparent text-sm text-fg-0 placeholder:text-fg-3',
-            'focus:outline-none min-h-[44px] max-h-[180px] py-1',
+            'focus:outline-none min-h-[38px] max-h-[180px] py-1 leading-6',
             'font-mono'
           )}
         />
@@ -267,14 +330,14 @@ export function PromptInput({
           )}
           title={disabled ? 'Disabled' : 'Send'}
         >
-          <Send className="w-4.5 h-4.5" />
+          <Send className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="mt-2 border-t border-bd-0/60 pt-2 flex items-center justify-between text-[10px] text-fg-3">
+      <div className="mt-1.5 flex items-center justify-between text-[10px] text-fg-3">
         <span className="inline-flex items-center gap-1.5">
           <ImagePlus className="w-3 h-3" />
-          Enter to send • Shift+Enter newline
+          Enter to send • Shift+Enter newline • Drag images to attach
         </span>
         {showCharCount && (
           <span className="font-mono text-fg-3/70">

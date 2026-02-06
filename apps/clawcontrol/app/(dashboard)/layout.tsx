@@ -28,8 +28,19 @@ export default function DashboardLayout({
         onSearchClick={search.onOpen}
         contentPadding={isConsoleRoute ? 'none' : 'default'}
       >
-        <SyncBanner />
-        {children}
+        {isConsoleRoute ? (
+          <div className="relative h-full">
+            <div className="pointer-events-none absolute inset-x-3 top-3 z-20">
+              <SyncBanner withMargin={false} className="pointer-events-auto" />
+            </div>
+            {children}
+          </div>
+        ) : (
+          <>
+            <SyncBanner />
+            {children}
+          </>
+        )}
       </AppShell>
       <SearchModal open={search.open} onClose={search.onClose} />
     </ProtectedActionProvider>
