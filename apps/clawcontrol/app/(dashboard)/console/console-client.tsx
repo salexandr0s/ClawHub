@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { agentsApi } from '@/lib/http'
 import { useGatewayChat } from '@/lib/hooks/useGatewayChat'
 import { useChatStore, type ChatMessage } from '@/lib/stores/chat-store'
+import type { PromptSubmitPayload } from '@/components/prompt-kit'
 import { SessionList } from './components/session-list'
 import { ChatPanel } from './components/chat-panel'
 import type { ConsoleSessionDTO } from '@/app/api/openclaw/console/sessions/route'
@@ -65,6 +66,7 @@ export function ConsoleClient() {
   const [gatewayAvailable, setGatewayAvailable] = useState(true)
   const [agentsBySessionKey, setAgentsBySessionKey] = useState<Record<string, AgentDTO>>({})
   const [syncingSessions, setSyncingSessions] = useState(false)
+  const [endingSessionIds, setEndingSessionIds] = useState<Record<string, boolean>>({})
 
   // Refs for retry logic
   const retryCountRef = useRef(0)
@@ -195,9 +197,9 @@ export function ConsoleClient() {
     setSelectedSessionId(sessionId)
   }, [])
 
-  const handleSendMessage = useCallback(async (content: string) => {
+  const handleSendMessage = useCallback(async (payload: PromptSubmitPayload) => {
     if (!selectedSessionId || isStreaming) return
-    await sendMessage(selectedSessionId, content)
+    await sendMessage(selectedSessionId, payload)
   }, [selectedSessionId, isStreaming, sendMessage])
 
   const handleRefresh = useCallback(() => {
@@ -226,6 +228,36 @@ export function ConsoleClient() {
     if (!selectedSessionId || !isStreaming) return
     await abort(selectedSessionId, currentRunId)
   }, [abort, currentRunId, isStreaming, selectedSessionId])
+
+  const handleEndSession = useCallback(async (sessionId: string) => {
+    setEndingSessionIds((prev) => ({ ...prev, [sessionId]: true }))
+    try {
+      const res = await fetch(`/api/openclaw/console/sessions/${sessionId}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        throw new Error(data?.error || 'Failed to end session')
+      }
+
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId))
+      if (selectedSessionId === sessionId) {
+        setSelectedSessionId(null)
+        resetChat()
+      }
+
+      // Pull fresh state from telemetry cache after mutation.
+      await fetchSessions()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to end session')
+    } finally {
+      setEndingSessionIds((prev) => {
+        const next = { ...prev }
+        delete next[sessionId]
+        return next
+      })
+    }
+  }, [fetchSessions, resetChat, selectedSessionId])
 
   // ============================================================================
   // RENDER
@@ -284,6 +316,8 @@ export function ConsoleClient() {
               agentsBySessionKey={agentsBySessionKey}
               onSync={handleSync}
               syncing={syncingSessions}
+              onEndSession={handleEndSession}
+              endingSessionIds={endingSessionIds}
             />
 
             {/* Chat panel (main area) */}

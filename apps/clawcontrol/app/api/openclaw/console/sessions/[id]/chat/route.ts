@@ -14,7 +14,22 @@ import { getRequestActor } from '@/lib/request-actor'
 // ============================================================================
 
 interface ChatRequestBody {
-  text: string
+  text?: string
+  attachments?: ChatAttachmentInput[]
+}
+
+interface ChatAttachmentInput {
+  type?: unknown
+  mimeType?: unknown
+  fileName?: unknown
+  content?: unknown
+}
+
+interface NormalizedChatAttachment {
+  type: string
+  mimeType: string
+  fileName: string
+  content: string
 }
 
 // ============================================================================
@@ -32,7 +47,8 @@ interface ChatRequestBody {
  * Returns SSE stream with response chunks from the agent.
  *
  * Request body:
- * - text: Message to send (required, 1-10000 chars)
+ * - text: Message text (optional when attachments are present, max 10000 chars)
+ * - attachments: Optional image attachments (base64/data URL)
  */
 export async function POST(
   request: NextRequest,
@@ -52,19 +68,19 @@ export async function POST(
     )
   }
 
-  const { text } = body
+  const text = typeof body.text === 'string' ? body.text.trim() : ''
+  const attachments = normalizeAttachments(body.attachments)
 
-  // Validate text
-  if (!text || typeof text !== 'string') {
+  if (!text && attachments.length === 0) {
     return NextResponse.json(
-      { ok: false, error: 'Message text is required', code: 'MISSING_TEXT' },
+      { ok: false, error: 'Message text or attachment is required', code: 'MISSING_TEXT' },
       { status: 400 }
     )
   }
 
-  if (text.length === 0 || text.length > 10000) {
+  if (text.length > 10000) {
     return NextResponse.json(
-      { ok: false, error: 'Message must be 1-10000 characters', code: 'INVALID_TEXT_LENGTH' },
+      { ok: false, error: 'Message must be <= 10000 characters', code: 'INVALID_TEXT_LENGTH' },
       { status: 400 }
     )
   }
@@ -110,6 +126,7 @@ export async function POST(
       sessionKey: session.sessionKey,
       agentId: session.agentId,
       messagePreview: text.slice(0, 100),
+      attachmentCount: attachments.length,
       mode: 'session_chat', // TRUE session injection
       idempotencyKey,
     },
@@ -128,6 +145,7 @@ export async function POST(
       sessionId,
       sessionKey: session.sessionKey,
       messageLength: text.length,
+      attachmentCount: attachments.length,
       mode: 'session_chat',
       idempotencyKey,
     },
@@ -156,6 +174,7 @@ export async function POST(
         const sendResult = await client.chatSend({
           sessionKey: session.sessionKey,
           message: text,
+          attachments,
           idempotencyKey,
         })
 
@@ -318,4 +337,34 @@ function extractTextContent(message: unknown): string | null {
   }
 
   return null
+}
+
+function normalizeAttachments(input: ChatAttachmentInput[] | undefined): NormalizedChatAttachment[] {
+  if (!Array.isArray(input)) return []
+
+  const normalized: NormalizedChatAttachment[] = []
+  for (const raw of input) {
+    const content = typeof raw?.content === 'string' ? raw.content.trim() : ''
+    if (!content) continue
+
+    const mimeType = typeof raw?.mimeType === 'string' && raw.mimeType.trim().length > 0
+      ? raw.mimeType.trim()
+      : 'image/png'
+    const type = typeof raw?.type === 'string' && raw.type.trim().length > 0
+      ? raw.type.trim()
+      : 'image'
+    const fileName = typeof raw?.fileName === 'string' && raw.fileName.trim().length > 0
+      ? raw.fileName.trim()
+      : 'attachment'
+
+    normalized.push({
+      type,
+      mimeType,
+      fileName,
+      content,
+    })
+  }
+
+  // Keep a hard cap to prevent oversized payload abuse.
+  return normalized.slice(0, 8)
 }

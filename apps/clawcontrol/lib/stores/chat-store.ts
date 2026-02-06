@@ -2,10 +2,18 @@ import { create } from 'zustand'
 
 export type ChatRole = 'operator' | 'agent' | 'system'
 
+export interface ChatAttachment {
+  type: 'image'
+  mimeType: string
+  fileName: string
+  content: string
+}
+
 export interface ChatMessage {
   id: string
   role: ChatRole
   content: string
+  attachments?: ChatAttachment[]
   timestamp: Date
   pending?: boolean
   streaming?: boolean
@@ -60,4 +68,3 @@ export const useChatStore = create<ChatState>((set) => ({
       currentRunId: null,
     }),
 }))
-

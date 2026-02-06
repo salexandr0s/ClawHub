@@ -30,6 +30,8 @@ import {
   type ChatAbortParams,
   type ChatAbortResult,
   type ChatEvent,
+  type SessionsDeleteParams,
+  type SessionsDeleteResult,
 } from '@clawcontrol/adapters-openclaw'
 
 // ============================================================================
@@ -69,6 +71,8 @@ export type {
   ChatAbortParams,
   ChatAbortResult,
   ChatEvent,
+  SessionsDeleteParams,
+  SessionsDeleteResult,
 }
 
 // ============================================================================
@@ -297,6 +301,20 @@ export async function abortSessionChat(
 ): Promise<ChatAbortResult> {
   const client = getWsConsoleClient()
   return client.chatAbort({ sessionKey, runId })
+}
+
+/**
+ * End/delete a session from OpenClaw.
+ *
+ * Note:
+ * - Main session cannot be deleted by gateway policy.
+ * - By default transcript is archived/deleted server-side.
+ */
+export async function deleteSession(
+  params: SessionsDeleteParams
+): Promise<SessionsDeleteResult> {
+  const client = getWsConsoleClient()
+  return client.sessionsDelete(params)
 }
 
 /**

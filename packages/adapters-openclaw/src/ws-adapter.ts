@@ -51,6 +51,8 @@ import type {
   ChatEvent,
   SessionsListParams,
   SessionsListResult,
+  SessionsDeleteParams,
+  SessionsDeleteResult,
   GatewayClientId,
   GatewayClientMode,
   DeviceIdentity as _DeviceIdentity,
@@ -478,6 +480,14 @@ export class WsAdapter implements OpenClawWsAdapter {
 
   async sessionsList(params?: SessionsListParams): Promise<SessionsListResult> {
     return this.request<SessionsListResult>('sessions.list', params ?? {})
+  }
+
+  async sessionsDelete(params: SessionsDeleteParams): Promise<SessionsDeleteResult> {
+    if (this.isReadonly) {
+      throw new Error('sessionsDelete requires readwrite mode (wsReadonly: false)')
+    }
+
+    return this.request<SessionsDeleteResult>('sessions.delete', params)
   }
 
   // ============================================================================

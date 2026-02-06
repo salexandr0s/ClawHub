@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useChatStore } from '@/lib/stores/chat-store'
+import { useChatStore, type ChatAttachment } from '@/lib/stores/chat-store'
 
 type SseJson =
   | { chunk: string }
@@ -55,12 +55,13 @@ export function useGatewayChat() {
   } = useChatStore()
 
   const sendMessage = useCallback(
-    async (sessionId: string, text: string) => {
+    async (sessionId: string, payload: { text: string; attachments?: ChatAttachment[] }) => {
       if (!sessionId) return
       if (isStreaming) return
 
-      const content = text.trim()
-      if (!content) return
+      const content = payload.text.trim()
+      const attachments = payload.attachments ?? []
+      if (!content && attachments.length === 0) return
 
       setError(null)
       setStreaming(true)
@@ -73,7 +74,8 @@ export function useGatewayChat() {
       addMessage({
         id: operatorMessageId,
         role: 'operator',
-        content,
+        content: content || `Sent ${attachments.length} attachment${attachments.length === 1 ? '' : 's'}`,
+        attachments,
         timestamp: new Date(),
         pending: true,
       })
@@ -92,7 +94,10 @@ export function useGatewayChat() {
         const res = await fetch(`/api/openclaw/console/sessions/${sessionId}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: content }),
+          body: JSON.stringify({
+            text: content,
+            attachments: attachments.length > 0 ? attachments : undefined,
+          }),
         })
 
         if (!res.ok) {

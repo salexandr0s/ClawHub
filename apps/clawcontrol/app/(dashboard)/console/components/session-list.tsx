@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useDeferredValue } from 'react'
-import { Bot, Clock, AlertCircle, CheckCircle, Pause, RefreshCw, Search } from 'lucide-react'
+import { Bot, Clock, AlertCircle, CheckCircle, Pause, RefreshCw, Search, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { StationIcon } from '@/components/station-icon'
 import type { ConsoleSessionDTO } from '@/app/api/openclaw/console/sessions/route'
@@ -20,6 +20,8 @@ interface SessionListProps {
   agentsBySessionKey: Record<string, AgentDTO>
   onSync: () => void
   syncing: boolean
+  onEndSession: (sessionId: string) => void
+  endingSessionIds: Record<string, boolean>
 }
 
 type FilterState = 'all' | 'active' | 'idle' | 'error'
@@ -64,6 +66,8 @@ export function SessionList({
   agentsBySessionKey,
   onSync,
   syncing,
+  onEndSession,
+  endingSessionIds,
 }: SessionListProps) {
   const [filter, setFilter] = useState<FilterState>('all')
   const [query, setQuery] = useState('')
@@ -177,18 +181,21 @@ export function SessionList({
             {filteredSessions.map((session) => {
               const agent = agentsBySessionKey[session.sessionKey]
               const displayName = agent?.name || session.agentId
+              const ending = Boolean(endingSessionIds[session.sessionId])
+              const canEnd = session.sessionKey !== 'main'
 
               return (
-                <button
+                <div
                   key={session.sessionId}
-                  onClick={() => onSelect(session.sessionId)}
                   className={cn(
-                    'w-full p-3 text-left transition-colors',
-                    selectedId === session.sessionId
-                      ? 'bg-bg-3'
-                      : 'hover:bg-bg-2'
+                    'relative',
+                    selectedId === session.sessionId ? 'bg-bg-3' : 'hover:bg-bg-2'
                   )}
                 >
+                  <button
+                    onClick={() => onSelect(session.sessionId)}
+                    className="w-full p-3 pr-10 text-left transition-colors"
+                  >
                   {/* Agent name + state */}
                   <div className="flex items-center gap-2">
                     {agent ? (
@@ -242,7 +249,27 @@ export function SessionList({
                       <span>Last run aborted</span>
                     </div>
                   )}
-                </button>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      if (!canEnd || ending) return
+                      onEndSession(session.sessionId)
+                    }}
+                    disabled={!canEnd || ending}
+                    className={cn(
+                      'absolute top-2.5 right-2.5 p-1 rounded-[var(--radius-sm)] transition-colors',
+                      !canEnd || ending
+                        ? 'text-fg-3/60 cursor-not-allowed'
+                        : 'text-fg-3 hover:text-status-danger hover:bg-bg-1'
+                    )}
+                    title={canEnd ? 'End session' : 'Main session cannot be ended'}
+                  >
+                    {ending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
               )
             })}
           </div>

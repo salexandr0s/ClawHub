@@ -3,7 +3,7 @@
 import { Terminal, Bot, XCircle, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { StationIcon } from '@/components/station-icon'
-import { ChatContainer, Message, PromptInput } from '@/components/prompt-kit'
+import { ChatContainer, Message, PromptInput, type PromptSubmitPayload } from '@/components/prompt-kit'
 import { SessionActivity } from './session-activity'
 import type { ConsoleSessionDTO } from '@/app/api/openclaw/console/sessions/route'
 import type { ChatMessage } from '@/lib/stores/chat-store'
@@ -17,7 +17,7 @@ import type { AvailabilityStatus } from '@/lib/openclaw/availability'
 interface ChatPanelProps {
   session: ConsoleSessionDTO | null
   messages: ChatMessage[]
-  onSend: (content: string) => void
+  onSend: (payload: PromptSubmitPayload) => void
   streaming: boolean
   runId: string | null
   onAbort: () => void
@@ -196,6 +196,7 @@ export function ChatPanel({
                 key={message.id}
                 role={message.role}
                 content={message.content}
+                attachments={message.attachments}
                 timestamp={message.timestamp}
                 pending={message.pending}
                 streaming={message.streaming}

@@ -501,6 +501,24 @@ export interface SessionsListResult {
   total?: number
 }
 
+/**
+ * sessions.delete params
+ */
+export interface SessionsDeleteParams {
+  key: string
+  deleteTranscript?: boolean
+}
+
+/**
+ * sessions.delete response
+ */
+export interface SessionsDeleteResult {
+  ok: boolean
+  key: string
+  deleted: boolean
+  archived?: string[]
+}
+
 // ============================================================================
 // Extended Adapter Interface for WebSocket
 // ============================================================================
@@ -534,6 +552,11 @@ export interface OpenClawWsAdapter extends OpenClawAdapter {
    * List sessions with metadata
    */
   sessionsList(params?: SessionsListParams): Promise<SessionsListResult>
+
+  /**
+   * Delete/archive a session
+   */
+  sessionsDelete(params: SessionsDeleteParams): Promise<SessionsDeleteResult>
 
   /**
    * Stream chat events for a session/run
