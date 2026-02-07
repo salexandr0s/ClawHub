@@ -8,7 +8,8 @@
  * - Resolves symlinks to prevent escape attacks
  */
 
-import { realpathSync, existsSync, lstatSync } from 'fs'
+import { readFileSync, realpathSync, existsSync, lstatSync } from 'fs'
+import { homedir } from 'os'
 import { resolve, join } from 'path'
 
 // Workspace root: where clawcontrol reads/writes agent files.
@@ -17,6 +18,7 @@ import { resolve, join } from 'path'
 // - OPENCLAW_WORKSPACE (preferred)
 // - CLAWCONTROL_WORKSPACE_ROOT (app-specific)
 // - WORKSPACE_ROOT (legacy)
+// - ~/.openclaw/openclaw.json -> agents.defaults.workspace
 // - Auto-detect: ../../../../.. (when clawcontrol is checked out under ~/clawd/projects/clawcontrol/apps/clawcontrol)
 // - ./workspace (fallback for demo/dev)
 function isWorkspaceMarkerPath(dir: string): boolean {
@@ -55,6 +57,9 @@ function pickWorkspaceRoot(): string {
     if (existsSync(candidate)) return candidate
   }
 
+  const configWorkspace = workspaceFromOpenClawConfig()
+  if (configWorkspace) return configWorkspace
+
   const discovered = findNearestWorkspaceRoot(process.cwd())
   if (discovered) return discovered
 
@@ -63,6 +68,38 @@ function pickWorkspaceRoot(): string {
 
   // Final fallback: current working directory (never auto-fallback to /).
   return resolve(process.cwd())
+}
+
+function toRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  return value as Record<string, unknown>
+}
+
+function toNonEmptyString(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function workspaceFromOpenClawConfig(): string | null {
+  const configPath = join(homedir(), '.openclaw', 'openclaw.json')
+  if (!existsSync(configPath)) return null
+
+  try {
+    const raw = readFileSync(configPath, 'utf8')
+    const root = toRecord(JSON.parse(raw))
+    if (!root) return null
+
+    const agents = toRecord(root.agents)
+    const defaults = toRecord(agents?.defaults)
+    const workspace = toNonEmptyString(defaults?.workspace) ?? toNonEmptyString(root.workspace)
+    if (!workspace) return null
+
+    const resolved = resolve(workspace)
+    return existsSync(resolved) ? resolved : null
+  } catch {
+    return null
+  }
 }
 
 const WORKSPACE_ROOT = pickWorkspaceRoot()

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, dialog } from 'electron'
+import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import fs from 'node:fs'
 import http from 'node:http'
@@ -18,6 +18,7 @@ const SERVER_URL = `http://${SERVER_HOST}:${SERVER_PORT}`
 const SERVER_PROBE_URL = `${SERVER_URL}/api/workspace?path=/`
 const SERVER_CHECK_INTERVAL_MS = 500
 const SERVER_START_TIMEOUT_MS = 30_000
+const PICK_DIRECTORY_CHANNEL = 'clawcontrol:pick-directory'
 
 function isBrokenPipeError(error: unknown): error is NodeJS.ErrnoException {
   if (!(error instanceof Error)) return false
@@ -387,6 +388,23 @@ async function startApp(): Promise<void> {
 }
 
 installStdIoGuards()
+
+ipcMain.handle(PICK_DIRECTORY_CHANNEL, async (_event, payload?: { defaultPath?: string }) => {
+  const options: Electron.OpenDialogOptions = {
+    title: 'Select OpenClaw Workspace',
+    properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
+    defaultPath: payload?.defaultPath,
+    buttonLabel: 'Select',
+  }
+  const result = mainWindow
+    ? await dialog.showOpenDialog(mainWindow, options)
+    : await dialog.showOpenDialog(options)
+
+  return {
+    canceled: result.canceled,
+    path: result.canceled ? null : (result.filePaths[0] ?? null),
+  }
+})
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
 if (!gotSingleInstanceLock) {

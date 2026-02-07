@@ -34,6 +34,14 @@ type OpenClawDiscoverNotFound = {
 
 type OpenClawDiscoverResponse = OpenClawDiscoverOk | OpenClawDiscoverNotFound
 
+declare global {
+  interface Window {
+    clawcontrolDesktop?: {
+      pickDirectory: (defaultPath?: string) => Promise<string | null>
+    }
+  }
+}
+
 export default function SettingsPage() {
   const { mode, setMode, resolved } = useLayout()
   const { theme, setTheme, density, setDensity, skipTypedConfirm, setSkipTypedConfirm } = useSettings()
@@ -43,6 +51,8 @@ export default function SettingsPage() {
   const [envLoading, setEnvLoading] = useState(true)
   const [envError, setEnvError] = useState<string | null>(null)
   const [workspacePath, setWorkspacePath] = useState('')
+  const [pickerAvailable, setPickerAvailable] = useState(false)
+  const [pickingWorkspace, setPickingWorkspace] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
@@ -58,6 +68,10 @@ export default function SettingsPage() {
   useEffect(() => {
     loadEnvConfig()
     loadDiscover()
+
+    if (typeof window !== 'undefined') {
+      setPickerAvailable(typeof window.clawcontrolDesktop?.pickDirectory === 'function')
+    }
   }, [])
 
   async function loadEnvConfig() {
@@ -110,6 +124,26 @@ export default function SettingsPage() {
       setEnvError(err instanceof Error ? err.message : 'Failed to save config')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handlePickWorkspace() {
+    if (typeof window === 'undefined' || typeof window.clawcontrolDesktop?.pickDirectory !== 'function') {
+      setEnvError('Directory picker is only available in the desktop app.')
+      return
+    }
+
+    setPickingWorkspace(true)
+    setEnvError(null)
+    try {
+      const selected = await window.clawcontrolDesktop.pickDirectory(workspacePath || undefined)
+      if (selected) {
+        setWorkspacePath(selected)
+      }
+    } catch (err) {
+      setEnvError(err instanceof Error ? err.message : 'Failed to open directory picker')
+    } finally {
+      setPickingWorkspace(false)
     }
   }
 
@@ -179,6 +213,25 @@ export default function SettingsPage() {
                     placeholder="/path/to/your/workspace"
                     className="flex-1 px-3 py-2 text-sm bg-bg-1 border border-bd-0 rounded-[var(--radius-md)] text-fg-0 placeholder:text-fg-3 focus:outline-none focus:border-status-info/50"
                   />
+                  {pickerAvailable && (
+                    <button
+                      onClick={handlePickWorkspace}
+                      disabled={pickingWorkspace || saving}
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-[var(--radius-md)] transition-colors',
+                        !pickingWorkspace && !saving
+                          ? 'bg-bg-3 text-fg-1 hover:bg-bd-1'
+                          : 'bg-bg-3 text-fg-3 cursor-not-allowed'
+                      )}
+                    >
+                      {pickingWorkspace ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FolderOpen className="w-4 h-4" />
+                      )}
+                      Browse
+                    </button>
+                  )}
                   <button
                     onClick={handleSaveWorkspace}
                     disabled={!hasWorkspaceChanges || saving}
@@ -219,7 +272,7 @@ export default function SettingsPage() {
 
               {/* Help text */}
               <p className="text-xs text-fg-3 pt-2">
-                This should be the directory containing your agents/, skills/, memory/, and other workspace folders.
+                This should be the OpenClaw directory containing your agents/, skills/, memory/, and other workspace folders.
                 Changes require a server restart.
               </p>
             </>

@@ -6,12 +6,14 @@ import { randomUUID } from 'node:crypto'
 
 describe('workspace path policy', () => {
   const originalCwd = process.cwd()
+  const originalHome = process.env.HOME
   const originalWorkspace = process.env.OPENCLAW_WORKSPACE
   const originalClawcontrolWorkspaceRoot = process.env.CLAWCONTROL_WORKSPACE_ROOT
   const originalWorkspaceRoot = process.env.WORKSPACE_ROOT
   const originalAllowlistOnly = process.env.CLAWCONTROL_WORKSPACE_ALLOWLIST_ONLY
 
   let tempRoot = ''
+  let fakeHome = ''
 
   function restoreEnv(key: string, value: string | undefined): void {
     if (value === undefined) {
@@ -24,10 +26,14 @@ describe('workspace path policy', () => {
   beforeEach(async () => {
     tempRoot = join(tmpdir(), `path-policy-test-${randomUUID()}`)
     await fsp.mkdir(tempRoot, { recursive: true })
+    fakeHome = join(tempRoot, 'home')
+    await fsp.mkdir(fakeHome, { recursive: true })
+    process.env.HOME = fakeHome
   })
 
   afterEach(async () => {
     process.chdir(originalCwd)
+    restoreEnv('HOME', originalHome)
     restoreEnv('OPENCLAW_WORKSPACE', originalWorkspace)
     restoreEnv('CLAWCONTROL_WORKSPACE_ROOT', originalClawcontrolWorkspaceRoot)
     restoreEnv('WORKSPACE_ROOT', originalWorkspaceRoot)
@@ -54,6 +60,58 @@ describe('workspace path policy', () => {
 
     const mod = await import('@/lib/fs/path-policy')
     expect(await fsp.realpath(mod.getWorkspaceRoot())).toBe(await fsp.realpath(repoLikeRoot))
+  })
+
+  it('prefers ~/.openclaw/openclaw.json workspace when env vars are unset', async () => {
+    const configDir = join(fakeHome, '.openclaw')
+    const configuredWorkspace = join(tempRoot, 'openclaw-workspace')
+
+    await fsp.mkdir(configDir, { recursive: true })
+    await fsp.mkdir(configuredWorkspace, { recursive: true })
+    await fsp.writeFile(join(configuredWorkspace, 'AGENTS.md'), '# test')
+    await fsp.writeFile(
+      join(configDir, 'openclaw.json'),
+      JSON.stringify({
+        agents: {
+          defaults: {
+            workspace: configuredWorkspace,
+          },
+        },
+      }, null, 2)
+    )
+
+    delete process.env.OPENCLAW_WORKSPACE
+    delete process.env.CLAWCONTROL_WORKSPACE_ROOT
+    delete process.env.WORKSPACE_ROOT
+    vi.resetModules()
+
+    const mod = await import('@/lib/fs/path-policy')
+    expect(await fsp.realpath(mod.getWorkspaceRoot())).toBe(await fsp.realpath(configuredWorkspace))
+  })
+
+  it('prefers OPENCLAW_WORKSPACE over ~/.openclaw/openclaw.json workspace', async () => {
+    const configDir = join(fakeHome, '.openclaw')
+    const configuredWorkspace = join(tempRoot, 'openclaw-workspace')
+    const envWorkspace = join(tempRoot, 'env-workspace')
+
+    await fsp.mkdir(configDir, { recursive: true })
+    await fsp.mkdir(configuredWorkspace, { recursive: true })
+    await fsp.mkdir(envWorkspace, { recursive: true })
+    await fsp.writeFile(join(configDir, 'openclaw.json'), JSON.stringify({
+      agents: {
+        defaults: {
+          workspace: configuredWorkspace,
+        },
+      },
+    }, null, 2))
+
+    process.env.OPENCLAW_WORKSPACE = envWorkspace
+    delete process.env.CLAWCONTROL_WORKSPACE_ROOT
+    delete process.env.WORKSPACE_ROOT
+    vi.resetModules()
+
+    const mod = await import('@/lib/fs/path-policy')
+    expect(await fsp.realpath(mod.getWorkspaceRoot())).toBe(await fsp.realpath(envWorkspace))
   })
 
   it('allows non-allowlisted top-level directories in default mode', async () => {
