@@ -6,9 +6,37 @@ import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { AvailabilityBadge } from '@/components/availability-badge'
+import { getModelShortName } from '@/lib/models'
+import {
+  addUtcDays,
+  addUtcMonths,
+  addUtcYears,
+  estimateRunsForUtcDate,
+  estimateRunsInUtcRange,
+  listUtcDaysInRange,
+  monthGridCells,
+  rangeForCalendarView,
+  startOfUtcDay,
+  type CalendarView,
+  type CronCalendarJob,
+} from '@/lib/cron/calendar'
 import type { CronJobDTO } from '@/lib/data'
 import { cn } from '@/lib/utils'
-import { Clock, Plus, Play, Pause, Loader2, Trash2, X, RefreshCw, Search, Save } from 'lucide-react'
+import {
+  Clock,
+  Plus,
+  Play,
+  Pause,
+  Loader2,
+  Trash2,
+  X,
+  RefreshCw,
+  Search,
+  Save,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 import type { StatusTone } from '@clawcontrol/ui/theme'
 
 type AvailabilityStatus = 'ok' | 'degraded' | 'unavailable'
@@ -92,6 +120,46 @@ interface CronHealthReport {
 }
 
 type EditMode = 'every' | 'cron' | 'at'
+type InsightsGroup = {
+  key: string
+  inputTokens: string
+  outputTokens: string
+  cacheReadTokens: string
+  cacheWriteTokens: string
+  totalTokens: string
+  totalCostMicros: string
+  sessionCount: number
+}
+
+type AgentModelRow = {
+  id: string
+  name: string
+  displayName: string
+  slug: string
+  runtimeAgentId: string
+  model: string | null
+}
+
+type CronCostEstimate = {
+  modelId: string | null
+  modelLabel: string
+  confidence: 'high' | 'medium' | 'low' | 'none'
+  estimatedRuns30d: number
+  tokensPerRun: number | null
+  costMicrosPerRun: number | null
+  projectedTokens30d: number | null
+  projectedCostMicros30d: number | null
+}
+
+type DayBucket = {
+  day: Date
+  dayKey: string
+  totalRuns: number
+  jobs: Array<{
+    job: CronJobRow
+    runs: number
+  }>
+}
 
 function formatDurationShort(ms: number): string {
   if (ms % 86400000 === 0) return `${ms / 86400000}d`
@@ -257,6 +325,82 @@ function mapToUiDto(job: CliCronJob): CronJobRow {
   }
 }
 
+function toCalendarJob(job: CronJobRow): CronCalendarJob {
+  return {
+    id: job.id,
+    enabled: job.enabled,
+    schedule: job.raw.schedule,
+    nextRunAtMs: job.raw.state?.nextRunAtMs ?? job.nextRunAt?.getTime() ?? null,
+    lastRunAtMs: job.raw.state?.lastRunAtMs ?? job.lastRunAt?.getTime() ?? null,
+  }
+}
+
+function utcDayKey(date: Date): string {
+  return date.toISOString().slice(0, 10)
+}
+
+function formatTokenCount(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '—'
+  if (value === 0) return '0'
+  return Intl.NumberFormat(undefined, {
+    notation: 'compact',
+    maximumFractionDigits: value >= 1000 ? 1 : 0,
+  }).format(value)
+}
+
+function formatUsdMicros(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '—'
+  if (value === 0) return '$0.00'
+  return Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: value / 1_000_000 >= 1 ? 2 : 4,
+    maximumFractionDigits: 4,
+  }).format(value / 1_000_000)
+}
+
+function parseBigIntSafe(value: string): bigint {
+  try {
+    return BigInt(value)
+  } catch {
+    return 0n
+  }
+}
+
+function bigIntToApproxNumber(value: bigint): number {
+  const max = BigInt(Number.MAX_SAFE_INTEGER)
+  if (value > max) return Number.MAX_SAFE_INTEGER
+  if (value < -max) return Number.MIN_SAFE_INTEGER
+  return Number(value)
+}
+
+function modelShortLabel(modelId: string | null): string {
+  if (!modelId) return 'Unknown'
+  return getModelShortName(modelId)
+}
+
+function buildAgentTokenMap(agents: AgentModelRow[]): Map<string, AgentModelRow> {
+  const map = new Map<string, AgentModelRow>()
+
+  for (const agent of agents) {
+    const values = [
+      agent.id,
+      agent.runtimeAgentId,
+      agent.slug,
+      agent.displayName,
+      agent.name,
+    ]
+      .map((v) => v?.trim().toLowerCase())
+      .filter((v): v is string => Boolean(v))
+
+    for (const value of values) {
+      map.set(value, agent)
+    }
+  }
+
+  return map
+}
+
 const cronColumns: Column<CronJobRow>[] = [
   {
     key: 'status',
@@ -355,11 +499,18 @@ export function CronClient() {
   const [cronJobs, setCronJobs] = useState<CronJobRow[]>([])
   const [healthReport, setHealthReport] = useState<CronHealthReport | null>(null)
   const [healthSort, setHealthSort] = useState<'failures' | 'success' | 'flaky'>('failures')
+  const [calendarView, setCalendarView] = useState<CalendarView>('month')
+  const [calendarAnchor, setCalendarAnchor] = useState<Date>(() => startOfUtcDay(new Date()))
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<string | null>(null)
   const [searchText, setSearchText] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedId, setSelectedId] = useState<string | undefined>()
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [agentModels, setAgentModels] = useState<AgentModelRow[]>([])
+  const [usageByAgent, setUsageByAgent] = useState<InsightsGroup[]>([])
+  const [usageByModel, setUsageByModel] = useState<InsightsGroup[]>([])
+  const [defaultModelId, setDefaultModelId] = useState<string | null>(null)
   const selectedJob = selectedId ? cronJobs.find((c) => c.id === selectedId) : undefined
 
   const enabledCount = cronJobs.filter((c) => c.enabled).length
@@ -402,17 +553,235 @@ export function CronClient() {
     return rows
   }, [healthReport?.jobs, healthSort])
 
+  const calendarJobs = useMemo(
+    () => filteredCronJobs.map((job) => ({ row: job, schedule: toCalendarJob(job) })),
+    [filteredCronJobs]
+  )
+
+  const calendarRange = useMemo(
+    () => rangeForCalendarView(calendarAnchor, calendarView),
+    [calendarAnchor, calendarView]
+  )
+
+  const dayBuckets = useMemo<DayBucket[]>(() => {
+    const days = listUtcDaysInRange(calendarRange.start, calendarRange.end)
+
+    return days.map((day) => {
+      const jobs = calendarJobs
+        .map(({ row, schedule }) => ({
+          job: row,
+          runs: estimateRunsForUtcDate(schedule, day),
+        }))
+        .filter((item) => item.runs > 0)
+        .sort((a, b) => b.runs - a.runs || a.job.name.localeCompare(b.job.name))
+
+      return {
+        day,
+        dayKey: utcDayKey(day),
+        totalRuns: jobs.reduce((sum, item) => sum + item.runs, 0),
+        jobs,
+      }
+    })
+  }, [calendarJobs, calendarRange.end, calendarRange.start])
+
+  const dayBucketsByKey = useMemo(() => {
+    const out = new Map<string, DayBucket>()
+    for (const bucket of dayBuckets) out.set(bucket.dayKey, bucket)
+    return out
+  }, [dayBuckets])
+
+  const yearBuckets = useMemo(() => {
+    if (calendarView !== 'year') return []
+
+    const year = calendarAnchor.getUTCFullYear()
+    return Array.from({ length: 12 }, (_, monthIndex) => {
+      const start = new Date(Date.UTC(year, monthIndex, 1))
+      const end = new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59, 999))
+
+      const jobs = calendarJobs
+        .map(({ row, schedule }) => ({
+          job: row,
+          runs: estimateRunsInUtcRange(schedule, start, end),
+        }))
+        .filter((item) => item.runs > 0)
+        .sort((a, b) => b.runs - a.runs || a.job.name.localeCompare(b.job.name))
+
+      return {
+        monthIndex,
+        monthLabel: start.toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' }),
+        start,
+        totalRuns: jobs.reduce((sum, item) => sum + item.runs, 0),
+        jobs,
+      }
+    })
+  }, [calendarAnchor, calendarJobs, calendarView])
+
+  const agentByToken = useMemo(() => buildAgentTokenMap(agentModels), [agentModels])
+
+  const usageByAgentMap = useMemo(() => {
+    const out = new Map<string, InsightsGroup>()
+    for (const row of usageByAgent) out.set(row.key.trim().toLowerCase(), row)
+    return out
+  }, [usageByAgent])
+
+  const usageByModelMap = useMemo(() => {
+    const out = new Map<string, InsightsGroup>()
+    for (const row of usageByModel) out.set(row.key.trim().toLowerCase(), row)
+    return out
+  }, [usageByModel])
+
+  const runs30dByJob = useMemo(() => {
+    const start = startOfUtcDay(new Date())
+    const end = addUtcDays(start, 29)
+    const out = new Map<string, number>()
+    for (const { row, schedule } of calendarJobs) {
+      out.set(row.id, estimateRunsInUtcRange(schedule, start, end))
+    }
+    return out
+  }, [calendarJobs])
+
+  const scheduledRuns30dByAgent = useMemo(() => {
+    const out = new Map<string, number>()
+
+    for (const job of filteredCronJobs) {
+      if (!job.enabled) continue
+      const candidateTokens = [job.raw.agentId, job.raw.payload?.to]
+        .map((v) => v?.trim().toLowerCase())
+        .filter((v): v is string => Boolean(v))
+
+      const matchedAgent = candidateTokens
+        .map((token) => agentByToken.get(token))
+        .find((row): row is AgentModelRow => Boolean(row))
+
+      const agentKey = matchedAgent?.runtimeAgentId?.trim().toLowerCase() ?? candidateTokens[0]
+      if (!agentKey) continue
+
+      const runs = runs30dByJob.get(job.id) ?? 0
+      out.set(agentKey, (out.get(agentKey) ?? 0) + runs)
+    }
+
+    return out
+  }, [agentByToken, filteredCronJobs, runs30dByJob])
+
+  const costEstimateByJob = useMemo(() => {
+    const out = new Map<string, CronCostEstimate>()
+
+    for (const job of filteredCronJobs) {
+      const candidateTokens = [job.raw.agentId, job.raw.payload?.to]
+        .map((v) => v?.trim().toLowerCase())
+        .filter((v): v is string => Boolean(v))
+
+      const matchedAgent = candidateTokens
+        .map((token) => agentByToken.get(token))
+        .find((row): row is AgentModelRow => Boolean(row))
+
+      const runtimeAgentId = matchedAgent?.runtimeAgentId?.trim().toLowerCase() ?? candidateTokens[0] ?? null
+      const modelId = matchedAgent?.model ?? defaultModelId
+
+      const agentUsage = runtimeAgentId ? usageByAgentMap.get(runtimeAgentId) : undefined
+      const modelUsage = modelId ? usageByModelMap.get(modelId.trim().toLowerCase()) : undefined
+
+      const scheduledRuns = runtimeAgentId ? (scheduledRuns30dByAgent.get(runtimeAgentId) ?? 0) : 0
+      const estimatedRuns30d = runs30dByJob.get(job.id) ?? 0
+
+      const agentTotalTokens = parseBigIntSafe(agentUsage?.totalTokens ?? '0')
+      const agentTotalCostMicros = parseBigIntSafe(agentUsage?.totalCostMicros ?? '0')
+      const modelTotalTokens = parseBigIntSafe(modelUsage?.totalTokens ?? '0')
+      const modelTotalCostMicros = parseBigIntSafe(modelUsage?.totalCostMicros ?? '0')
+
+      let confidence: CronCostEstimate['confidence'] = 'none'
+      let tokensPerRun: number | null = null
+      let costMicrosPerRun: number | null = null
+
+      if (scheduledRuns > 0 && agentTotalTokens > 0n) {
+        tokensPerRun = bigIntToApproxNumber(agentTotalTokens) / scheduledRuns
+        confidence = 'medium'
+      } else if ((modelUsage?.sessionCount ?? 0) > 0 && modelTotalTokens > 0n) {
+        tokensPerRun = bigIntToApproxNumber(modelTotalTokens) / modelUsage!.sessionCount
+        confidence = 'low'
+      }
+
+      if (tokensPerRun !== null && modelTotalTokens > 0n && modelTotalCostMicros > 0n) {
+        const modelCostPerToken = bigIntToApproxNumber(modelTotalCostMicros) / bigIntToApproxNumber(modelTotalTokens)
+        costMicrosPerRun = tokensPerRun * modelCostPerToken
+        confidence = confidence === 'medium' ? 'high' : 'medium'
+      } else if (scheduledRuns > 0 && agentTotalCostMicros > 0n) {
+        costMicrosPerRun = bigIntToApproxNumber(agentTotalCostMicros) / scheduledRuns
+        if (confidence === 'none') confidence = 'low'
+      }
+
+      const projectedTokens30d = tokensPerRun === null ? null : tokensPerRun * estimatedRuns30d
+      const projectedCostMicros30d = costMicrosPerRun === null ? null : costMicrosPerRun * estimatedRuns30d
+
+      out.set(job.id, {
+        modelId,
+        modelLabel: modelShortLabel(modelId),
+        confidence,
+        estimatedRuns30d,
+        tokensPerRun,
+        costMicrosPerRun,
+        projectedTokens30d,
+        projectedCostMicros30d,
+      })
+    }
+
+    return out
+  }, [
+    agentByToken,
+    defaultModelId,
+    filteredCronJobs,
+    runs30dByJob,
+    scheduledRuns30dByAgent,
+    usageByAgentMap,
+    usageByModelMap,
+  ])
+
+  const projectedTotals30d = useMemo(() => {
+    let tokens = 0
+    let cost = 0
+
+    for (const estimate of costEstimateByJob.values()) {
+      tokens += estimate.projectedTokens30d ?? 0
+      cost += estimate.projectedCostMicros30d ?? 0
+    }
+
+    return { tokens, cost }
+  }, [costEstimateByJob])
+
   const refreshJobs = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const [response, healthResponse] = await Promise.all([
+      const [
+        response,
+        healthResponse,
+        agentsResponse,
+        usageByAgentResponse,
+        usageByModelResponse,
+        modelsResponse,
+      ] = await Promise.all([
         fetch('/api/openclaw/cron/jobs', {
           method: 'GET',
           headers: { Accept: 'application/json' },
         }),
         fetch('/api/openclaw/cron/health?days=7', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        }),
+        fetch('/api/agents', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        }),
+        fetch('/api/openclaw/usage/breakdown?groupBy=agent', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        }),
+        fetch('/api/openclaw/usage/breakdown?groupBy=model', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        }),
+        fetch('/api/models', {
           method: 'GET',
           headers: { Accept: 'application/json' },
         }),
@@ -438,6 +807,42 @@ export function CronClient() {
         : (raw as { jobs?: CliCronJob[] } | null)?.jobs ?? []
 
       setCronJobs(jobsArray.map(mapToUiDto))
+
+      if (agentsResponse.ok) {
+        const agentsPayload = (await agentsResponse.json()) as { data?: AgentModelRow[] }
+        if (Array.isArray(agentsPayload.data)) {
+          setAgentModels(agentsPayload.data)
+        }
+      } else {
+        setAgentModels([])
+      }
+
+      if (usageByAgentResponse.ok) {
+        const usagePayload = (await usageByAgentResponse.json()) as {
+          data?: { groups?: InsightsGroup[] }
+        }
+        setUsageByAgent(Array.isArray(usagePayload.data?.groups) ? usagePayload.data.groups : [])
+      } else {
+        setUsageByAgent([])
+      }
+
+      if (usageByModelResponse.ok) {
+        const usagePayload = (await usageByModelResponse.json()) as {
+          data?: { groups?: InsightsGroup[] }
+        }
+        setUsageByModel(Array.isArray(usagePayload.data?.groups) ? usagePayload.data.groups : [])
+      } else {
+        setUsageByModel([])
+      }
+
+      if (modelsResponse.ok) {
+        const modelsPayload = (await modelsResponse.json()) as {
+          data?: { status?: { resolvedDefault?: string; defaultModel?: string } }
+        }
+        setDefaultModelId(modelsPayload.data?.status?.resolvedDefault ?? modelsPayload.data?.status?.defaultModel ?? null)
+      } else {
+        setDefaultModelId(null)
+      }
     } catch (err) {
       setAvailability(null)
       setCronJobs([])
@@ -451,6 +856,16 @@ export function CronClient() {
     refreshJobs()
   }, [refreshJobs])
 
+  useEffect(() => {
+    if (calendarView === 'year') {
+      setSelectedCalendarDay(null)
+      return
+    }
+
+    if (selectedCalendarDay && dayBucketsByKey.has(selectedCalendarDay)) return
+    setSelectedCalendarDay(dayBuckets[0]?.dayKey ?? null)
+  }, [calendarView, dayBuckets, dayBucketsByKey, selectedCalendarDay])
+
   const handleJobCreated = async () => {
     await refreshJobs()
     setCreateModalOpen(false)
@@ -460,6 +875,44 @@ export function CronClient() {
     await refreshJobs()
     setSelectedId(undefined)
   }
+
+  const selectedDayBucket = selectedCalendarDay ? dayBucketsByKey.get(selectedCalendarDay) : null
+
+  const calendarLabel = useMemo(() => {
+    if (calendarView === 'day') {
+      return calendarAnchor.toLocaleDateString(undefined, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
+    }
+
+    if (calendarView === 'week') {
+      const end = addUtcDays(rangeForCalendarView(calendarAnchor, 'week').start, 6)
+      return `${rangeForCalendarView(calendarAnchor, 'week').start.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        timeZone: 'UTC',
+      })} – ${end.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}`
+    }
+
+    if (calendarView === 'month') {
+      return calendarAnchor.toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    }
+
+    return calendarAnchor.toLocaleDateString(undefined, { year: 'numeric', timeZone: 'UTC' })
+  }, [calendarAnchor, calendarView])
+
+  const shiftCalendar = useCallback((delta: number) => {
+    setCalendarAnchor((prev) => {
+      if (calendarView === 'day') return addUtcDays(prev, delta)
+      if (calendarView === 'week') return addUtcDays(prev, delta * 7)
+      if (calendarView === 'month') return addUtcMonths(prev, delta)
+      return addUtcYears(prev, delta)
+    })
+  }, [calendarView])
 
   return (
     <>
@@ -554,6 +1007,16 @@ export function CronClient() {
           </>
         )}
 
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <HealthCard label="Projected tokens (30d)" value={formatTokenCount(projectedTotals30d.tokens)} />
+          <HealthCard label="Projected cost (30d)" value={formatUsdMicros(projectedTotals30d.cost)} />
+          <HealthCard label="Models resolved" value={String(Array.from(costEstimateByJob.values()).filter((v) => v.modelId).length)} />
+          <HealthCard
+            label="Estimates available"
+            value={String(Array.from(costEstimateByJob.values()).filter((v) => v.projectedTokens30d !== null).length)}
+          />
+        </div>
+
         {error && (
           <div className="p-3 bg-status-danger/10 border border-status-danger/20 rounded-[var(--radius-md)] text-status-danger text-sm">
             {error}
@@ -584,6 +1047,204 @@ export function CronClient() {
             }
           />
         </div>
+
+        <div className="bg-bg-2 rounded-[var(--radius-lg)] border border-bd-0 overflow-hidden p-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-fg-1" />
+              <h2 className="text-sm font-medium text-fg-0">Schedule Calendar</h2>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center bg-bg-3 border border-bd-0 rounded-[var(--radius-md)] overflow-hidden">
+                {(['day', 'week', 'month', 'year'] as const).map((view) => (
+                  <button
+                    key={view}
+                    onClick={() => setCalendarView(view)}
+                    className={cn(
+                      'px-2 py-1.5 text-xs capitalize',
+                      calendarView === view ? 'bg-bg-2 text-fg-0' : 'text-fg-2 hover:text-fg-1'
+                    )}
+                  >
+                    {view}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCalendarAnchor(startOfUtcDay(new Date()))}
+                className="px-2.5 py-1.5 text-xs bg-bg-3 border border-bd-0 rounded-[var(--radius-md)] text-fg-1 hover:text-fg-0"
+              >
+                Today
+              </button>
+
+              <button
+                onClick={() => shiftCalendar(-1)}
+                className="p-1.5 rounded hover:bg-bg-3 text-fg-2"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => shiftCalendar(1)}
+                className="p-1.5 rounded hover:bg-bg-3 text-fg-2"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="text-xs text-fg-2">
+            {calendarLabel} (UTC). Counts include enabled jobs that match each day.
+          </div>
+
+          {calendarView === 'year' ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+              {yearBuckets.map((bucket) => (
+                <button
+                  key={bucket.monthIndex}
+                  onClick={() => {
+                    setCalendarView('month')
+                    setCalendarAnchor(new Date(Date.UTC(calendarAnchor.getUTCFullYear(), bucket.monthIndex, 1)))
+                  }}
+                  className={cn(
+                    'rounded-[var(--radius-md)] border p-3 text-left transition-colors',
+                    bucket.totalRuns > 0
+                      ? 'border-status-info/40 bg-status-info/10 hover:bg-status-info/20'
+                      : 'border-bd-0 bg-bg-3/40 hover:bg-bg-3/60'
+                  )}
+                >
+                  <div className="text-xs text-fg-1">{bucket.monthLabel}</div>
+                  <div className="mt-1 text-lg font-semibold text-fg-0">{bucket.totalRuns}</div>
+                  <div className="text-[11px] text-fg-2">scheduled runs</div>
+                  <div className="mt-2 text-[11px] text-fg-2 truncate">
+                    {bucket.jobs[0] ? `${bucket.jobs[0].job.name} (${bucket.jobs[0].runs})` : 'No scheduled jobs'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : calendarView === 'month' ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-7 gap-2 text-xs text-fg-2">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((label) => (
+                  <div key={label} className="text-center">{label}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {monthGridCells(new Date(Date.UTC(calendarAnchor.getUTCFullYear(), calendarAnchor.getUTCMonth(), 1))).map((cell, idx) => {
+                  if (!cell.date) {
+                    return <div key={`empty-${idx}`} className="h-24 rounded border border-bd-0/40 bg-bg-3/30" />
+                  }
+
+                  const key = utcDayKey(cell.date)
+                  const bucket = dayBucketsByKey.get(key)
+                  const selected = selectedCalendarDay === key
+
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setSelectedCalendarDay(key)}
+                      className={cn(
+                        'h-24 rounded border text-left p-2 transition-colors',
+                        selected && 'ring-1 ring-status-info/60',
+                        bucket && bucket.totalRuns > 0
+                          ? 'border-status-info/40 bg-status-info/10 hover:bg-status-info/20'
+                          : 'border-bd-0 bg-bg-3/40 hover:bg-bg-3/60'
+                      )}
+                    >
+                      <div className="text-xs text-fg-1">{cell.date.getUTCDate()}</div>
+                      <div className="mt-1 text-[11px] text-fg-2">{bucket?.totalRuns ?? 0} runs</div>
+                      <div className="mt-1 text-[11px] text-fg-2 truncate">
+                        {bucket?.jobs[0]?.job.name ?? '—'}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className={cn('grid gap-2', calendarView === 'week' ? 'grid-cols-1 md:grid-cols-7' : 'grid-cols-1')}>
+              {dayBuckets.map((bucket) => {
+                const selected = selectedCalendarDay === bucket.dayKey
+                return (
+                  <button
+                    key={bucket.dayKey}
+                    onClick={() => setSelectedCalendarDay(bucket.dayKey)}
+                    className={cn(
+                      'rounded-[var(--radius-md)] border p-3 text-left transition-colors',
+                      selected && 'ring-1 ring-status-info/60',
+                      bucket.totalRuns > 0
+                        ? 'border-status-info/40 bg-status-info/10 hover:bg-status-info/20'
+                        : 'border-bd-0 bg-bg-3/40 hover:bg-bg-3/60'
+                    )}
+                  >
+                    <div className="text-xs text-fg-1">
+                      {bucket.day.toLocaleDateString(undefined, {
+                        weekday: calendarView === 'week' ? 'short' : 'long',
+                        month: 'short',
+                        day: 'numeric',
+                        timeZone: 'UTC',
+                      })}
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-fg-0">{bucket.totalRuns}</div>
+                    <div className="text-[11px] text-fg-2">scheduled runs</div>
+                    <div className="mt-1 text-[11px] text-fg-2 truncate">
+                      {bucket.jobs[0] ? `${bucket.jobs[0].job.name} (${bucket.jobs[0].runs})` : 'No scheduled jobs'}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {calendarView !== 'year' && selectedDayBucket && (
+            <div className="rounded-[var(--radius-md)] border border-bd-0 bg-bg-3/40">
+              <div className="px-3 py-2 border-b border-bd-0 flex items-center justify-between">
+                <div className="text-xs text-fg-1">
+                  {selectedDayBucket.day.toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                    timeZone: 'UTC',
+                  })}
+                </div>
+                <div className="text-xs text-fg-2">{selectedDayBucket.totalRuns} runs</div>
+              </div>
+
+              {selectedDayBucket.jobs.length === 0 ? (
+                <div className="px-3 py-4 text-sm text-fg-2">No scheduled runs.</div>
+              ) : (
+                <div className="divide-y divide-bd-0/60">
+                  {selectedDayBucket.jobs.map(({ job, runs }) => {
+                    const estimate = costEstimateByJob.get(job.id)
+
+                    return (
+                      <button
+                        key={job.id}
+                        onClick={() => setSelectedId(job.id)}
+                        className="w-full px-3 py-2 text-left hover:bg-bg-2/80 transition-colors"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="text-sm text-fg-0">{job.name}</div>
+                          <div className="text-xs text-fg-2">{runs} run{runs === 1 ? '' : 's'}</div>
+                        </div>
+                        <div className="mt-1 grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] text-fg-2">
+                          <span>Model: {estimate?.modelLabel ?? 'Unknown'}</span>
+                          <span>Tokens/run: {formatTokenCount(estimate?.tokensPerRun ?? null)}</span>
+                          <span>Cost/run: {formatUsdMicros(estimate?.costMicrosPerRun ?? null)}</span>
+                          <span>Confidence: {estimate?.confidence ?? 'none'}</span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Detail Drawer */}
@@ -596,6 +1257,7 @@ export function CronClient() {
         {selectedJob && (
           <CronDetail
             job={selectedJob}
+            estimate={costEstimateByJob.get(selectedJob.id)}
             onClose={() => setSelectedId(undefined)}
             onUpdated={refreshJobs}
             onDeleted={handleJobDeleted}
@@ -615,11 +1277,13 @@ export function CronClient() {
 
 function CronDetail({
   job,
+  estimate,
   onClose,
   onUpdated,
   onDeleted,
 }: {
   job: CronJobRow
+  estimate?: CronCostEstimate
   onClose: () => void
   onUpdated: () => void | Promise<void>
   onDeleted?: () => void
@@ -992,6 +1656,28 @@ function CronDetail({
       </PageSection>
 
       {/* Stats */}
+      {estimate && (
+        <PageSection title="Estimated Token Cost (30d)">
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            <dt className="text-fg-2">Model</dt>
+            <dd className="text-fg-1 font-mono text-xs">{estimate.modelLabel}</dd>
+            <dt className="text-fg-2">Est. Runs</dt>
+            <dd className="text-fg-1 font-mono">{estimate.estimatedRuns30d}</dd>
+            <dt className="text-fg-2">Tokens / Run</dt>
+            <dd className="text-fg-1 font-mono">{formatTokenCount(estimate.tokensPerRun)}</dd>
+            <dt className="text-fg-2">Cost / Run</dt>
+            <dd className="text-fg-1 font-mono">{formatUsdMicros(estimate.costMicrosPerRun)}</dd>
+            <dt className="text-fg-2">Projected Tokens</dt>
+            <dd className="text-fg-1 font-mono">{formatTokenCount(estimate.projectedTokens30d)}</dd>
+            <dt className="text-fg-2">Projected Cost</dt>
+            <dd className="text-fg-1 font-mono">{formatUsdMicros(estimate.projectedCostMicros30d)}</dd>
+          </dl>
+          <p className="mt-2 text-xs text-fg-2">
+            Approximation based on agent/model usage over the last 30 days and this job&apos;s schedule.
+          </p>
+        </PageSection>
+      )}
+
       <PageSection title="Statistics">
         <dl className="grid grid-cols-2 gap-2 text-sm">
           <dt className="text-fg-2">Total Runs</dt>
