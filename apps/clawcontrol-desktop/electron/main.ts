@@ -19,6 +19,25 @@ const SERVER_PROBE_URL = `${SERVER_URL}/api/workspace?path=/`
 const SERVER_CHECK_INTERVAL_MS = 500
 const SERVER_START_TIMEOUT_MS = 30_000
 
+function isBrokenPipeError(error: unknown): error is NodeJS.ErrnoException {
+  if (!(error instanceof Error)) return false
+  const maybeErrno = error as NodeJS.ErrnoException
+  return maybeErrno.code === 'EPIPE' || maybeErrno.code === 'ERR_STREAM_DESTROYED'
+}
+
+function installStdIoGuards(): void {
+  const onStdIoError = (error: Error) => {
+    if (isBrokenPipeError(error)) return
+    // Re-throw unexpected stream errors to preserve fail-fast behavior.
+    process.nextTick(() => {
+      throw error
+    })
+  }
+
+  process.stdout?.on('error', onStdIoError)
+  process.stderr?.on('error', onStdIoError)
+}
+
 function createAppMenu() {
   const template: Electron.MenuItemConstructorOptions[] = [
     { role: 'fileMenu' },
@@ -366,6 +385,8 @@ async function startApp(): Promise<void> {
 
   return startInFlight
 }
+
+installStdIoGuards()
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock()
 if (!gotSingleInstanceLock) {
