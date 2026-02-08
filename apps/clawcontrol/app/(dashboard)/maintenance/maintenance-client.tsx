@@ -600,11 +600,11 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium text-fg-0">Error trend (14 days)</h3>
                 {errorSummary?.spike.detected ? (
-                  <span className="px-2 py-0.5 text-xs rounded bg-status-danger/15 text-status-danger">
+                  <span className="px-2 py-0.5 text-xs rounded bg-status-danger/[0.15] text-status-danger">
                     Spike detected
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 text-xs rounded bg-status-success/15 text-status-success">
+                  <span className="px-2 py-0.5 text-xs rounded bg-status-success/[0.15] text-status-success">
                     Stable
                   </span>
                 )}

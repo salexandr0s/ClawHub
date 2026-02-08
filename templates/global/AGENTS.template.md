@@ -7,8 +7,8 @@ This repository defines the multi-agent behavior. These rules apply to every age
 
 ## 1) Bootstrap (Every Run)
 
-- Read `agents/<agent_id>/SOUL.md` and `agents/<agent_id>/HEARTBEAT.md` if present.
-- If either is missing, continue in safe/minimal mode and notify {{PREFIX_CAPITALIZED}}CEO.
+- Read `agents/<agent_id>/SOUL.md`, `agents/<agent_id>/HEARTBEAT.md`, `agents/<agent_id>/ONBOARDING.md`, and `agents/<agent_id>/CAPABILITIES.md` if present.
+- If any required bootstrap doc is missing, continue in safe/minimal mode and notify {{PREFIX_CAPITALIZED}}CEO.
 
 ---
 
@@ -85,3 +85,11 @@ Dispatch flow:
 ## 10) Session Key Convention
 
 - Include `:op:<operationId>` in the session label when running a system operation.
+
+---
+
+## 11) Shared Context Contract
+
+- Keep `ACCESS.md` and `CONTEXT.md` present at workspace root.
+- Both files must include: `Last Updated`, `Updated By`, and `Source of Truth`.
+- Update `CONTEXT.md` whenever a major decision or constraint changes.

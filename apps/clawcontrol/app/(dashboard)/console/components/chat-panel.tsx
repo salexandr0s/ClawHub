@@ -284,7 +284,7 @@ export function ChatPanel({
       />
 
       {isPanelDragOver && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-bg-0/35">
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-bg-0/[0.35]">
           <div className="rounded-[var(--radius-lg)] border border-status-info/50 bg-bg-1/95 px-4 py-2 text-sm text-fg-1 shadow-md shadow-black/20">
             Drop images to attach
           </div>

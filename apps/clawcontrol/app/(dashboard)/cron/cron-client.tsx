@@ -1804,7 +1804,7 @@ export function CronClient() {
                           'h-28 rounded-[var(--radius-md)] p-2 text-left transition-colors',
                           bucket && bucket.totalRuns > 0
                             ? 'bg-status-info/10 hover:bg-status-info/20'
-                            : 'bg-bg-3/35 hover:bg-bg-3/55'
+                            : 'bg-bg-3/[0.35] hover:bg-bg-3/[0.55]'
                         )}
                       >
                         <div className="flex items-center justify-between">

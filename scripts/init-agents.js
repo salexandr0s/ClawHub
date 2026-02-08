@@ -394,6 +394,17 @@ const ROLE_HEARTBEAT_CHECKS = {
   ],
 };
 
+const GENERATED_AGENT_DOCS = [
+  'SOUL.md',
+  'HEARTBEAT.md',
+  'ONBOARDING.md',
+  'CAPABILITIES.md',
+  'MEMORY.md',
+  'WORKING.md',
+  'ANNOUNCEMENT.md',
+  '.learnings/LEARNINGS.md',
+];
+
 function parseArgs(argv) {
   const args = {
     prefix: undefined,
@@ -478,6 +489,7 @@ Options:
 Notes:
   - Prefix is optional. Empty prefix yields role-only IDs (e.g. build, manager).
   - Default is no prefix unless one is provided.
+  - Generates full Phase 1 markdown contracts (`ACCESS.md`, `CONTEXT.md`, and per-agent onboarding/capabilities/memory docs).
 `);
 }
 
@@ -502,6 +514,108 @@ function buildAgentId(prefix, role) {
 function buildAgentName(prefixCap, role) {
   const roleDisplay = ROLE_DISPLAY[role] || role;
   return prefixCap ? `${prefixCap}${roleDisplay}` : roleDisplay;
+}
+
+function toTitleCaseFromSnakeCase(value) {
+  return String(value)
+    .replace(/^can_/, '')
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function formatPermissionList(permissions) {
+  const entries = Object.entries(permissions || {});
+  if (entries.length === 0) return '- No explicit permissions defined.';
+  return entries
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([key, allowed]) => `- ${toTitleCaseFromSnakeCase(key)}: ${allowed ? 'Allowed' : 'Not allowed'}`)
+    .join('\n');
+}
+
+function resolveRoleFlow(role, prefixCap) {
+  const ceoName = buildAgentName(prefixCap, 'ceo');
+  const managerName = buildAgentName(prefixCap, 'manager');
+  const guardName = buildAgentName(prefixCap, 'guard');
+
+  switch (role) {
+    case 'ceo':
+      return {
+        receivesFrom: ['Alexandros', managerName],
+        delegatesTo: [managerName],
+        handoffTo: ['Alexandros'],
+        escalationTarget: 'Alexandros',
+      };
+    case 'manager':
+      return {
+        receivesFrom: [ceoName, guardName],
+        delegatesTo: ROLES
+          .filter((item) => !['ceo', 'manager', 'guard'].includes(item))
+          .map((item) => buildAgentName(prefixCap, item)),
+        handoffTo: [ceoName],
+        escalationTarget: ceoName,
+      };
+    case 'guard':
+      return {
+        receivesFrom: ['External input pipeline'],
+        delegatesTo: [],
+        handoffTo: [managerName],
+        escalationTarget: managerName,
+      };
+    case 'build':
+      return {
+        receivesFrom: [managerName],
+        delegatesTo: [],
+        handoffTo: [buildAgentName(prefixCap, 'buildreview')],
+        escalationTarget: managerName,
+      };
+    case 'buildreview':
+      return {
+        receivesFrom: [managerName, buildAgentName(prefixCap, 'build')],
+        delegatesTo: [],
+        handoffTo: [managerName],
+        escalationTarget: managerName,
+      };
+    case 'plan':
+      return {
+        receivesFrom: [managerName],
+        delegatesTo: [],
+        handoffTo: [buildAgentName(prefixCap, 'planreview')],
+        escalationTarget: managerName,
+      };
+    case 'planreview':
+      return {
+        receivesFrom: [managerName, buildAgentName(prefixCap, 'plan')],
+        delegatesTo: [],
+        handoffTo: [managerName],
+        escalationTarget: managerName,
+      };
+    case 'ui':
+      return {
+        receivesFrom: [managerName],
+        delegatesTo: [],
+        handoffTo: [buildAgentName(prefixCap, 'uireview')],
+        escalationTarget: managerName,
+      };
+    case 'uireview':
+      return {
+        receivesFrom: [managerName, buildAgentName(prefixCap, 'ui')],
+        delegatesTo: [],
+        handoffTo: [managerName],
+        escalationTarget: managerName,
+      };
+    default:
+      return {
+        receivesFrom: [managerName],
+        delegatesTo: [],
+        handoffTo: [managerName],
+        escalationTarget: managerName,
+      };
+  }
+}
+
+function isoDateNow() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 function renderTemplate(template, vars) {
@@ -529,11 +643,19 @@ async function ensureRequiredTemplates(rootDir) {
     ...ROLES.map((role) => `templates/roles/${role}.template.md`),
     'templates/agent/SOUL.template.md',
     'templates/agent/HEARTBEAT.template.md',
+    'templates/agent/ONBOARDING.template.md',
+    'templates/agent/CAPABILITIES.template.md',
+    'templates/agent/MEMORY.template.md',
+    'templates/agent/WORKING.template.md',
+    'templates/agent/ANNOUNCEMENT.template.md',
+    'templates/agent/LEARNINGS.template.md',
     'templates/config/clawcontrol.config.template.yaml',
     'templates/config/agent-entry.template.yaml',
     'templates/global/AGENTS.template.md',
     'templates/global/SOUL.template.md',
     'templates/global/HEARTBEAT.template.md',
+    'templates/global/ACCESS.template.md',
+    'templates/global/CONTEXT.template.md',
     'templates/global/agents.SOUL.template.md',
     'templates/global/agents.HEARTBEAT.template.md',
   ];
@@ -912,6 +1034,7 @@ async function main() {
     PREFIX: prefix,
     PREFIX_CAPITALIZED: prefixCap,
     OWNER: owner,
+    TODAY: isoDateNow(),
     GLOBAL_HEARTBEAT_CHECKS: formatBulletList(heartbeatGlobal),
   };
 
@@ -919,6 +1042,8 @@ async function main() {
     AGENTS: await fsp.readFile(path.join(rootDir, 'templates/global/AGENTS.template.md'), 'utf8'),
     SOUL: await fsp.readFile(path.join(rootDir, 'templates/global/SOUL.template.md'), 'utf8'),
     HEARTBEAT: await fsp.readFile(path.join(rootDir, 'templates/global/HEARTBEAT.template.md'), 'utf8'),
+    ACCESS: await fsp.readFile(path.join(rootDir, 'templates/global/ACCESS.template.md'), 'utf8'),
+    CONTEXT: await fsp.readFile(path.join(rootDir, 'templates/global/CONTEXT.template.md'), 'utf8'),
     AGENTS_SOUL: await fsp.readFile(path.join(rootDir, 'templates/global/agents.SOUL.template.md'), 'utf8'),
     AGENTS_HEARTBEAT: await fsp.readFile(path.join(rootDir, 'templates/global/agents.HEARTBEAT.template.md'), 'utf8'),
   };
@@ -926,18 +1051,27 @@ async function main() {
   scheduleWrite('AGENTS.md', renderTemplate(templateAgents.AGENTS, globalVars));
   scheduleWrite('SOUL.md', renderTemplate(templateAgents.SOUL, globalVars));
   scheduleWrite('HEARTBEAT.md', renderTemplate(templateAgents.HEARTBEAT, globalVars));
+  scheduleWrite('ACCESS.md', renderTemplate(templateAgents.ACCESS, globalVars));
+  scheduleWrite('CONTEXT.md', renderTemplate(templateAgents.CONTEXT, globalVars));
   scheduleWrite('agents/SOUL.md', renderTemplate(templateAgents.AGENTS_SOUL, globalVars));
   scheduleWrite('agents/HEARTBEAT.md', renderTemplate(templateAgents.AGENTS_HEARTBEAT, globalVars));
 
   const roleTemplateCache = {};
   const soulTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/SOUL.template.md'), 'utf8');
   const heartbeatTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/HEARTBEAT.template.md'), 'utf8');
+  const onboardingTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/ONBOARDING.template.md'), 'utf8');
+  const capabilitiesTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/CAPABILITIES.template.md'), 'utf8');
+  const memoryTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/MEMORY.template.md'), 'utf8');
+  const workingTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/WORKING.template.md'), 'utf8');
+  const announcementTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/ANNOUNCEMENT.template.md'), 'utf8');
+  const learningsTemplate = await fsp.readFile(path.join(rootDir, 'templates/agent/LEARNINGS.template.md'), 'utf8');
 
   for (const role of ROLES) {
     if (enabledRoles.get(role) === false) {
       scheduleDelete(`agents/${role}.md`);
-      scheduleDelete(`agents/${role}/SOUL.md`);
-      scheduleDelete(`agents/${role}/HEARTBEAT.md`);
+      for (const rel of GENERATED_AGENT_DOCS) {
+        scheduleDelete(`agents/${role}/${rel}`);
+      }
       continue;
     }
 
@@ -946,6 +1080,11 @@ async function main() {
     const agentName = buildAgentName(prefixCap, role);
     const emoji = roleEmojis.get(role);
     const soulData = ROLE_SOUL[role];
+    const rolePermissions = {
+      ...(ROLE_PERMISSION_DEFAULTS[role] || {}),
+      ...(rolePermissionOverrides.get(role) || {}),
+    };
+    const roleFlow = resolveRoleFlow(role, prefixCap);
 
     if (!roleTemplateCache[role]) {
       roleTemplateCache[role] = await fsp.readFile(path.join(rootDir, `templates/roles/${role}.template.md`), 'utf8');
@@ -959,6 +1098,7 @@ async function main() {
       AGENT_ID: agentId,
       AGENT_NAME: agentName,
       EMOJI: emoji,
+      TODAY: isoDateNow(),
     };
 
     scheduleWrite(`agents/${role}.md`, renderTemplate(roleTemplateCache[role], vars));
@@ -981,6 +1121,43 @@ async function main() {
       HEARTBEAT_ADDITIONAL_CHECKS: '',
     };
     scheduleWrite(`agents/${role}/HEARTBEAT.md`, renderTemplate(heartbeatTemplate, roleHeartbeatVars));
+
+    const roleCapabilitiesVars = {
+      ...vars,
+      SOUL_ROLE: renderTemplate(soulData.role, vars),
+      CAPABILITIES_CAN: formatBulletList(soulData.can.map((line) => renderTemplate(line, vars))),
+      CAPABILITIES_CANNOT: formatBulletList(soulData.cannot.map((line) => renderTemplate(line, vars))),
+      CAPABILITIES_OUTPUT: renderTemplate(soulData.output, vars),
+      CAPABILITIES_PERMISSIONS: formatPermissionList(rolePermissions),
+      CAPABILITIES_RECEIVES_FROM: formatBulletList(roleFlow.receivesFrom),
+      CAPABILITIES_DELEGATES_TO: formatBulletList(roleFlow.delegatesTo),
+      CAPABILITIES_HANDOFF_TO: formatBulletList(roleFlow.handoffTo),
+      CAPABILITIES_ESCALATION_TARGET: roleFlow.escalationTarget,
+    };
+    scheduleWrite(`agents/${role}/CAPABILITIES.md`, renderTemplate(capabilitiesTemplate, roleCapabilitiesVars));
+
+    const roleOnboardingVars = {
+      ...vars,
+      ONBOARDING_REQUIRED_DOCS: formatBulletList([
+        'AGENTS.md',
+        'SOUL.md',
+        'HEARTBEAT.md',
+        'ACCESS.md',
+        'CONTEXT.md',
+        `agents/${role}.md`,
+        `agents/${role}/SOUL.md`,
+        `agents/${role}/HEARTBEAT.md`,
+        `agents/${role}/CAPABILITIES.md`,
+      ]),
+      ONBOARDING_HANDOFF_TO: formatBulletList(roleFlow.handoffTo),
+      ONBOARDING_ESCALATION_TARGET: roleFlow.escalationTarget,
+    };
+    scheduleWrite(`agents/${role}/ONBOARDING.md`, renderTemplate(onboardingTemplate, roleOnboardingVars));
+
+    scheduleWrite(`agents/${role}/MEMORY.md`, renderTemplate(memoryTemplate, roleCapabilitiesVars));
+    scheduleWrite(`agents/${role}/WORKING.md`, renderTemplate(workingTemplate, roleCapabilitiesVars));
+    scheduleWrite(`agents/${role}/ANNOUNCEMENT.md`, renderTemplate(announcementTemplate, roleCapabilitiesVars));
+    scheduleWrite(`agents/${role}/.learnings/LEARNINGS.md`, renderTemplate(learningsTemplate, roleCapabilitiesVars));
   }
 
   const configTemplatePath = path.join(rootDir, 'templates/config/clawcontrol.config.template.yaml');

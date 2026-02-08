@@ -89,3 +89,4 @@ docs/
 !docs/
 docs/**
 !docs/agent-templates.md
+!docs/AGENT_STARTER_TEMPLATE.md

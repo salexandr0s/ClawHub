@@ -174,7 +174,7 @@ function SystemActivityRow({ item }: { item: ActivityItem }) {
           : <FolderOpen className="w-3.5 h-3.5 text-fg-2" />
 
   return (
-    <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-bd-0 bg-bg-0/55 px-2.5 py-1.5 text-xs">
+    <div className="flex items-center gap-2 rounded-[var(--radius-md)] border border-bd-0 bg-bg-0/[0.55] px-2.5 py-1.5 text-xs">
       <span className="inline-flex flex-shrink-0 items-center justify-center">
         {icon}
       </span>

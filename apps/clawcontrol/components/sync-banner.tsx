@@ -43,7 +43,7 @@ export function SyncBanner({ className, withMargin = true }: { className?: strin
           type="button"
           onClick={() => void triggerSync()}
           disabled={syncing}
-          className="ml-auto inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium hover:bg-status-warning/15 disabled:opacity-60"
+          className="ml-auto inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium hover:bg-status-warning/[0.15] disabled:opacity-60"
         >
           <RefreshCw className={syncing ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
           {syncing ? 'Syncing...' : 'Retry'}
@@ -67,7 +67,7 @@ export function SyncBanner({ className, withMargin = true }: { className?: strin
           type="button"
           onClick={() => void triggerSync()}
           disabled={syncing}
-          className="ml-auto inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium hover:bg-status-warning/15 disabled:opacity-60"
+          className="ml-auto inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium hover:bg-status-warning/[0.15] disabled:opacity-60"
         >
           <RefreshCw className={syncing ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
           {syncing ? 'Syncing...' : 'Sync now'}

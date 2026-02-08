@@ -188,6 +188,8 @@ clawcontrol/
 | `npm run dev` | Development server (hot reload) |
 | `npm run build` | Production build |
 | `npm run start --workspace=clawcontrol` | Production server |
+| `npm run init:agents -- --prefix <org>` | Generate full starter agent markdown + config templates |
+| `npm run check:agent-docs` | Validate required global/agent markdown contracts |
 | `npm run test` | Run Vitest tests |
 | `npm run typecheck` | TypeScript check |
 | `npm run db:migrate` | Apply database migrations |
@@ -219,3 +221,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 - [OpenClaw Integration](docs/OPENCLAW_INTEGRATION.md)
 - [Security Model](docs/SECURITY.md)
 - [Path Policy](docs/PATH_POLICY.md)
+- [Agent Starter Template](docs/AGENT_STARTER_TEMPLATE.md)

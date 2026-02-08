@@ -112,15 +112,22 @@
     --fg2: #6B7A8F;
     --fg2-rgb: 107 122 143;
     --bd0: rgba(255, 255, 255, 0.06);
-    --bd0-rgb: 34 34 34;
+    --bd0-rgb: 25 25 25;
     --bd1: rgba(255, 255, 255, 0.10);
-    --bd1-rgb: 44 44 44;
+    --bd1-rgb: 35 35 35;
   }
 
   /* Compact density override */
   .density-compact {
     --density-row: var(--density-compact-row);
     --density-padding: var(--density-compact-padding);
+  }
+
+  /* Prevent Tailwind preflight fallback (#e5e7eb) from showing as white borders */
+  *,
+  ::before,
+  ::after {
+    border-color: rgb(var(--bd0-rgb) / 1);
   }
 }
 
