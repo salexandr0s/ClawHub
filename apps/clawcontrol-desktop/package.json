@@ -9,10 +9,11 @@
     "predev": "npx tsc -p tsconfig.json",
     "dev": "npx electron .",
     "build:server": "npm --prefix ../clawcontrol run build",
-    "build": "npm run build:server && npx tsc -p tsconfig.json && npx electron-builder",
-    "build:mac": "npm run build:server && npx tsc -p tsconfig.json && npx electron-builder --mac",
-    "build:win": "npm run build:server && npx tsc -p tsconfig.json && npx electron-builder --win",
-    "build:linux": "npm run build:server && npx tsc -p tsconfig.json && npx electron-builder --linux"
+    "build": "npm run build:server && npx tsc -p tsconfig.json",
+    "build:desktop": "npm run build && npx electron-builder",
+    "build:mac": "npm run build && npx electron-builder --mac",
+    "build:win": "npm run build && npx electron-builder --win",
+    "build:linux": "npm run build && npx electron-builder --linux"
   },
   "build": {
     "appId": "com.clawcontrol.desktop",
