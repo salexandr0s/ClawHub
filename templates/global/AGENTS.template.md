@@ -37,10 +37,12 @@ This repository defines the multi-agent behavior. These rules apply to every age
 
 Dispatch flow:
 - {{PREFIX_CAPITALIZED}}CEO creates/updates WorkOrders and Operations in the DB.
-- {{PREFIX_CAPITALIZED}}CEO spawns specialists with `sessions_spawn`.
+- {{PREFIX_CAPITALIZED}}CEO dispatches execution intent to {{PREFIX_CAPITALIZED}}Manager with constraints and success criteria.
+- {{PREFIX_CAPITALIZED}}Manager spawns specialists with `sessions_spawn`.
 - Session key must include `:op:<operationId>` for telemetry linkage.
 - Specialists execute and return a Receipt with evidence.
-- {{PREFIX_CAPITALIZED}}CEO reviews Receipts, enforces QA gates, and reports to Alexandros.
+- {{PREFIX_CAPITALIZED}}Manager validates Receipts and enforces QA gates.
+- {{PREFIX_CAPITALIZED}}CEO reports approved outcomes to Alexandros.
 
 ---
 

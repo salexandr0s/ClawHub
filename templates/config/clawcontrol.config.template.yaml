@@ -463,9 +463,11 @@ workflows:
       - agent: "{{PREFIX}}planreview"
         loop_target: "{{PREFIX}}plan"
         max_iterations: 2
-      - agent: "{{PREFIX}}ops"
       - agent: "{{PREFIX}}security"
+        loop_target: "{{PREFIX}}ops"
+        max_iterations: 1
         can_veto: true
+      - agent: "{{PREFIX}}ops"
 
   bug_fix:
     description: "Bug fix — abbreviated workflow"
@@ -473,6 +475,10 @@ workflows:
       - agent: "{{PREFIX}}research"
         condition: "unknowns_exist"
         optional: true
+      - agent: "{{PREFIX}}plan"
+      - agent: "{{PREFIX}}planreview"
+        loop_target: "{{PREFIX}}plan"
+        max_iterations: 2
       - agent: "{{PREFIX}}build"
       - agent: "{{PREFIX}}buildreview"
         loop_target: "{{PREFIX}}build"
@@ -484,8 +490,18 @@ workflows:
   hotfix:
     description: "Emergency hotfix — minimal gates"
     stages:
+      - agent: "{{PREFIX}}plan"
+      - agent: "{{PREFIX}}planreview"
+        loop_target: "{{PREFIX}}plan"
+        max_iterations: 1
       - agent: "{{PREFIX}}build"
+      - agent: "{{PREFIX}}buildreview"
+        loop_target: "{{PREFIX}}build"
+        max_iterations: 1
       - agent: "{{PREFIX}}security"
+        loop_target: "{{PREFIX}}build"
+        max_iterations: 1
+        can_veto: true
       - agent: "{{PREFIX}}ops"
 
 # ============================================================================

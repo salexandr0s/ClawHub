@@ -162,7 +162,7 @@ const ROLE_PERMISSION_DEFAULTS = {
 const ROLE_SOUL = {
   build: {
     role: 'Code implementation based on approved plans.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Modify code and configuration files.',
       'Run tests, linters, and build commands.',
@@ -177,13 +177,14 @@ const ROLE_SOUL = {
   },
   buildreview: {
     role: 'QA and code review for builds.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Review code against the approved plan.',
-      'Run tests and static analysis.',
+      'Run allowlisted tests and static analysis (`npm test`, `npm run typecheck`, `npm run lint`).',
     ],
     cannot: [
       'Modify source code.',
+      'Execute non-allowlisted commands.',
       'Deploy or approve beyond review scope.',
       'Delegate tasks.',
     ],
@@ -207,7 +208,7 @@ const ROLE_SOUL = {
   },
   guard: {
     role: 'Input security screener for all external messages.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Read and analyze external messages.',
       'Classify messages as clean, suspicious, or malicious.',
@@ -241,7 +242,7 @@ const ROLE_SOUL = {
   },
   ops: {
     role: 'Infrastructure operations and deployments.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Deploy services and manage infrastructure changes.',
       'Configure monitoring, cron, and system services.',
@@ -255,7 +256,7 @@ const ROLE_SOUL = {
   },
   plan: {
     role: 'Implementation planning and sequencing.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Produce structured implementation plans.',
       'Define steps, acceptance criteria, and risks.',
@@ -269,7 +270,7 @@ const ROLE_SOUL = {
   },
   planreview: {
     role: 'Critical review of implementation plans.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Approve, reject, or request research on plans.',
       'Identify gaps, risks, and ambiguities.',
@@ -283,7 +284,7 @@ const ROLE_SOUL = {
   },
   research: {
     role: 'Deep research and source-backed findings.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Perform web and doc research.',
       'Read and analyze files and specs.',
@@ -298,10 +299,10 @@ const ROLE_SOUL = {
   },
   security: {
     role: 'Security auditor with veto power.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Audit code, configs, and dependencies for vulnerabilities.',
-      'Run security scanners and static analysis tools.',
+      'Assess security scanner/test artifacts and provide remediation findings.',
     ],
     cannot: [
       'Modify source code.',
@@ -312,7 +313,7 @@ const ROLE_SOUL = {
   },
   ui: {
     role: 'Frontend implementation under ui-skills constraints.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Build frontend components and pages.',
       'Implement responsive layouts and motion/react animations.',
@@ -326,7 +327,7 @@ const ROLE_SOUL = {
   },
   uireview: {
     role: 'UI QA against ui-skills and accessibility.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Coordination: {{PREFIX_CAPITALIZED}}Manager.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}Manager.',
     can: [
       'Review UI code for compliance and accessibility.',
       'Run a11y and responsive checks.',
@@ -489,7 +490,7 @@ Options:
 Notes:
   - Prefix is optional. Empty prefix yields role-only IDs (e.g. build, manager).
   - Default is no prefix unless one is provided.
-  - Generates full Phase 1 markdown contracts (`ACCESS.md`, `CONTEXT.md`, and per-agent onboarding/capabilities/memory docs).
+  - Generates full Phase 1 markdown contracts (\`ACCESS.md\`, \`CONTEXT.md\`, and per-agent onboarding/capabilities/memory docs).
 `);
 }
 
@@ -896,6 +897,62 @@ function applyConfigOverrides(config, context) {
   }
 }
 
+function validateWorkflowGateInvariants(config, prefix) {
+  if (!config || typeof config !== 'object') {
+    throw new Error('Cannot validate workflow gates: config is not an object');
+  }
+
+  if (!config.workflows || typeof config.workflows !== 'object') {
+    return;
+  }
+
+  const planId = buildAgentId(prefix, 'plan');
+  const planReviewId = buildAgentId(prefix, 'planreview');
+  const buildId = buildAgentId(prefix, 'build');
+  const uiId = buildAgentId(prefix, 'ui');
+  const opsId = buildAgentId(prefix, 'ops');
+  const securityId = buildAgentId(prefix, 'security');
+  const errors = [];
+
+  for (const [workflowName, workflow] of Object.entries(config.workflows)) {
+    if (!workflow || typeof workflow !== 'object' || !Array.isArray(workflow.stages)) {
+      continue;
+    }
+
+    const stages = workflow.stages.filter((stage) => stage && typeof stage.agent === 'string');
+    const indexOfAgent = (agentId) => stages.findIndex((stage) => stage.agent === agentId);
+
+    const planReviewIndex = indexOfAgent(planReviewId);
+    for (const gatedAgent of [buildId, uiId, opsId]) {
+      const gatedIndex = indexOfAgent(gatedAgent);
+      if (gatedIndex !== -1 && (planReviewIndex === -1 || planReviewIndex > gatedIndex)) {
+        errors.push(`workflow "${workflowName}" must run ${planReviewId} before ${gatedAgent}`);
+      }
+    }
+
+    const opsIndex = indexOfAgent(opsId);
+    const securityIndex = indexOfAgent(securityId);
+    if (opsIndex !== -1 && securityIndex !== -1 && securityIndex > opsIndex) {
+      errors.push(`workflow "${workflowName}" must run ${securityId} before ${opsId}`);
+    }
+
+    if (workflowName === 'bug_fix' || workflowName === 'hotfix') {
+      const buildIndex = indexOfAgent(buildId);
+      const planIndex = indexOfAgent(planId);
+      if (buildIndex !== -1 && (planIndex === -1 || planIndex > buildIndex)) {
+        errors.push(`workflow "${workflowName}" must run ${planId} before ${buildId}`);
+      }
+      if (buildIndex !== -1 && (planReviewIndex === -1 || planReviewIndex > buildIndex)) {
+        errors.push(`workflow "${workflowName}" must run ${planReviewId} before ${buildId}`);
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Workflow gate invariant violations:\n- ${errors.join('\n- ')}`);
+  }
+}
+
 async function maybePromptMissingInputs(args, manifest) {
   const shouldPrompt = process.stdin.isTTY && !args.manifestPath;
   if (!shouldPrompt) return {};
@@ -1183,6 +1240,14 @@ async function main() {
   const needsConfigMutation = hasRoleOverride || prefix.length === 0;
 
   if (!needsConfigMutation) {
+    let config;
+    try {
+      config = yaml.load(renderedConfigTemplate);
+    } catch (err) {
+      throw new Error(`Config template rendered invalid YAML: ${err.message}`);
+    }
+
+    validateWorkflowGateInvariants(config, prefix);
     scheduleWrite('clawcontrol.config.yaml', renderedConfigTemplate);
   } else {
     let config;
@@ -1199,6 +1264,8 @@ async function main() {
       roleModelTierOverrides,
       rolePermissionOverrides,
     });
+
+    validateWorkflowGateInvariants(config, prefix);
 
     const dumpedConfig = yaml.dump(sortObjectKeys(config), {
       lineWidth: 120,

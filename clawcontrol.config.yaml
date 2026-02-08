@@ -463,9 +463,11 @@ workflows:
       - agent: "clawcontrolplanreview"
         loop_target: "clawcontrolplan"
         max_iterations: 2
-      - agent: "clawcontrolops"
       - agent: "clawcontrolsecurity"
+        loop_target: "clawcontrolops"
+        max_iterations: 1
         can_veto: true
+      - agent: "clawcontrolops"
 
   bug_fix:
     description: "Bug fix — abbreviated workflow"
@@ -473,6 +475,10 @@ workflows:
       - agent: "clawcontrolresearch"
         condition: "unknowns_exist"
         optional: true
+      - agent: "clawcontrolplan"
+      - agent: "clawcontrolplanreview"
+        loop_target: "clawcontrolplan"
+        max_iterations: 2
       - agent: "clawcontrolbuild"
       - agent: "clawcontrolbuildreview"
         loop_target: "clawcontrolbuild"
@@ -484,8 +490,18 @@ workflows:
   hotfix:
     description: "Emergency hotfix — minimal gates"
     stages:
+      - agent: "clawcontrolplan"
+      - agent: "clawcontrolplanreview"
+        loop_target: "clawcontrolplan"
+        max_iterations: 1
       - agent: "clawcontrolbuild"
+      - agent: "clawcontrolbuildreview"
+        loop_target: "clawcontrolbuild"
+        max_iterations: 1
       - agent: "clawcontrolsecurity"
+        loop_target: "clawcontrolbuild"
+        max_iterations: 1
+        can_veto: true
       - agent: "clawcontrolops"
 
 # ============================================================================
