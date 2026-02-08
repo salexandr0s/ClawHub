@@ -49,13 +49,6 @@
         "filter": [
           "**/*"
         ]
-      },
-      {
-        "from": "../clawcontrol/prisma/migrations",
-        "to": "server/apps/clawcontrol/prisma/migrations",
-        "filter": [
-          "**/*"
-        ]
       }
     ],
     "mac": {
