@@ -331,6 +331,111 @@ export async function runCommand(
   return result.value
 }
 
+function findMatchingJsonEnd(source: string, startIndex: number): number | null {
+  const opening = source[startIndex]
+  if (opening !== '{' && opening !== '[') return null
+
+  const stack: string[] = [opening]
+  let inString = false
+  let escaped = false
+
+  for (let i = startIndex + 1; i < source.length; i += 1) {
+    const ch = source[i]
+
+    if (inString) {
+      if (escaped) {
+        escaped = false
+        continue
+      }
+      if (ch === '\\') {
+        escaped = true
+        continue
+      }
+      if (ch === '"') {
+        inString = false
+      }
+      continue
+    }
+
+    if (ch === '"') {
+      inString = true
+      continue
+    }
+
+    if (ch === '{' || ch === '[') {
+      stack.push(ch)
+      continue
+    }
+
+    if (ch === '}' || ch === ']') {
+      const last = stack.pop()
+      if ((ch === '}' && last !== '{') || (ch === ']' && last !== '[')) {
+        return null
+      }
+      if (stack.length === 0) return i
+    }
+  }
+
+  return null
+}
+
+function isLikelyJsonArrayStart(source: string, index: number): boolean {
+  if (source[index] !== '[') return false
+
+  for (let i = index + 1; i < source.length; i += 1) {
+    const ch = source[i]
+    if (/\s/.test(ch)) continue
+    return ch !== 'p' // Filters plugin log lines like "[plugins] ..."
+      && ch !== 'P'
+      && ch !== 'w' // Filters bracket-prefixed warning tags
+      && ch !== 'W'
+  }
+  return false
+}
+
+/**
+ * Parse JSON payload from command output that may include log prefixes.
+ *
+ * Some OpenClaw/plugin combinations emit non-JSON log lines before JSON output.
+ * This helper extracts the first valid top-level JSON object/array payload.
+ */
+export function parseJsonFromCommandOutput<T = unknown>(stdout: string): T | null {
+  const text = stdout.trim()
+  if (!text) return null
+
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    // Continue with extraction fallback.
+  }
+
+  const candidates: number[] = []
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]
+    if (ch === '{') {
+      candidates.push(i)
+      continue
+    }
+    if (ch === '[' && isLikelyJsonArrayStart(text, i)) {
+      candidates.push(i)
+    }
+  }
+
+  for (const start of candidates) {
+    const end = findMatchingJsonEnd(text, start)
+    if (end === null) continue
+
+    const candidate = text.slice(start, end + 1)
+    try {
+      return JSON.parse(candidate) as T
+    } catch {
+      // Try next candidate.
+    }
+  }
+
+  return null
+}
+
 /**
  * Execute a command and return parsed JSON output
  */
@@ -347,14 +452,13 @@ export async function runCommandJson<T = unknown>(
     }
   }
 
-  try {
-    const data = JSON.parse(result.stdout) as T
+  const data = parseJsonFromCommandOutput<T>(result.stdout)
+  if (data !== null) {
     return { data, exitCode: 0 }
-  } catch {
-    return {
-      error: 'Failed to parse JSON output',
-      exitCode: result.exitCode,
-    }
+  }
+  return {
+    error: 'Failed to parse JSON output',
+    exitCode: result.exitCode,
   }
 }
 
@@ -657,12 +761,11 @@ export async function runDynamicCommandJson<T = unknown>(
       }
     }
 
-    try {
-      const data = JSON.parse(stdout) as T
+    const data = parseJsonFromCommandOutput<T>(stdout)
+    if (data !== null) {
       return { data, exitCode: 0 }
-    } catch {
-      return { error: 'Failed to parse JSON output', exitCode }
     }
+    return { error: 'Failed to parse JSON output', exitCode }
   } catch (err) {
     return {
       error: err instanceof Error ? err.message : 'Unknown error',

@@ -251,6 +251,42 @@ function getDesktopSettingsPath(): string {
   return path.join(app.getPath('userData'), 'settings.json')
 }
 
+function buildServerPath(basePath: string | undefined): string {
+  const separator = process.platform === 'win32' ? ';' : ':'
+  const existing = (basePath ?? '').split(separator).filter((entry) => entry.length > 0)
+  const extra =
+    process.platform === 'darwin'
+      ? ['/opt/homebrew/bin', '/usr/local/bin', '/usr/bin', '/bin', '/usr/sbin', '/sbin']
+      : ['/usr/local/bin', '/usr/bin', '/bin']
+
+  for (const candidate of extra) {
+    if (!existing.includes(candidate)) {
+      existing.push(candidate)
+    }
+  }
+
+  return existing.join(separator)
+}
+
+function resolveOpenClawBin(pathValue: string): string | null {
+  const candidates = [
+    process.env.OPENCLAW_BIN,
+    ...pathValue
+      .split(process.platform === 'win32' ? ';' : ':')
+      .filter((segment) => segment.length > 0)
+      .map((segment) => path.join(segment, process.platform === 'win32' ? 'openclaw.exe' : 'openclaw')),
+    '/opt/homebrew/bin/openclaw',
+    '/usr/local/bin/openclaw',
+  ]
+
+  for (const candidate of candidates) {
+    if (!candidate) continue
+    if (fs.existsSync(candidate)) return candidate
+  }
+
+  return null
+}
+
 function normalizeSettingsString(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
@@ -319,6 +355,8 @@ async function spawnServer(): Promise<ChildProcess> {
     const workspaceRoot = settings.workspacePath || path.join(userDataDir, 'workspace')
     const databasePath = path.join(userDataDir, 'clawcontrol.db')
     const migrationsDir = path.join(serverDir, 'apps', 'clawcontrol', 'prisma', 'migrations')
+    const serverPath = buildServerPath(process.env.PATH)
+    const openClawBin = resolveOpenClawBin(serverPath)
 
     fs.mkdirSync(workspaceRoot, { recursive: true })
     await ensurePackagedDatabaseSchema(serverDir, databasePath)
@@ -336,6 +374,11 @@ async function spawnServer(): Promise<ChildProcess> {
       CLAWCONTROL_SETTINGS_PATH: settingsPath,
       CLAWCONTROL_MIGRATIONS_DIR: migrationsDir,
       DATABASE_URL: `file:${databasePath}`,
+      PATH: serverPath,
+    }
+
+    if (openClawBin) {
+      env.OPENCLAW_BIN = openClawBin
     }
 
     if (settings.gatewayHttpUrl) {

@@ -5,6 +5,7 @@ import {
   executeCommand,
   isAllowedCommand,
   getCommandSpec,
+  parseJsonFromCommandOutput,
   type AllowedCommandId,
 } from '@clawcontrol/adapters-openclaw'
 import type { ActionKind } from '@clawcontrol/core'
@@ -171,11 +172,7 @@ export async function POST(
     // Parse JSON output if applicable
     let parsedJson: Record<string, unknown> | undefined
     if (actionConfig.commandId.endsWith('.json') && stdout) {
-      try {
-        parsedJson = JSON.parse(stdout)
-      } catch {
-        // Not valid JSON, that's OK
-      }
+      parsedJson = parseJsonFromCommandOutput<Record<string, unknown>>(stdout) ?? undefined
     }
 
     // Finalize receipt

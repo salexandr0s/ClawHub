@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createAdapter, checkOpenClaw, OPENCLAW_BIN, MIN_OPENCLAW_VERSION, runCommandJson } from '@clawcontrol/adapters-openclaw'
+import { checkOpenClaw, OPENCLAW_BIN, MIN_OPENCLAW_VERSION } from '@clawcontrol/adapters-openclaw'
+import { getRepos } from '@/lib/repo'
+import { getOpenClawConfig, getOpenClawConfigSync } from '@/lib/openclaw-client'
+import { DEFAULT_GATEWAY_HTTP_URL } from '@/lib/settings/types'
 
 const CACHE_TTL_MS = 30_000
 
@@ -28,6 +31,8 @@ type MaintenanceResponseBody = {
 let cached: { body: MaintenanceResponseBody; createdAtMs: number } | null = null
 let inFlight: Promise<MaintenanceResponseBody> | null = null
 
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]'])
+
 function parsePollIntervalMs(): number {
   const raw = process.env.MAINTENANCE_POLL_INTERVAL_MS
   if (!raw) return 30_000
@@ -44,6 +49,44 @@ function responseWithHeaders(body: MaintenanceResponseBody, cacheStatus: 'HIT' |
       'X-Cache': cacheStatus,
     },
   })
+}
+
+function isLoopbackHostname(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase()
+  if (LOOPBACK_HOSTS.has(normalized)) return true
+  return /^127(?:\.\d{1,3}){3}$/.test(normalized)
+}
+
+function mapAvailabilityToHealthStatus(status: 'ok' | 'degraded' | 'unavailable'): 'ok' | 'degraded' | 'down' {
+  if (status === 'unavailable') return 'down'
+  return status
+}
+
+function buildLocalOnlySummary(gatewayUrl: string) {
+  let bind: string | null = null
+  let port: number | null = null
+  let ok = false
+
+  try {
+    const parsed = new URL(gatewayUrl)
+    bind = isLoopbackHostname(parsed.hostname) ? 'loopback' : parsed.hostname
+    port = parsed.port ? Number.parseInt(parsed.port, 10) : null
+    ok = bind === 'loopback'
+  } catch {
+    // Keep defaults when URL parsing fails.
+  }
+
+  return {
+    clawcontrol: {
+      expectedHost: '127.0.0.1',
+      enforced: true,
+    },
+    openclawDashboard: {
+      bind,
+      port,
+      ok,
+    },
+  }
 }
 
 /**
@@ -64,35 +107,25 @@ export async function GET() {
 
   if (!inFlight) {
     inFlight = (async (): Promise<MaintenanceResponseBody> => {
-      const adapter = createAdapter({ mode: 'local_cli' })
-
       // Check OpenClaw CLI availability
       const cliCheck = await checkOpenClaw()
       const pollIntervalMs = parsePollIntervalMs()
 
       try {
-        const [health, status, probe, gatewayCfg] = await Promise.all([
-          adapter.healthCheck(),
-          adapter.gatewayStatus(),
-          adapter.gatewayProbe(),
-          runCommandJson('config.gateway.json'),
+        const repos = getRepos()
+        const [statusRes, probeRes, resolvedConfig] = await Promise.all([
+          repos.gateway.status(),
+          repos.gateway.probe(),
+          getOpenClawConfig(true).catch(() => null),
         ])
 
-        const localOnly = {
-          clawcontrol: {
-            expectedHost: '127.0.0.1',
-            enforced: true,
-          },
-          openclawDashboard: {
-            bind: (gatewayCfg as any)?.data?.bind ?? null,
-            port: (gatewayCfg as any)?.data?.port ?? null,
-            ok: (gatewayCfg as any)?.data?.bind === 'loopback',
-          },
-        }
+        const fallbackConfig = resolvedConfig ?? getOpenClawConfigSync()
+        const gatewayUrl = fallbackConfig?.gatewayUrl ?? DEFAULT_GATEWAY_HTTP_URL
+        const localOnly = buildLocalOnlySummary(gatewayUrl)
 
         const body: MaintenanceResponseBody = {
           data: {
-            mode: adapter.mode,
+            mode: 'probe_first',
             localOnly,
             // CLI info
             cliBin: OPENCLAW_BIN,
@@ -103,12 +136,16 @@ export async function GET() {
             cliError: cliCheck.error,
             // Gateway status (lean)
             health: {
-              status: health.status,
-              message: health.message,
-              timestamp: health.timestamp,
+              status: mapAvailabilityToHealthStatus(statusRes.status),
+              message: statusRes.error ?? undefined,
+              timestamp: statusRes.timestamp,
             },
-            status,
-            probe,
+            status: statusRes.data ?? { running: false },
+            probe: {
+              ok: probeRes.data?.reachable ?? probeRes.status !== 'unavailable',
+              latencyMs: probeRes.data?.latencyMs ?? probeRes.latencyMs,
+              ...(probeRes.error ? { error: probeRes.error } : {}),
+            },
             pollIntervalMs,
             timestamp: new Date().toISOString(),
           },
@@ -118,7 +155,7 @@ export async function GET() {
       } catch (err) {
         const body: MaintenanceResponseBody = {
           data: {
-            mode: adapter.mode,
+            mode: 'probe_first',
             // CLI info (even on error)
             cliBin: OPENCLAW_BIN,
             cliAvailable: cliCheck.available,
