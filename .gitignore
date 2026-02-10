@@ -90,3 +90,5 @@ docs/
 docs/**
 !docs/agent-templates.md
 !docs/AGENT_STARTER_TEMPLATE.md
+!docs/local-only-admin.md
+!docs/REMOTE_TAILSCALE.md

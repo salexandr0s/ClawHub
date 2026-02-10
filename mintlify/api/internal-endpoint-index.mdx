@@ -1,0 +1,132 @@
+# API: Internal Endpoint Index (Full Inventory)
+
+Purpose: complete endpoint inventory from `apps/clawcontrol/app/api/**/route.ts`, with internal/admin routes clearly marked.
+
+## Classification Key
+
+- `operator`: normal product/API usage from UI and local tooling.
+- `internal/admin`: operational control, sync orchestration, recovery, or system wiring endpoints.
+
+## Internal/Admin Endpoints (explicit)
+
+- `/api/agents/completion`
+- `/api/maintenance`
+- `/api/maintenance/[action]`
+- `/api/maintenance/recover`
+- `/api/openclaw/agents/sync`
+- `/api/openclaw/sessions/sync`
+- `/api/openclaw/usage/sync`
+- `/api/search`
+- `/api/sync/run`
+- `/api/sync/status`
+- `/api/workflows`
+
+## Full Endpoint Inventory
+
+```text
+/api/activities
+/api/agent-templates/[id]/export
+/api/agent-templates/[id]/files/[fileId]
+/api/agent-templates/[id]
+/api/agent-templates/import
+/api/agent-templates
+/api/agents/[id]/avatar
+/api/agents/[id]/provision
+/api/agents/[id]
+/api/agents/[id]/test
+/api/agents/completion
+/api/agents/create-from-template/preview
+/api/agents/create-from-template
+/api/agents/create
+/api/agents/hierarchy
+/api/agents
+/api/approvals/[id]
+/api/approvals/batch
+/api/approvals
+/api/config/env
+/api/config/settings
+/api/maintenance/[action]
+/api/maintenance/recover
+/api/maintenance
+/api/models
+/api/openclaw/agents/sync
+/api/openclaw/capabilities
+/api/openclaw/console/agent/turn
+/api/openclaw/console/sessions/[id]/abort
+/api/openclaw/console/sessions/[id]/chat
+/api/openclaw/console/sessions/[id]/history
+/api/openclaw/console/sessions/[id]
+/api/openclaw/console/sessions/[id]/send
+/api/openclaw/console/sessions
+/api/openclaw/cron/[id]/delete
+/api/openclaw/cron/[id]/disable
+/api/openclaw/cron/[id]/edit
+/api/openclaw/cron/[id]/enable
+/api/openclaw/cron/[id]/run
+/api/openclaw/cron/health
+/api/openclaw/cron/jobs
+/api/openclaw/cron
+/api/openclaw/cron/runs
+/api/openclaw/cron/status
+/api/openclaw/discover
+/api/openclaw/errors/summary
+/api/openclaw/gateway/status
+/api/openclaw/gateway/test
+/api/openclaw/models/add
+/api/openclaw/models/available
+/api/openclaw/sessions
+/api/openclaw/sessions/sync
+/api/openclaw/usage/breakdown
+/api/openclaw/usage/summary
+/api/openclaw/usage/sync
+/api/operations/[id]
+/api/operations/[id]/stories
+/api/operations
+/api/playbooks/[id]
+/api/playbooks/[id]/run
+/api/playbooks
+/api/plugins/[id]/config
+/api/plugins/[id]/doctor
+/api/plugins/[id]
+/api/plugins/restart
+/api/plugins
+/api/receipts/[id]/append
+/api/receipts/[id]/finalize
+/api/receipts/[id]
+/api/receipts
+/api/search
+/api/security/audit
+/api/skills/[scope]/[id]/duplicate
+/api/skills/[scope]/[id]/export
+/api/skills/[scope]/[id]
+/api/skills/[scope]/[id]/validate
+/api/skills/import
+/api/skills
+/api/stations/[id]
+/api/stations
+/api/stream/activities
+/api/stream/openclaw
+/api/stream/receipts/[id]
+/api/sync/run
+/api/sync/status
+/api/system/init-status
+/api/work-orders/[id]
+/api/work-orders/[id]/start
+/api/work-orders
+/api/workflows
+/api/workspace/[id]
+/api/workspace/calendar
+/api/workspace/favorites
+/api/workspace/recents
+/api/workspace
+```
+
+## Last updated
+
+2026-02-10
+
+## Related pages
+
+- [API Overview](/api/overview)
+- [API: Workspace + Maintenance + Security + Sync](/api/workspace-maintenance-security-sync)
+- [API: OpenClaw + Console + Cron](/api/openclaw-console-cron)

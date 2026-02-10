@@ -25,7 +25,7 @@ export interface CreateWorkOrderInput {
   ownerType?: OwnerType
   ownerAgentId?: string | null
   tags?: string[]
-  routingTemplate?: string
+  workflowId?: string | null
 }
 
 export interface UpdateWorkOrderInput {
@@ -211,7 +211,8 @@ export function createDbWorkOrdersRepo(): WorkOrdersRepo {
           ownerType: ownerRef.ownerType,
           ownerAgentId: ownerRef.ownerAgentId,
           tags: serializeTags(input.tags),
-          routingTemplate: input.routingTemplate || 'default_routing',
+          workflowId: input.workflowId ?? null,
+          currentStage: 0,
         },
       })
 
@@ -380,7 +381,8 @@ interface PrismaWorkOrderRow {
   ownerType?: string | null
   ownerAgentId?: string | null
   tags: string
-  routingTemplate: string
+  workflowId: string | null
+  currentStage: number
   blockedReason: string | null
   createdAt: Date
   updatedAt: Date
@@ -404,7 +406,8 @@ function toDTO(row: PrismaWorkOrderRow, resolvedOwnerLabel?: string): WorkOrderD
     ownerAgentId,
     ownerLabel,
     tags: parseTags(row.tags),
-    routingTemplate: row.routingTemplate,
+    workflowId: row.workflowId,
+    currentStage: row.currentStage,
     blockedReason: row.blockedReason,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

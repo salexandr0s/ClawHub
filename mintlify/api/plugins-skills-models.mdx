@@ -1,0 +1,59 @@
+# API: Plugins + Skills + Models
+
+Purpose: capability-aware extension and model management on top of OpenClaw.
+
+## Plugins
+
+Representative routes:
+
+- `GET /api/plugins`
+- `GET /api/plugins/:id`
+- `PATCH /api/plugins/:id`
+- `POST /api/plugins/:id/doctor`
+- `PATCH /api/plugins/:id/config`
+- `POST /api/plugins/restart`
+
+## Skills
+
+Representative routes:
+
+- `GET /api/skills`
+- `POST /api/skills`
+- `POST /api/skills/import`
+- `GET/PATCH/DELETE /api/skills/:scope/:id`
+- `POST /api/skills/:scope/:id/validate`
+- `GET /api/skills/:scope/:id/export`
+- duplicate routes under `/api/skills/:scope/:id/duplicate`
+
+## Models
+
+Representative routes:
+
+- `GET /api/models`
+- `GET /api/openclaw/models/available`
+- `POST /api/openclaw/models/add`
+
+## cURL examples
+
+```bash
+curl -sS "http://127.0.0.1:3000/api/plugins"
+curl -sS "http://127.0.0.1:3000/api/skills"
+curl -sS "http://127.0.0.1:3000/api/models"
+```
+
+## Error patterns
+
+- capability-based unsupported operations may fail with endpoint-specific errors
+- governor-protected mutations require typed confirmations (`428`/`403` on failure)
+- OpenClaw unavailability yields unavailable/error responses, not demo data
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Plugins](/features/plugins)
+- [Feature: Skills](/features/skills)
+- [Feature: Models](/features/models)
+- [OpenClaw Integration](/integration/openclaw-integration)

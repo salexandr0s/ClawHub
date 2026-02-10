@@ -25,14 +25,10 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  Plus,
-  X,
+  Play,
   Ship,
   Ban,
 } from 'lucide-react'
-
-// Stations from routing templates
-const STATIONS = ['spec', 'build', 'qa', 'ops', 'update', 'ship', 'compound'] as const
 
 type TabId = 'overview' | 'pipeline' | 'operations' | 'messages' | 'artifacts' | 'receipts' | 'activity'
 
@@ -73,11 +69,13 @@ interface WorkOrderDetailProps {
 export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   const triggerProtectedAction = useProtectedActionTrigger()
   const [workOrder, setWorkOrder] = useState<WorkOrderWithOpsDTO | null>(null)
+  const [workflowStages, setWorkflowStages] = useState<Array<{ ref: string; agent: string }>>([])
   const [operations, setOperations] = useState<OperationDTO[]>([])
   const [activities, setActivities] = useState<ActivityDTO[]>([])
   const [agentStationsById, setAgentStationsById] = useState<Record<string, string>>({})
   const [approvals, setApprovals] = useState<ApprovalDTO[]>([])
   const [receipts, setReceipts] = useState<ReceiptDTO[]>([])
+  const [starting, setStarting] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [savingTags, setSavingTags] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -97,6 +95,17 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           agentsApi.list(),
         ])
         setWorkOrder(woResult.data)
+        const workflowResponse = await fetch('/api/workflows', {
+          method: 'GET',
+          headers: { Accept: 'application/json' },
+        })
+        const workflowJson = (await workflowResponse.json()) as {
+          data?: Array<{ id: string; stages?: Array<{ ref: string; agent: string }> }>
+        }
+        const selectedWorkflow = (workflowJson.data ?? []).find(
+          (workflow) => workflow.id === woResult.data.workflowId
+        )
+        setWorkflowStages(selectedWorkflow?.stages ?? [])
         setTagInput(woResult.data.tags.join(', '))
         setOperations(opsResult.data)
         setActivities(activitiesResult.data)
@@ -222,6 +231,24 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
     }
   }
 
+  const handleStart = async () => {
+    setStarting(true)
+    try {
+      await workOrdersApi.start(workOrderId)
+      const [woResult, opsResult] = await Promise.all([
+        workOrdersApi.get(workOrderId),
+        operationsApi.list({ workOrderId }),
+      ])
+      setWorkOrder(woResult.data)
+      setOperations(opsResult.data)
+      await refreshData()
+    } catch (err) {
+      console.error('Failed to start workflow:', err)
+    } finally {
+      setStarting(false)
+    }
+  }
+
   return (
     <div className="max-w-[1200px] space-y-4">
       {/* Breadcrumb */}
@@ -241,6 +268,16 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           <div className="flex items-center gap-3">
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
+              {workOrder.state === 'planned' && (
+                <button
+                  onClick={handleStart}
+                  disabled={starting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-status-info text-bg-0 hover:bg-status-info/90 disabled:opacity-60"
+                >
+                  <Play className="w-3.5 h-3.5" />
+                  {starting ? 'Starting...' : 'Start'}
+                </button>
+              )}
               {canShip && (
                 <button
                   onClick={handleShip}
@@ -363,14 +400,14 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
           />
         )}
         {activeTab === 'pipeline' && (
-          <PipelineTab workOrder={workOrder} operations={operations} />
+          <PipelineTab
+            workflowId={workOrder.workflowId}
+            workflowStages={workflowStages}
+            operations={operations}
+          />
         )}
         {activeTab === 'operations' && (
-          <OperationsTab
-            operations={operations}
-            workOrderId={workOrderId}
-            onOperationCreated={refreshData}
-          />
+          <OperationsTab operations={operations} />
         )}
         {activeTab === 'messages' && (
           <MessagesTab workOrderId={workOrderId} />
@@ -575,8 +612,8 @@ function OverviewTab({
       <PageSection title="Details">
         <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
-            <dt className="text-fg-2 mb-1">Routing Template</dt>
-            <dd className="text-fg-1 font-mono text-xs">{workOrder.routingTemplate}</dd>
+            <dt className="text-fg-2 mb-1">Workflow</dt>
+            <dd className="text-fg-1 font-mono text-xs">{workOrder.workflowId ?? 'auto'}</dd>
           </div>
           <div>
             <dt className="text-fg-2 mb-1">Created</dt>
@@ -599,38 +636,54 @@ function OverviewTab({
 }
 
 function PipelineTab({
-  workOrder,
+  workflowId,
+  workflowStages,
   operations,
 }: {
-  workOrder: WorkOrderWithOpsDTO
+  workflowId: string | null
+  workflowStages: Array<{ ref: string; agent: string }>
   operations: OperationDTO[]
 }) {
-  // Parse routing template to get stages
-  const stages = workOrder.routingTemplate.split('→').map((s) => s.trim())
+  const fallbackStages = Array.from(
+    new Set(
+      operations
+        .map((operation) => operation.workflowStageIndex)
+        .filter((value) => Number.isFinite(value))
+    )
+  )
+    .sort((a, b) => a - b)
+    .map((index) => ({
+      ref: `stage_${index + 1}`,
+      agent: 'unknown',
+      index,
+    }))
 
-  // Group operations by station
-  const opsByStation = operations.reduce((acc, op) => {
-    if (!acc[op.station]) acc[op.station] = []
-    acc[op.station].push(op)
+  const stages = workflowStages.length > 0
+    ? workflowStages.map((stage, index) => ({ ...stage, index }))
+    : fallbackStages
+
+  const opsByStage = operations.reduce((acc, operation) => {
+    if (!acc[operation.workflowStageIndex]) acc[operation.workflowStageIndex] = []
+    acc[operation.workflowStageIndex].push(operation)
     return acc
-  }, {} as Record<string, OperationDTO[]>)
+  }, {} as Record<number, OperationDTO[]>)
 
   return (
     <div className="p-6">
       <PageSection
         title="Pipeline"
-        description={`Routing: ${workOrder.routingTemplate}`}
+        description={`Workflow: ${workflowId ?? 'unassigned'}`}
       >
         <div className="flex gap-4 overflow-x-auto pb-2">
           {stages.map((stage, index) => {
-            const stageOps = opsByStation[stage] || []
+            const stageOps = opsByStage[stage.index] || []
             const doneCount = stageOps.filter((op) => op.status === 'done').length
             const inProgressCount = stageOps.filter((op) => op.status === 'in_progress').length
             const blockedCount = stageOps.filter((op) => op.status === 'blocked').length
 
             return (
               <div
-                key={stage}
+                key={stage.ref}
                 className={cn(
                   'flex-shrink-0 w-48 p-4 rounded-[var(--radius-md)] border',
                   stageOps.length === 0
@@ -640,7 +693,7 @@ function PipelineTab({
               >
                 {/* Stage Header */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-medium text-fg-1">{stage}</span>
+                  <span className="text-xs font-medium text-fg-1">{stage.ref}</span>
                   <span className="text-[10px] text-fg-3">
                     {index + 1}/{stages.length}
                   </span>
@@ -687,60 +740,14 @@ function PipelineTab({
 
 function OperationsTab({
   operations,
-  workOrderId,
-  onOperationCreated,
 }: {
   operations: OperationDTO[]
-  workOrderId: string
-  onOperationCreated?: () => void
 }) {
-  const [showCreate, setShowCreate] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [title, setTitle] = useState('')
-  const [station, setStation] = useState<string>('build')
-  const [notes, setNotes] = useState('')
-  const [error, setError] = useState<string | null>(null)
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim()) return
-
-    setCreating(true)
-    setError(null)
-
-    try {
-      await operationsApi.create({
-        workOrderId,
-        station,
-        title: title.trim(),
-        notes: notes.trim() || undefined,
-      })
-      setTitle('')
-      setStation('build')
-      setNotes('')
-      setShowCreate(false)
-      onOperationCreated?.()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create operation')
-    } finally {
-      setCreating(false)
-    }
-  }
-
   return (
     <div className="p-6">
       <PageSection
         title="Operations"
-        description={`${operations.length} total`}
-        actions={
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-status-info text-bg-0 hover:bg-status-info/90"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add Operation
-          </button>
-        }
+        description={`${operations.length} total (manager-controlled)`}
       >
         {operations.length > 0 ? (
           <div className="space-y-2">
@@ -788,110 +795,10 @@ function OperationsTab({
           <EmptyState
             icon={<Terminal className="w-8 h-8" />}
             title="No operations yet"
-            description="Click 'Add Operation' to create the first operation"
+            description="Start the workflow to let manager create stage operations."
           />
         )}
       </PageSection>
-
-      {/* Create Operation Modal */}
-      {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-bg-0/80 backdrop-blur-sm"
-            onClick={() => setShowCreate(false)}
-          />
-
-          {/* Dialog */}
-          <div className="relative w-full max-w-md mx-4 bg-bg-1 rounded-[var(--radius-lg)] border border-bd-0 shadow-xl">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-bd-0">
-              <h3 className="text-sm font-semibold text-fg-0">New Operation</h3>
-              <button
-                onClick={() => setShowCreate(false)}
-                className="p-1.5 rounded-[var(--radius-sm)] text-fg-2 hover:text-fg-0 hover:bg-bg-3"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleCreate} className="p-4 space-y-4">
-              {error && (
-                <div className="p-3 bg-status-danger/10 border border-status-danger/30 rounded-[var(--radius-md)]">
-                  <p className="text-xs text-status-danger">{error}</p>
-                </div>
-              )}
-
-              {/* Title */}
-              <div>
-                <label className="block text-xs font-medium text-fg-1 mb-1.5">
-                  Title <span className="text-status-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Implement authentication flow"
-                  className="w-full px-3 py-2 text-sm bg-bg-2 border border-bd-0 rounded-[var(--radius-md)] text-fg-0 placeholder:text-fg-3 focus:outline-none focus:border-bd-1"
-                  autoFocus
-                />
-              </div>
-
-              {/* Station */}
-              <div>
-                <label className="block text-xs font-medium text-fg-1 mb-1.5">
-                  Station
-                </label>
-                <select
-                  value={station}
-                  onChange={(e) => setStation(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-bg-2 border border-bd-0 rounded-[var(--radius-md)] text-fg-0 focus:outline-none focus:border-bd-1"
-                >
-                  {STATIONS.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-xs font-medium text-fg-1 mb-1.5">
-                  Notes (optional)
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Additional context or instructions..."
-                  rows={3}
-                  className="w-full px-3 py-2 text-sm bg-bg-2 border border-bd-0 rounded-[var(--radius-md)] text-fg-0 placeholder:text-fg-3 focus:outline-none focus:border-bd-1 resize-none"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreate(false)}
-                  className="px-3 py-1.5 text-xs font-medium text-fg-1 hover:text-fg-0"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!title.trim() || creating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] bg-status-info text-bg-0 hover:bg-status-info/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {creating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Create Operation
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

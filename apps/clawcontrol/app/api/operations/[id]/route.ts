@@ -11,6 +11,13 @@ interface RouteContext {
   params: Promise<{ id: string }>
 }
 
+function isManagerActor(request: NextRequest): boolean {
+  const actorType = request.headers.get('x-clawcontrol-actor-type')?.trim().toLowerCase()
+  const actorId = request.headers.get('x-clawcontrol-actor-id')?.trim().toLowerCase()
+  if (actorType !== 'system') return false
+  return actorId === 'manager' || actorId === 'manager-engine' || actorId === 'workflow-engine'
+}
+
 /**
  * GET /api/operations/:id
  *
@@ -76,6 +83,16 @@ export async function PATCH(
     // If status is being changed to a different value, validate the transition
     const statusActuallyChanging = status && status !== current.status
     if (statusActuallyChanging) {
+      if (!isManagerActor(request)) {
+        return NextResponse.json(
+          {
+            error: 'Operation status transitions are manager-controlled',
+            code: 'MANAGER_CONTROLLED_OPERATION_STATUS',
+          },
+          { status: 403 }
+        )
+      }
+
       const validation = validateOperationTransition(
         current.status as OperationStatus,
         status as OperationStatus

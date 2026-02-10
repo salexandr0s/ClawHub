@@ -1,0 +1,11 @@
+id: security_audit
+description: Security-first audit workflow for vulnerability and risk assessment.
+stages:
+  - ref: security
+    agent: security
+    canVeto: true
+
+  - ref: build_review
+    agent: build_review
+    optional: true
+    condition: code_review_needed

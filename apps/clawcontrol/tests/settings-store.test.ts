@@ -66,18 +66,39 @@ describe('settings store', () => {
     await mod.writeSettings({
       gatewayHttpUrl: 'http://127.0.0.1:18789',
       workspacePath: '/tmp/a',
+      remoteAccessMode: 'tailscale_tunnel',
       setupCompleted: true,
     })
 
     await mod.writeSettings({
       gatewayHttpUrl: null as unknown as string,
       workspacePath: '/tmp/b',
+      remoteAccessMode: 'local_only',
       setupCompleted: false,
     })
 
     const result = await mod.readSettings()
     expect(result.settings.workspacePath).toBe('/tmp/b')
+    expect(result.settings.remoteAccessMode).toBe('local_only')
     expect(result.settings.setupCompleted).toBe(false)
     expect(result.settings.gatewayHttpUrl).toBeUndefined()
+  })
+
+  it('ignores unsupported remote access mode values from disk', async () => {
+    await fsp.writeFile(
+      settingsPath,
+      JSON.stringify(
+        {
+          remoteAccessMode: 'public_expose',
+          updatedAt: new Date().toISOString(),
+        },
+        null,
+        2
+      )
+    )
+
+    const mod = await import('@/lib/settings/store')
+    const result = await mod.readSettings()
+    expect(result.settings.remoteAccessMode).toBeUndefined()
   })
 })

@@ -1,0 +1,64 @@
+# Core Concepts
+
+This page defines the primary data and control concepts used throughout ClawControl.
+
+## Work Orders
+
+Work orders are the top-level planning and delivery unit.
+
+- States: `planned`, `active`, `blocked`, `review`, `shipped`, `cancelled`.
+- Priorities: `P0` to `P3`.
+- Ownership model includes owner type (`user`, `agent`, `system`) and optional `ownerAgentId`.
+- Stored in SQLite (`work_orders` table).
+
+## Operations
+
+Operations are executable units linked to a work order.
+
+- Statuses: `todo`, `in_progress`, `blocked`, `review`, `done`, `rework`.
+- Stations identify pipeline position (for example `spec`, `build`, `qa`, `ops`, `ship`, `compound`).
+- Operations can track assignees and dependencies.
+
+## Receipts
+
+Receipts are execution logs and evidence.
+
+- Capture command identity, args, output excerpts, duration, and exit code.
+- Can be streamed in real time via SSE (`/api/stream/receipts/:id`).
+- Are used by maintenance, console actions, provisioning/test flows, and other operational APIs.
+
+## Governor + Approvals
+
+Protected actions use policy enforcement from `@clawcontrol/core`.
+
+- Policy attributes: risk level, confirmation mode, and approval requirement.
+- Confirmation modes: `NONE`, `CONFIRM`, `WO_CODE`.
+- Approval states: `pending`, `approved`, `rejected`.
+- Server routes use `withGovernor` / `enforceTypedConfirm` wrappers for enforcement.
+
+## Agents
+
+Agents represent orchestrated workers and higher-level roles.
+
+- Kind values include `worker`, `manager`, `ceo`, `guard`.
+- Dispatch eligibility and WIP limit are tracked per agent.
+- Runtime linkage uses `sessionKey` / `runtimeAgentId` and telemetry from OpenClaw sessions.
+
+## Workspace
+
+Workspace is the controlled filesystem surface.
+
+- Root path is resolved from settings/env/config fallback chain.
+- Path validation blocks traversal, invalid path characters, and symlink escapes.
+- Root-level exposure can be constrained by allowlist mode.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Work Orders + Operations Feature Guide](/features/work-orders-operations)
+- [Approvals / Governor](/features/approvals-governor)
+- [Workspace Browser and Editing](/features/workspace-browser-editing)
+- [Data and Persistence](/data/persistence-and-migrations)

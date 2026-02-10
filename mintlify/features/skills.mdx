@@ -1,0 +1,47 @@
+# Feature: Skills
+
+This page describes the implemented skills feature set.
+
+## Scope Model
+
+Skills can be:
+
+- `global`
+- `agent`-scoped
+
+## Implemented Operations
+
+- list/get/update
+- install/import (zip or package/source path depending on OpenClaw support)
+- validate
+- export
+- duplicate across scopes
+- uninstall
+
+Protected mutations are typed-confirm gated.
+
+## Validation Model
+
+Validation returns status buckets such as:
+
+- `valid`
+- `warnings`
+- `invalid`
+- `unchecked`
+
+UI surfaces include validation summaries and timestamps.
+
+## Import/Export
+
+- import endpoint supports uploaded skill archive flow
+- export endpoint returns skill package output
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Agents + Hierarchy + Templates](/features/agents-hierarchy-templates)
+- [API: Plugins + Skills + Models](/api/plugins-skills-models)
+- [Security: Approval + Typed Confirm](/security/approvals-typed-confirm)

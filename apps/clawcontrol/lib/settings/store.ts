@@ -4,6 +4,7 @@ import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import {
   type ClawcontrolSettings,
+  type RemoteAccessMode,
   type SettingsReadResult,
 } from './types'
 
@@ -41,6 +42,14 @@ function normalizeBoolean(value: unknown): boolean | undefined {
   return undefined
 }
 
+function normalizeRemoteAccessMode(value: unknown): RemoteAccessMode | undefined {
+  const normalized = normalizeString(value)
+  if (normalized === 'local_only' || normalized === 'tailscale_tunnel') {
+    return normalized
+  }
+  return undefined
+}
+
 function parseSettingsRecord(input: unknown): ClawcontrolSettings {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return { updatedAt: nowIso() }
@@ -48,12 +57,14 @@ function parseSettingsRecord(input: unknown): ClawcontrolSettings {
 
   const record = input as Record<string, unknown>
   const updatedAt = normalizeString(record.updatedAt) ?? nowIso()
+  const remoteAccessMode = normalizeRemoteAccessMode(record.remoteAccessMode)
 
   return {
     ...(normalizeString(record.gatewayHttpUrl) ? { gatewayHttpUrl: normalizeString(record.gatewayHttpUrl) } : {}),
     ...(normalizeString(record.gatewayWsUrl) ? { gatewayWsUrl: normalizeString(record.gatewayWsUrl) } : {}),
     ...(normalizeString(record.gatewayToken) ? { gatewayToken: normalizeString(record.gatewayToken) } : {}),
     ...(normalizeString(record.workspacePath) ? { workspacePath: normalizeString(record.workspacePath) } : {}),
+    ...(remoteAccessMode ? { remoteAccessMode } : {}),
     ...(normalizeBoolean(record.setupCompleted) !== undefined
       ? { setupCompleted: normalizeBoolean(record.setupCompleted) }
       : {}),

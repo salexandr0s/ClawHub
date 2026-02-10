@@ -1,0 +1,44 @@
+# Feature: Maintenance / Recovery
+
+This page documents maintenance checks, command execution, and recovery flows.
+
+## Maintenance Capabilities
+
+Maintenance page includes:
+
+- health checks
+- doctor runs
+- doctor fix runs
+- cache/session reset previews
+- gateway restart
+- one-click recovery flow
+
+## Recovery Flow
+
+Recovery endpoint (`/api/maintenance/recover`) orchestrates:
+
+1. health check
+2. diagnostics/doctor
+3. auto-fix stage (when applicable)
+4. gateway restart
+5. verification
+
+The flow creates a parent receipt plus step receipts.
+
+## Playbooks
+
+Maintenance page also loads and can execute playbooks, with protected actions using typed confirmation.
+
+## Error Summaries
+
+UI also loads OpenClaw error summary endpoint for operational context (`/api/openclaw/errors/summary`).
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Operations: Troubleshooting](/operations/troubleshooting)
+- [API: Workspace + Maintenance + Security + Sync](/api/workspace-maintenance-security-sync)
+- [Security: Approval + Typed Confirm](/security/approvals-typed-confirm)

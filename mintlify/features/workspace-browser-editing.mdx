@@ -1,0 +1,45 @@
+# Feature: Workspace Browser and Editing
+
+This page documents the workspace UI and filesystem action model.
+
+## UI Capabilities
+
+Workspace page supports:
+
+- directory browsing
+- file read/edit/write
+- file/folder creation and deletion
+- favorites and recents
+- calendar view with day/week/month/year modes
+- sort modes (`name`, `recentlyEdited`, `newestCreated`, `oldestCreated`)
+
+## Protected Files
+
+Protected root files receive stricter gating behavior. Current protected mapping includes:
+
+- `AGENTS.md`
+- `routing.yaml`
+
+Protected edits require typed confirmation with policy mapping.
+
+## API Surface Used
+
+- `/api/workspace`
+- `/api/workspace/:id`
+- `/api/workspace/favorites`
+- `/api/workspace/recents`
+- `/api/workspace/calendar`
+
+## Safety Controls
+
+All file actions pass workspace path policy and root constraints.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Security: Path Safety and Allowlist](/security/path-safety-allowlist)
+- [API: Workspace + Maintenance + Security + Sync](/api/workspace-maintenance-security-sync)
+- [Data and Persistence](/data/persistence-and-migrations)

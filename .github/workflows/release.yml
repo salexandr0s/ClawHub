@@ -41,6 +41,11 @@ jobs:
       - name: Smoke test packaged runtime
         run: node apps/clawcontrol-desktop/scripts/verify-packaged-runtime.mjs
 
+      - name: Generate SHA-256 checksums
+        run: |
+          cd apps/clawcontrol-desktop/dist/release
+          find . -maxdepth 1 -type f ! -name 'SHA256SUMS.txt' -print0 | xargs -0 shasum -a 256 > SHA256SUMS.txt
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -80,7 +85,12 @@ jobs:
             ### Desktop App (Electron, self-contained)
             1. Download the macOS artifact from this release (DMG/ZIP)
             2. Install it (drag to Applications if prompted)
-            3. Open ClawControl (first time: right-click → Open to bypass Gatekeeper)
+            3. Verify checksums:
+               ```bash
+               cd <download-folder>
+               shasum -a 256 -c SHA256SUMS.txt
+               ```
+            4. Open ClawControl (first time: right-click → Open to bypass Gatekeeper)
 
             ### Web Only (no Xcode required)
             ```bash
@@ -101,3 +111,5 @@ jobs:
             ---
 
             > **Note**: The desktop app is unsigned. On first launch, right-click the app and select "Open" to bypass macOS Gatekeeper.
+            >
+            > **Remote access policy**: ClawControl remains local-only (`127.0.0.1`/`::1`). Use tunnel-only access (no `tailscale serve`): https://github.com/${{ github.repository }}/blob/main/docs/REMOTE_TAILSCALE.md

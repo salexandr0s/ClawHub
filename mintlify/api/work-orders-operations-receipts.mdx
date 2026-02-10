@@ -1,0 +1,96 @@
+# API: Work Orders + Operations + Receipts
+
+Purpose: core orchestration entities and execution evidence streams.
+
+## Work Orders
+
+- `GET /api/work-orders`
+- `POST /api/work-orders`
+- `GET /api/work-orders/:id`
+- `PATCH /api/work-orders/:id`
+- `POST /api/work-orders/:id/start` (canonical manager-engine start)
+
+### Create work order example
+
+```bash
+curl -sS -X POST "http://127.0.0.1:3000/api/work-orders" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title":"Harden gateway startup checks",
+    "goalMd":"Implement stricter startup verification before dispatch.",
+    "priority":"P1"
+  }'
+```
+
+### Work order start example
+
+```bash
+curl -sS -X POST "http://127.0.0.1:3000/api/work-orders/<id>/start" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "context": { "hasUnknowns": false },
+    "force": false
+  }'
+```
+
+`PATCH /api/work-orders/:id` blocks non-manager attempts to set `state=active` with:
+- status `400`
+- code `MANAGER_CONTROLLED_STATE`
+
+## Operations
+
+- `GET /api/operations`
+- `GET /api/operations/:id`
+- `PATCH /api/operations/:id`
+- `GET /api/operations/:id/stories`
+
+`POST /api/operations` is removed for manual use and returns:
+- status `410`
+- code `MANAGER_CONTROLLED_OPERATION_GRAPH`
+
+`PATCH /api/operations/:id` rejects non-manager status transitions with:
+- status `403`
+- code `MANAGER_CONTROLLED_OPERATION_STATUS`
+
+## Approvals + Activities
+
+- approvals: `/api/approvals`, `/api/approvals/:id`, `/api/approvals/batch`
+- activity feed: `/api/activities`
+
+## Receipts
+
+- `GET /api/receipts`
+- `POST /api/receipts`
+- `PATCH /api/receipts/:id/append`
+- `PATCH /api/receipts/:id/finalize`
+- `GET /api/stream/receipts/:id` (see streaming page)
+
+Create receipt example:
+
+```bash
+curl -sS -X POST "http://127.0.0.1:3000/api/receipts" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "workOrderId":"<woId>",
+    "kind":"manual",
+    "commandName":"doctor"
+  }'
+```
+
+## Error patterns
+
+- `404` for missing work order/operation/receipt ids
+- `400` for invalid transition or manager-controlled work-order activation
+- `403` for manager-controlled operation status transitions
+- `410` for manager-controlled operation graph creation
+- `500` repository/internal failure
+
+## Last updated
+
+2026-02-10
+
+## Related pages
+
+- [Feature: Work Orders + Operations](/features/work-orders-operations)
+- [Feature: Approvals / Governor](/features/approvals-governor)
+- [API Streaming](/api/streaming)

@@ -29,7 +29,8 @@ export interface WorkOrder {
   priority: Priority
   owner: Owner
   tags: string[]
-  routingTemplate: string
+  workflowId: string | null
+  currentStage: number
   blockedReason: string | null
   createdAt: Date
   updatedAt: Date
@@ -67,6 +68,17 @@ export interface Operation {
   title: string
   notes: string | null
   status: OperationStatus
+  workflowId: string | null
+  workflowStageIndex: number
+  iterationCount: number
+  executionType: 'single' | 'loop'
+  currentStoryId: string | null
+  retryCount: number
+  maxRetries: number
+  claimedBy: string | null
+  claimExpiresAt: Date | null
+  lastClaimedAt: Date | null
+  timeoutCount: number
   assigneeAgentIds: string[]
   dependsOnOperationIds: string[]
   wipClass: string

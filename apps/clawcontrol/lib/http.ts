@@ -342,7 +342,22 @@ export const workOrdersApi = {
     ownerType?: 'user' | 'agent' | 'system'
     ownerAgentId?: string | null
     tags?: string[]
+    workflowId?: string
   }) => apiPost<{ data: WorkOrderDTO }>('/api/work-orders', data),
+
+  start: (id: string, data?: {
+    context?: Record<string, unknown>
+    force?: boolean
+  }) => apiPost<{
+    success: true
+    workOrderId: string
+    workflowId: string
+    operationId: string
+    stageIndex: number
+    agentId: string
+    agentName: string
+    sessionKey: string | null
+  }>(`/api/work-orders/${id}/start`, data),
 
   update: (id: string, data: Partial<{
     title: string
@@ -384,6 +399,25 @@ export const operationsApi = {
     notes: string | null
     blockedReason: string | null
   }>) => apiPatch<{ data: OperationDTO }>(`/api/operations/${id}`, data),
+
+  stories: (id: string) => apiGet<{
+    data: Array<{
+      id: string
+      operationId: string
+      workOrderId: string
+      storyIndex: number
+      storyKey: string
+      title: string
+      description: string
+      acceptanceCriteria: string[]
+      status: 'pending' | 'running' | 'done' | 'failed'
+      output: string | null
+      retryCount: number
+      maxRetries: number
+      createdAt: Date
+      updatedAt: Date
+    }>
+  }>(`/api/operations/${id}/stories`),
 }
 
 // Agents
@@ -1409,6 +1443,7 @@ export interface TemplateSummary {
   validationWarnings: string[]
   hasReadme: boolean
   hasSoul: boolean
+  hasHeartbeat: boolean
   hasOverlay: boolean
   createdAt: string
   updatedAt: string
@@ -1594,7 +1629,10 @@ export const templatesApi = {
 // CONFIGURATION API
 // ============================================================================
 
+export type RemoteAccessMode = 'local_only' | 'tailscale_tunnel'
+
 export interface SettingsConfig {
+  remoteAccessMode: RemoteAccessMode
   gatewayHttpUrl: string | null
   gatewayWsUrl: string | null
   gatewayToken: string | null
@@ -1656,6 +1694,10 @@ export interface InitStatusResponse {
   ready: boolean
   requiresSetup: boolean
   setupCompleted: boolean
+  access: {
+    mode: RemoteAccessMode
+    loopbackEnforced: boolean
+  }
   checks: {
     database: {
       state: 'ok' | 'error'
@@ -1691,6 +1733,7 @@ export interface InitStatusResponse {
 export const configApi = {
   getSettings: () => apiGet<{ data: SettingsConfigResponse }>('/api/config/settings'),
   updateSettings: (data: Partial<{
+    remoteAccessMode: RemoteAccessMode
     gatewayHttpUrl: string | null
     gatewayWsUrl: string | null
     gatewayToken: string | null

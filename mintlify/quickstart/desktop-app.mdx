@@ -1,0 +1,35 @@
+# Quickstart: Desktop App Run
+
+This path runs ClawControl through the Electron wrapper.
+
+## Development Run
+
+```bash
+git clone https://github.com/salexandr0s/clawcontrol.git
+cd clawcontrol
+npm install
+npm run db:migrate
+./start.sh --desktop
+```
+
+## What Happens
+
+- Desktop app starts a local server on `127.0.0.1:3000` if needed.
+- If port `3000` is already in use, startup fails and desktop exits.
+- Workspace picker and restart hooks are available in desktop mode.
+
+## Security Constraints
+
+- Desktop mode still enforces loopback-only behavior.
+- Remote access remains tunnel-only.
+- Never expose ClawControl via `tailscale serve`.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Release Install Path](/quickstart/release-install)
+- [Unsigned Desktop Install Guidance](/operations/unsigned-desktop-install)
+- [Remote Tunnel-only Workflow](/remote/tailscale-ssh-tunnel-only)

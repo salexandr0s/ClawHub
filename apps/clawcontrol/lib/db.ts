@@ -85,7 +85,7 @@ type ReservedWorkOrderSeed = {
   state: string
   priority: string
   owner: string
-  routingTemplate: string
+  workflowId?: string | null
 }
 
 const RESERVED_WORK_ORDERS: ReservedWorkOrderSeed[] = [
@@ -97,7 +97,7 @@ const RESERVED_WORK_ORDERS: ReservedWorkOrderSeed[] = [
     state: 'active',
     priority: 'P3',
     owner: 'system',
-    routingTemplate: 'system',
+    workflowId: 'ops_change',
   },
   {
     id: 'console',
@@ -107,7 +107,7 @@ const RESERVED_WORK_ORDERS: ReservedWorkOrderSeed[] = [
     state: 'active',
     priority: 'P3',
     owner: 'system',
-    routingTemplate: 'system',
+    workflowId: 'ops_change',
   },
 ]
 
@@ -132,7 +132,8 @@ export async function ensureReservedWorkOrders(): Promise<void> {
         state: wo.state,
         priority: wo.priority,
         owner: wo.owner,
-        routingTemplate: wo.routingTemplate,
+        workflowId: wo.workflowId ?? null,
+        currentStage: 0,
       },
       update: {},
     })

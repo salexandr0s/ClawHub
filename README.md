@@ -35,19 +35,10 @@ npm run build --workspace=clawcontrol
 ### Option C: Download Release
 1. Download the macOS desktop app artifact from [Releases](https://github.com/salexandr0s/clawcontrol/releases)
 2. Install it (DMG/ZIP instructions vary by artifact)
-3. Start the backend (required):
-   ```bash
-   git clone https://github.com/salexandr0s/clawcontrol.git
-   cd clawcontrol
-   npm install
-   cp apps/clawcontrol/.env.example apps/clawcontrol/.env
-   npm run db:migrate
-   npm run build --workspace=clawcontrol
-   npm run start --workspace=clawcontrol
-   ```
-4. Launch ClawControl (first time: right-click → Open to bypass Gatekeeper)
+3. Launch ClawControl (first time: right-click → Open to bypass Gatekeeper)
 
-> **Note**: The desktop app is a wrapper that connects to the backend at `localhost:3000`. The backend must be running for the app to work.
+> **Note**: The desktop app auto-starts a local backend bound to `127.0.0.1:3000`.
+> For remote control, use tunnel-only access. See [docs/REMOTE_TAILSCALE.md](docs/REMOTE_TAILSCALE.md).
 
 ---
 
@@ -65,7 +56,7 @@ npm run build --workspace=clawcontrol
 
 ## Features
 
-- **Work Orders** — Kanban board + table view for feature tracking
+- **Work Orders** — Workflow-only execution with deterministic stage progression
 - **Governor** — Policy-enforced approval gates (ALLOW / CONFIRM / WO_CODE / DENY)
 - **Live View** — Streaming timeline, visualizer, receipt tail
 - **Agents** — Soul files, overlays, capabilities, WIP limits
@@ -74,6 +65,19 @@ npm run build --workspace=clawcontrol
 - **Plugins** — OpenClaw-authoritative with capability probing
 - **Maintenance** — Health checks, doctor, recovery workflows
 - **Audit Trail** — Every action logged with receipts
+
+---
+
+## Execution Model
+
+ClawControl runs a single execution mode for work delivery:
+
+- `work-order -> workflow -> stage -> operation -> completion -> next stage`
+- Work order start is only via `POST /api/work-orders/:id/start`
+- Workflow definitions are loaded from YAML and selected deterministically
+- Manual operation graph/status mutation is blocked by API guards
+
+Canonical station names for workflows/agents: [docs/STATIONS.md](docs/STATIONS.md)
 
 ---
 
@@ -153,6 +157,12 @@ All actions logged with timestamp, actor, entity, payload, receipt ID.
 
 See [docs/SECURITY.md](docs/SECURITY.md) for full threat model.
 
+### Local-only Networking
+
+- ClawControl stays bound to loopback only (`127.0.0.1` / `::1`)
+- Never expose ClawControl via `0.0.0.0`, reverse proxies, or `tailscale serve`
+- Remote access is supported only via user-initiated SSH tunnel (including over Tailscale)
+
 ---
 
 ## Project Structure
@@ -220,5 +230,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - [OpenClaw Integration](docs/OPENCLAW_INTEGRATION.md)
 - [Security Model](docs/SECURITY.md)
+- [Remote Access (Tailscale Tunnel)](docs/REMOTE_TAILSCALE.md)
 - [Path Policy](docs/PATH_POLICY.md)
 - [Agent Starter Template](docs/AGENT_STARTER_TEMPLATE.md)

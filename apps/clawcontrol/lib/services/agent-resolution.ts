@@ -181,6 +181,18 @@ function scoreCandidate(agent: ResolvedAgent, stageRef: string): number {
 
   let score = 0
 
+  if (stage === 'security') {
+    const securitySpecialist =
+      station === 'security' ||
+      capabilityKeys.includes('security') ||
+      capabilityKeys.includes('vulnerability') ||
+      capabilityKeys.includes('auth') ||
+      roleTokens.includes('security')
+
+    // Security stages must use a dedicated security specialist.
+    if (!securitySpecialist) return -1000
+  }
+
   if (hints.preferredStations.includes(station)) score += 120
   if (hints.preferredKinds.includes(kind)) score += 40
   if (capabilityKeys.some((k) => hints.capabilityKeys.includes(k))) score += 50

@@ -43,6 +43,7 @@ model WorkOrder {
 
   // Relations
   operations Operation[]
+  operationStories OperationStory[]
   approvals  Approval[]
   artifacts  Artifact[]
   receipts   Receipt[]
@@ -79,6 +80,15 @@ model Operation {
   workflowStageIndex  Int       @default(0) @map("workflow_stage_index")
   iterationCount      Int       @default(0) @map("iteration_count")
   loopTargetOpId      String?   @map("loop_target_op_id") // for review → build loops
+  executionType       String    @default("single") @map("execution_type") // single|loop
+  loopConfigJson      String?   @map("loop_config_json") // JSON
+  currentStoryId      String?   @map("current_story_id")
+  retryCount          Int       @default(0) @map("retry_count")
+  maxRetries          Int       @default(2) @map("max_retries")
+  claimedBy           String?   @map("claimed_by")
+  claimExpiresAt      DateTime? @map("claim_expires_at")
+  lastClaimedAt       DateTime? @map("last_claimed_at")
+  timeoutCount        Int       @default(0) @map("timeout_count")
 
   // Escalation tracking
   escalatedAt         DateTime? @map("escalated_at")
@@ -92,12 +102,44 @@ model Operation {
   approvals Approval[]
   artifacts Artifact[]
   receipts  Receipt[]
+  stories   OperationStory[]
 
   @@index([workOrderId])
   @@index([status])
   @@index([station])
   @@index([workflowId])
+  @@index([claimExpiresAt])
+  @@index([executionType])
   @@map("operations")
+}
+
+// ============================================================================
+// OPERATION STORIES (LOOP EXECUTION TRACKING)
+// ============================================================================
+
+model OperationStory {
+  id                   String   @id @default(cuid())
+  operationId          String   @map("operation_id")
+  workOrderId          String   @map("work_order_id")
+  storyIndex           Int      @map("story_index")
+  storyKey             String   @map("story_key")
+  title                String
+  description          String
+  acceptanceCriteriaJson String @map("acceptance_criteria_json") // JSON array
+  status               String   @default("pending") // pending|running|done|failed
+  outputJson           String?  @map("output_json") // JSON
+  retryCount           Int      @default(0) @map("retry_count")
+  maxRetries           Int      @default(2) @map("max_retries")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  operation Operation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  workOrder WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@unique([operationId, storyIndex])
+  @@index([operationId, status])
+  @@index([workOrderId])
+  @@map("operation_stories")
 }
 
 // ============================================================================
@@ -320,6 +362,21 @@ model IngestionLease {
 
   @@index([expiresAt])
   @@map("ingestion_leases")
+}
+
+// ============================================================================
+// OPERATION COMPLETION TOKENS (IDEMPOTENCY)
+// ============================================================================
+
+model OperationCompletionToken {
+  id          String   @id @default(cuid())
+  token       String   @unique
+  operationId String   @map("operation_id")
+  workOrderId String?  @map("work_order_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([operationId])
+  @@map("operation_completion_tokens")
 }
 
 // ============================================================================

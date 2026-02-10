@@ -1,0 +1,50 @@
+# Security: Path Safety / Allowlist
+
+This page documents workspace filesystem safety controls.
+
+## Path Validation Controls
+
+Workspace path policy rejects:
+
+- traversal attempts (`..`)
+- invalid characters (including backslash and null byte)
+- escapes outside resolved workspace root
+- symlink escapes after realpath resolution
+
+## Workspace Root Resolution
+
+Root resolves from a fallback chain:
+
+1. settings workspace path
+2. env vars
+3. discovered OpenClaw config workspace
+4. known workspace directories
+5. nearest marker files
+6. local fallback
+
+## Allowlisted Top-level Directories
+
+Implemented allowlisted workspace directories include:
+
+- `agents`, `overlays`, `skills`, `playbooks`, `plugins`, `agent-templates`
+- `memory`, `life`, `docs`, `tools`, `templates`, `canvas`, `projects`
+
+Strict mode can enforce root allowlist behavior with `CLAWCONTROL_WORKSPACE_ALLOWLIST_ONLY=1`.
+
+## Workspace Validation
+
+Workspace validation checks include:
+
+- path exists and is directory
+- required `AGENTS.md` at workspace root
+- warnings for recommended structures (for example `memory/`, `agents/`, agent `SOUL.md` presence)
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Workspace Browser and Editing](/features/workspace-browser-editing)
+- [API: Workspace + Maintenance + Security + Sync](/api/workspace-maintenance-security-sync)
+- [Operations: OpenClaw/Auth/Workspace Errors](/operations/openclaw-auth-workspace-errors)

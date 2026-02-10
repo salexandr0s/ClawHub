@@ -1,0 +1,44 @@
+# Quickstart: Web-only Run
+
+This path runs ClawControl in browser mode without starting the Electron shell.
+
+## Prerequisites
+
+- Node.js `20+`
+- npm `10+`
+- Optional but recommended for OpenClaw-backed functionality: `openclaw` CLI on PATH
+
+## Setup and Run
+
+```bash
+git clone https://github.com/salexandr0s/clawcontrol.git
+cd clawcontrol
+./setup.sh
+npm run dev
+```
+
+Open `http://127.0.0.1:3000`.
+
+## Notes
+
+- Runtime remains local-only.
+- If OpenClaw is unavailable, OpenClaw-backed views show unavailable/empty real-data states.
+- No demo/mock fallback is used.
+
+## Verification
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+```
+
+Expected: loopback listener only (`127.0.0.1:3000` and/or `::1:3000`).
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [First-run Setup Flow](/quickstart/first-run-setup)
+- [Security and Local-only Enforcement](/security/networking-local-only)
+- [Troubleshooting](/operations/troubleshooting)

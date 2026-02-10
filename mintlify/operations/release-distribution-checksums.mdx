@@ -1,0 +1,43 @@
+# Operations: Release and Distribution Checksums
+
+This page summarizes release distribution details currently implemented in CI workflow.
+
+## Workflow Facts
+
+Release workflow:
+
+- builds desktop artifacts on macOS
+- runs packaged runtime smoke test
+- generates `SHA256SUMS.txt`
+- publishes artifacts in GitHub release
+- includes unsigned app note and local-only remote access policy note
+
+## Operator Verification Steps
+
+1. Download artifacts and `SHA256SUMS.txt`.
+2. Verify checksums:
+
+```bash
+cd <download-folder>
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+3. Launch using unsigned-app trust guidance.
+
+## Release Notes Expectations
+
+Release body should continue to include:
+
+- checksum verification commands
+- unsigned desktop warning
+- local-only + tunnel-only remote policy
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Unsigned Desktop Install](/operations/unsigned-desktop-install)
+- [Quickstart: Release Install](/quickstart/release-install)
+- [Developers: Build/Test/Lint/Typecheck](/developers/build-test-lint-typecheck)

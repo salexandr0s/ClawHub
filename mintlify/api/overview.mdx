@@ -1,0 +1,57 @@
+# API Reference Overview
+
+This section documents the implemented local API surface in `/apps/clawcontrol/app/api/**`.
+
+## Base URL
+
+```text
+http://127.0.0.1:3000
+```
+
+The API is local-only and not designed for internet exposure.
+
+## Response Conventions
+
+Most endpoints return one of:
+
+- `{ "data": ... }`
+- `{ "data": ..., "meta": ... }`
+- `{ "error": "..." }`
+
+## Common Status Codes
+
+- `200` success
+- `201` created
+- `400` invalid input
+- `403` forbidden (policy/gate)
+- `404` not found
+- `428` typed confirmation required
+- `500` server error
+- `502/503` upstream OpenClaw/gateway unavailable patterns
+
+## cURL-first Example
+
+```bash
+curl -sS "http://127.0.0.1:3000/api/work-orders?limit=10"
+```
+
+## Grouped API Pages
+
+- [Config + Init](/api/config-init)
+- [OpenClaw + Console + Cron](/api/openclaw-console-cron)
+- [Work Orders + Operations + Receipts](/api/work-orders-operations-receipts)
+- [Agents + Templates + Stations](/api/agents-templates-stations)
+- [Plugins + Skills + Models](/api/plugins-skills-models)
+- [Workspace + Maintenance + Security + Sync](/api/workspace-maintenance-security-sync)
+- [Streaming](/api/streaming)
+- [Internal Endpoint Index](/api/internal-endpoint-index)
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Security and Local-only Enforcement](/security/networking-local-only)
+- [Product Architecture](/product/architecture)
+- [Operations Troubleshooting](/operations/troubleshooting)

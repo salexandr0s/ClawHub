@@ -1,0 +1,54 @@
+# API: Agents + Templates + Stations
+
+Purpose: manage agents, topology, template lifecycle, and station taxonomy.
+
+## Agents
+
+- `GET /api/agents`
+- `POST /api/agents/create`
+- `POST /api/agents/create-from-template`
+- `GET /api/agents/hierarchy`
+- `GET/PATCH /api/agents/:id`
+- `POST /api/agents/:id/provision`
+- `POST /api/agents/:id/test`
+- avatar routes: `/api/agents/:id/avatar`
+
+### Agent update example
+
+```bash
+curl -sS -X PATCH "http://127.0.0.1:3000/api/agents/<id>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status":"idle",
+    "typedConfirmText":"CONFIRM"
+  }'
+```
+
+## Agent Templates
+
+- `GET/POST /api/agent-templates`
+- `GET/PATCH/DELETE /api/agent-templates/:id`
+- file/export/import routes under `/api/agent-templates/*`
+
+## Stations
+
+- `GET/POST /api/stations`
+- `PATCH/DELETE /api/stations/:id`
+
+Station mutations are typed-confirm protected and logged with receipts + activities.
+
+## Error patterns
+
+- `409 STATION_NAME_TAKEN` / `STATION_IN_USE`
+- `400 INVALID_ICON`, `INVALID_COLOR`, `INVALID_SORT_ORDER`
+- policy failures return `428`/`403`
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Agents + Hierarchy + Templates](/features/agents-hierarchy-templates)
+- [Feature: Work Orders + Operations](/features/work-orders-operations)
+- [Security: Approval + Typed Confirm](/security/approvals-typed-confirm)

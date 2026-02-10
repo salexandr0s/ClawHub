@@ -13,7 +13,7 @@ import { useWorkOrderStream } from '@/lib/hooks/useWorkOrderStream'
 import type { AgentDTO, WorkOrderWithOpsDTO } from '@/lib/repo'
 import type { WorkOrderState, Priority, Owner } from '@clawcontrol/core'
 import { cn, formatRelativeTime } from '@/lib/utils'
-import { timedClientFetch, usePageReadyTiming } from '@/lib/perf/client-timing'
+import { usePageReadyTiming } from '@/lib/perf/client-timing'
 import { ClipboardList, Plus, Filter, Loader2, X } from 'lucide-react'
 import { formatOwnerLabel, ownerTextTone } from '@/lib/agent-identity'
 
@@ -25,19 +25,6 @@ interface WorkOrderFilters {
   state: WorkOrderState | 'all'
   priority: Priority | 'all'
   owner: string | 'all'
-}
-
-interface DispatchCronStatus {
-  available: boolean
-  exists: boolean
-  enabled: boolean
-  jobId: string | null
-  name: string
-  schedule: string | null
-  recommendedEvery: string
-  overlapGuard: boolean
-  duplicateJobIds: string[]
-  error?: string
 }
 
 const DEFAULT_FILTERS: WorkOrderFilters = {
@@ -97,6 +84,7 @@ interface NewWorkOrderFormData {
   priority: Priority
   owner: Owner
   tagsInput: string
+  workflowId: string
 }
 
 const DEFAULT_FORM_DATA: NewWorkOrderFormData = {
@@ -105,6 +93,7 @@ const DEFAULT_FORM_DATA: NewWorkOrderFormData = {
   priority: 'P2',
   owner: 'user',
   tagsInput: '',
+  workflowId: '',
 }
 
 interface NewWorkOrderModalProps {
@@ -112,9 +101,16 @@ interface NewWorkOrderModalProps {
   onClose: () => void
   onCreated: () => void
   ownerOptions: { value: Owner; label: string }[]
+  workflowOptions: Array<{ id: string; label: string }>
 }
 
-function NewWorkOrderModal({ isOpen, onClose, onCreated, ownerOptions }: NewWorkOrderModalProps) {
+function NewWorkOrderModal({
+  isOpen,
+  onClose,
+  onCreated,
+  ownerOptions,
+  workflowOptions,
+}: NewWorkOrderModalProps) {
   const [formData, setFormData] = useState<NewWorkOrderFormData>(DEFAULT_FORM_DATA)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -169,6 +165,7 @@ function NewWorkOrderModal({ isOpen, onClose, onCreated, ownerOptions }: NewWork
         ownerType: normalizedOwnerType,
         ownerAgentId: normalizedOwnerAgentId,
         tags: parseTagsInput(formData.tagsInput),
+        workflowId: formData.workflowId || undefined,
       })
 
       onCreated()
@@ -282,7 +279,7 @@ function NewWorkOrderModal({ isOpen, onClose, onCreated, ownerOptions }: NewWork
           </div>
 
           {/* Priority & Owner Row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             {/* Priority */}
             <div>
               <label htmlFor="wo-priority" className="block text-xs font-medium text-fg-1 mb-1.5">
@@ -318,6 +315,27 @@ function NewWorkOrderModal({ isOpen, onClose, onCreated, ownerOptions }: NewWork
                 {ownerOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Workflow */}
+            <div>
+              <label htmlFor="wo-workflow" className="block text-xs font-medium text-fg-1 mb-1.5">
+                Workflow
+              </label>
+              <select
+                id="wo-workflow"
+                value={formData.workflowId}
+                onChange={(e) => setFormData((f) => ({ ...f, workflowId: e.target.value }))}
+                disabled={isSubmitting}
+                className="w-full px-3 py-2 text-sm bg-bg-2 border border-bd-1 rounded-[var(--radius-md)] text-fg-0 focus:outline-none focus:ring-1 focus:ring-status-info/50 disabled:opacity-50"
+              >
+                <option value="">Auto (deterministic)</option>
+                {workflowOptions.map((workflow) => (
+                  <option key={workflow.id} value={workflow.id}>
+                    {workflow.label}
                   </option>
                 ))}
               </select>
@@ -436,12 +454,19 @@ const workOrderColumns: Column<WorkOrderWithOpsDTO>[] = [
 
 interface WorkOrderDrawerProps {
   workOrder: WorkOrderWithOpsDTO
+  onStart?: (workOrderId: string) => Promise<void>
+  startingWorkOrderId?: string | null
 }
 
-function WorkOrderDrawerContent({ workOrder }: WorkOrderDrawerProps) {
+function WorkOrderDrawerContent({
+  workOrder,
+  onStart,
+  startingWorkOrderId,
+}: WorkOrderDrawerProps) {
   const doneOps = workOrder.operations.filter((op) => op.status === 'done').length
   const totalOps = workOrder.operations.length
   const progressPercent = totalOps > 0 ? Math.round((doneOps / totalOps) * 100) : 0
+  const isStarting = startingWorkOrderId === workOrder.id
 
   return (
     <div className="space-y-4">
@@ -509,8 +534,8 @@ function WorkOrderDrawerContent({ workOrder }: WorkOrderDrawerProps) {
           </span>
         </div>
         <div className="flex justify-between text-xs">
-          <span className="text-fg-2">Routing</span>
-          <span className="font-mono text-fg-1">{workOrder.routingTemplate}</span>
+          <span className="text-fg-2">Workflow</span>
+          <span className="font-mono text-fg-1">{workOrder.workflowId ?? 'auto'}</span>
         </div>
         <div className="flex justify-between text-xs">
           <span className="text-fg-2">Updated</span>
@@ -524,13 +549,23 @@ function WorkOrderDrawerContent({ workOrder }: WorkOrderDrawerProps) {
         )}
       </div>
 
-      {/* Action button */}
-      <a
-        href={`/work-orders/${workOrder.id}`}
-        className="block w-full text-center px-4 py-2 text-xs font-medium bg-bg-3 text-fg-0 hover:bg-bg-3/80 rounded-[var(--radius-md)] border border-bd-0"
-      >
-        View Full Details
-      </a>
+      <div className="space-y-2">
+        {workOrder.state === 'planned' && (
+          <button
+            onClick={() => onStart?.(workOrder.id)}
+            disabled={isStarting}
+            className="w-full text-center px-4 py-2 text-xs font-medium bg-status-info text-bg-0 hover:bg-status-info/90 rounded-[var(--radius-md)] disabled:opacity-60"
+          >
+            {isStarting ? 'Starting...' : 'Start Workflow'}
+          </button>
+        )}
+        <a
+          href={`/work-orders/${workOrder.id}`}
+          className="block w-full text-center px-4 py-2 text-xs font-medium bg-bg-3 text-fg-0 hover:bg-bg-3/80 rounded-[var(--radius-md)] border border-bd-0"
+        >
+          View Full Details
+        </a>
+      </div>
     </div>
   )
 }
@@ -543,10 +578,11 @@ export function WorkOrdersClient() {
   const router = useRouter()
   const [workOrders, setWorkOrders] = useState<WorkOrderWithOpsDTO[]>([])
   const [agents, setAgents] = useState<AgentDTO[]>([])
-  const [dispatchCron, setDispatchCron] = useState<DispatchCronStatus | null>(null)
-  const [dispatchCronBusy, setDispatchCronBusy] = useState(false)
-  const [dispatchCronError, setDispatchCronError] = useState<string | null>(null)
+  const [workflowOptions, setWorkflowOptions] = useState<Array<{ id: string; label: string }>>([])
   const [assigningWorkOrderId, setAssigningWorkOrderId] = useState<string | null>(null)
+  const [startingWorkOrderId, setStartingWorkOrderId] = useState<string | null>(null)
+  const [queueTickMessage, setQueueTickMessage] = useState<string | null>(null)
+  const [queueTickError, setQueueTickError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -637,54 +673,47 @@ export function WorkOrdersClient() {
     }
   }, [])
 
-  const fetchDispatchCronStatus = useCallback(async () => {
-    try {
-      const response = await timedClientFetch('/api/dispatch/cron', {
-        method: 'GET',
-        headers: { Accept: 'application/json' },
-      }, {
-        page: 'work-orders',
-        name: 'dispatch.cron.status',
-      })
-
-      const json = (await response.json()) as { data?: DispatchCronStatus; error?: string }
-      if (!response.ok || !json.data) {
-        throw new Error(json.error || 'Failed to load dispatch cron status')
-      }
-
-      setDispatchCron(json.data)
-      setDispatchCronError(json.data.error ?? null)
-    } catch (err) {
-      setDispatchCronError(err instanceof Error ? err.message : 'Failed to load dispatch cron status')
-    }
-  }, [])
-
   // Initial fetch
   useEffect(() => {
     fetchWorkOrders()
-    fetchDispatchCronStatus()
-  }, [fetchWorkOrders, fetchDispatchCronStatus])
+  }, [fetchWorkOrders])
 
   useEffect(() => {
     let isMounted = true
-    const fetchAgents = async () => {
+    const fetchAgentsAndWorkflows = async () => {
       try {
-        const result = await agentsApi.list({
-          mode: 'light',
-          includeSessionOverlay: false,
-          includeModelOverlay: false,
-          syncSessions: false,
-          cacheTtlMs: 5000,
-        })
+        const [agentResult, workflowResponse] = await Promise.all([
+          agentsApi.list({
+            mode: 'light',
+            includeSessionOverlay: false,
+            includeModelOverlay: false,
+            syncSessions: false,
+            cacheTtlMs: 5000,
+          }),
+          fetch('/api/workflows', {
+            method: 'GET',
+            headers: { Accept: 'application/json' },
+          }),
+        ])
+
+        const workflowJson = (await workflowResponse.json()) as {
+          data?: Array<{ id: string; description?: string }>
+        }
         if (isMounted) {
-          setAgents(result.data)
+          setAgents(agentResult.data)
+          setWorkflowOptions(
+            (workflowJson.data ?? []).map((workflow) => ({
+              id: workflow.id,
+              label: workflow.description ? `${workflow.id} — ${workflow.description}` : workflow.id,
+            }))
+          )
         }
       } catch (err) {
-        console.error('Failed to load agents:', err)
+        console.error('Failed to load work-order metadata:', err)
       }
     }
 
-    fetchAgents()
+    fetchAgentsAndWorkflows()
     return () => {
       isMounted = false
     }
@@ -705,6 +734,13 @@ export function WorkOrdersClient() {
   // Handle state change from kanban drag-drop
   const handleStateChange = useCallback(
     async (id: string, newState: WorkOrderState, typedConfirmText?: string) => {
+      const currentWorkOrder = workOrders.find((workOrder) => workOrder.id === id)
+      if (currentWorkOrder?.state === 'planned' && newState === 'active') {
+        await workOrdersApi.start(id)
+        await fetchWorkOrders()
+        return
+      }
+
       // For dangerous transitions (ship/cancel), skip optimistic update
       // These go through TypedConfirmModal and should only update after server confirms
       const isDangerous = newState === 'shipped' || newState === 'cancelled'
@@ -733,7 +769,7 @@ export function WorkOrdersClient() {
         await fetchWorkOrders()
       }
     },
-    [fetchWorkOrders]
+    [fetchWorkOrders, workOrders]
   )
 
   const handleAssignToAgent = useCallback(
@@ -743,6 +779,7 @@ export function WorkOrdersClient() {
       const ownerLabel = assignedAgent?.displayName || `agent:${agentId}`
 
       // Planned column behaves as an assignment queue. Claiming assigns owner and activates.
+      // Manager engine start remains explicit and separate.
       setWorkOrders((prev) =>
         prev.map((wo) =>
           wo.id === id
@@ -752,7 +789,6 @@ export function WorkOrdersClient() {
                 ownerType: 'agent',
                 ownerAgentId: agentId,
                 ownerLabel,
-                state: 'active',
                 updatedAt: new Date(),
               }
             : wo
@@ -764,7 +800,6 @@ export function WorkOrdersClient() {
           owner: `agent:${agentId}`,
           ownerType: 'agent',
           ownerAgentId: agentId,
-          state: 'active',
         })
         await fetchWorkOrders()
       } catch (err) {
@@ -777,39 +812,19 @@ export function WorkOrdersClient() {
     [agents, fetchWorkOrders]
   )
 
-  const handleToggleDispatchCron = useCallback(async () => {
-    if (dispatchCronBusy) return
-
-    const targetEnabled = !(dispatchCron?.enabled ?? false)
-    setDispatchCronBusy(true)
-    setDispatchCronError(null)
-
+  const handleStartWorkOrder = useCallback(async (workOrderId: string) => {
+    setStartingWorkOrderId(workOrderId)
+    setQueueTickError(null)
     try {
-      const response = await timedClientFetch('/api/dispatch/cron', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ enabled: targetEnabled }),
-      }, {
-        page: 'work-orders',
-        name: 'dispatch.cron.toggle',
-      })
-
-      const json = (await response.json()) as { data?: DispatchCronStatus; error?: string }
-      if (!response.ok || !json.data) {
-        throw new Error(json.error || 'Failed to update dispatch cron')
-      }
-
-      setDispatchCron(json.data)
-      setDispatchCronError(json.data.error ?? null)
+      await workOrdersApi.start(workOrderId)
+      await fetchWorkOrders()
+      setQueueTickMessage(`Started workflow for work order ${workOrderId}.`)
     } catch (err) {
-      setDispatchCronError(err instanceof Error ? err.message : 'Failed to update dispatch cron')
+      setQueueTickError(err instanceof Error ? err.message : 'Failed to start work order')
     } finally {
-      setDispatchCronBusy(false)
+      setStartingWorkOrderId(null)
     }
-  }, [dispatchCron?.enabled, dispatchCronBusy])
+  }, [fetchWorkOrders])
 
   // Handle card click in board view
   const handleCardClick = useCallback((wo: WorkOrderWithOpsDTO) => {
@@ -882,34 +897,6 @@ export function WorkOrdersClient() {
           <div className="flex items-center gap-2">
             <ViewToggle value={view} onChange={setView} />
             <button
-              onClick={handleToggleDispatchCron}
-              disabled={dispatchCronBusy || dispatchCron?.available === false}
-              title={
-                dispatchCron?.available === false
-                  ? dispatchCron.error || 'Dispatch cron is unavailable'
-                  : dispatchCron?.enabled
-                    ? 'Disable automated dispatch cron'
-                    : 'Enable automated dispatch cron'
-              }
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] border transition-colors',
-                dispatchCron?.available === false
-                  ? 'bg-status-warning/10 text-status-warning border-status-warning/20'
-                  : dispatchCron?.enabled
-                    ? 'bg-status-success/10 text-status-success border-status-success/20 hover:bg-status-success/20'
-                    : 'bg-bg-3 text-fg-1 border-bd-0 hover:text-fg-0',
-                'disabled:opacity-60 disabled:cursor-not-allowed'
-              )}
-            >
-              {dispatchCronBusy
-                ? 'Auto Dispatch...'
-                : dispatchCron?.available === false
-                  ? 'Auto Dispatch Unavailable'
-                  : dispatchCron?.enabled
-                    ? 'Auto Dispatch On'
-                    : 'Auto Dispatch Off'}
-            </button>
-            <button
               onClick={() => setFilterDrawerOpen(true)}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[var(--radius-md)] border border-bd-0',
@@ -937,9 +924,15 @@ export function WorkOrdersClient() {
         }
       />
 
-      {dispatchCronError && (
+      {queueTickError && (
         <div className="p-2 rounded-[var(--radius-md)] border border-status-warning/20 bg-status-warning/10 text-status-warning text-xs">
-          Automated dispatch: {dispatchCronError}
+          Start error: {queueTickError}
+        </div>
+      )}
+
+      {queueTickMessage && (
+        <div className="p-2 rounded-[var(--radius-md)] border border-status-info/20 bg-status-info/10 text-status-info text-xs">
+          {queueTickMessage}
         </div>
       )}
 
@@ -985,7 +978,11 @@ export function WorkOrdersClient() {
         description="Work Order Details"
       >
         {selectedWorkOrder && (
-          <WorkOrderDrawerContent workOrder={selectedWorkOrder} />
+          <WorkOrderDrawerContent
+            workOrder={selectedWorkOrder}
+            onStart={handleStartWorkOrder}
+            startingWorkOrderId={startingWorkOrderId}
+          />
         )}
       </RightDrawer>
 
@@ -1079,6 +1076,7 @@ export function WorkOrdersClient() {
         onClose={() => setCreateModalOpen(false)}
         onCreated={fetchWorkOrders}
         ownerOptions={ownerOptions}
+        workflowOptions={workflowOptions}
       />
     </div>
   )

@@ -1,0 +1,37 @@
+# Local Process Model
+
+This page describes how ClawControl processes run in web and desktop modes.
+
+## Web-only Runtime
+
+- Server process runs from `apps/clawcontrol` using Next.js.
+- Startup scripts use local-only guard to force loopback host values.
+- Typical local endpoint: `http://127.0.0.1:3000`.
+
+## Desktop Runtime
+
+- Electron main process launches and monitors local Next server.
+- Desktop wrapper checks local port readiness and exits on unrecoverable startup failures.
+- Packaged mode uses standalone Next build output bundled into desktop resources.
+
+## Local-only Enforcement Points
+
+- Script guard: `/apps/clawcontrol/scripts/local-only.mjs`
+- Proxy host check: `/apps/clawcontrol/proxy.ts`
+- Settings API URL validation: `/api/config/settings`
+
+## Remote Control Pattern
+
+- Host stays loopback-only.
+- Operator uses SSH local forwarding, including over Tailscale.
+- App behavior and docs explicitly reject `tailscale serve` exposure model.
+
+## Last updated
+
+2026-02-10
+
+## Related pages
+
+- [Desktop App Quickstart](/quickstart/desktop-app)
+- [Remote Tailscale Tunnel-only Guide](/remote/tailscale-ssh-tunnel-only)
+- [Security: Forbidden Exposure Paths](/security/forbidden-exposure-paths)

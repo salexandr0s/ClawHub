@@ -1,0 +1,42 @@
+# Remote Access: Tailscale Tunnel-only Workflow
+
+This page documents the only supported remote-access model.
+
+## Policy
+
+- Host machine keeps ClawControl bound to loopback (`127.0.0.1:3000`).
+- Remote machine accesses host via SSH local forwarding over tailnet.
+- `tailscale serve` is not allowed for ClawControl.
+
+## Host Steps
+
+1. Start ClawControl normally.
+2. Verify loopback listener.
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+```
+
+## Remote Steps
+
+```bash
+ssh -L 3000:127.0.0.1:3000 <user>@<host-tailnet-name>
+```
+
+Then open `http://127.0.0.1:3000` on the remote machine.
+
+## Not Allowed (repeated for operator safety)
+
+- `tailscale serve`
+- non-loopback bind
+- reverse proxy/public tunnel exposure
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Settings + Remote Access Mode](/features/settings-remote-access)
+- [Security: Local-only Enforcement](/security/networking-local-only)
+- [Security: Forbidden Exposure Paths](/security/forbidden-exposure-paths)

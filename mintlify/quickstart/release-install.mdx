@@ -1,0 +1,35 @@
+# Quickstart: Release Install Path
+
+Use this path for packaged desktop artifacts from GitHub Releases.
+
+## Install Steps
+
+1. Download desktop artifact and `SHA256SUMS.txt` from a release.
+2. Verify checksum locally.
+3. Install app (drag to Applications on macOS when applicable).
+4. First launch: right-click app and choose **Open** (unsigned app trust path).
+
+## Checksum Verification
+
+```bash
+cd <download-folder>
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+Expected output: `OK` for each artifact.
+
+## Important
+
+- Current desktop app is unsigned.
+- Trust bypass step is required for first launch on macOS Gatekeeper.
+- This does not change local-only network policy.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Release and Distribution + Checksums](/operations/release-distribution-checksums)
+- [Unsigned Desktop Guidance](/operations/unsigned-desktop-install)
+- [Publish docs.clawcontrol.cc](/deploy/publish-docs-clawcontrol-cc)

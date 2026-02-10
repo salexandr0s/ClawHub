@@ -236,7 +236,22 @@ async function scanTemplatesFs(): Promise<AgentTemplate[]> {
 
     const hasReadme = existsSync(join(absDir, 'README.md'))
     const hasSoul = existsSync(join(absDir, 'SOUL.md'))
+    const hasHeartbeat = existsSync(join(absDir, 'HEARTBEAT.md'))
     const hasOverlay = existsSync(join(absDir, 'overlay.md'))
+
+    if (!hasHeartbeat) {
+      validationResult = {
+        ...validationResult,
+        warnings: [
+          ...validationResult.warnings,
+          {
+            path: '/HEARTBEAT.md',
+            message: 'Template is missing HEARTBEAT.md (required for built-in defaults).',
+            code: 'MISSING_HEARTBEAT',
+          },
+        ],
+      }
+    }
 
     const dirStat = await fsp.stat(absDir)
     const jsonStat = await fsp.stat(absTemplateJson)
@@ -255,6 +270,7 @@ async function scanTemplatesFs(): Promise<AgentTemplate[]> {
       config,
       hasReadme,
       hasSoul,
+      hasHeartbeat,
       hasOverlay,
       createdAt: dirStat.birthtime ?? dirStat.mtime,
       updatedAt: jsonStat.mtime,
@@ -399,6 +415,7 @@ export async function createTemplateScaffold(templateId: string, name: string, r
       engine: 'mustache',
       targets: [
         { source: 'SOUL.md', destination: 'workspace/agents/{{agentSlug}}/SOUL.md' },
+        { source: 'HEARTBEAT.md', destination: 'workspace/agents/{{agentSlug}}/HEARTBEAT.md' },
         { source: 'overlay.md', destination: 'workspace/agents/{{agentSlug}}.md' },
       ],
     },
@@ -436,6 +453,21 @@ You are {{agentName}}, a clawcontrol ${role.toLowerCase()} agent.
 
 ## Constraints
 - WIP Limit: 2 concurrent operations
+`,
+      'utf8'
+    )
+    await fsp.writeFile(
+      join(absDir, 'HEARTBEAT.md'),
+      `# {{agentName}} Heartbeat
+
+## Checks
+- Blockers for active operations
+- Pending approvals needed
+- Health regressions since last run
+
+## Report vs Silence
+- Report only actionable issues
+- Otherwise reply \`HEARTBEAT_OK\`
 `,
       'utf8'
     )
@@ -504,6 +536,7 @@ export async function previewTemplateRender(
   // Get render targets (or defaults)
   const targets = config.render?.targets || [
     { source: 'SOUL.md', destination: 'workspace/agents/{{agentSlug}}/SOUL.md' },
+    { source: 'HEARTBEAT.md', destination: 'workspace/agents/{{agentSlug}}/HEARTBEAT.md' },
     { source: 'overlay.md', destination: 'workspace/agents/{{agentSlug}}.md' },
   ]
 

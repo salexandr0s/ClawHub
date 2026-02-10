@@ -1,0 +1,83 @@
+# API: Config + Init
+
+Purpose: setup/read runtime config and determine readiness state for dashboard entry.
+
+## Key Endpoints
+
+- `GET /api/config/settings`
+- `PUT /api/config/settings`
+- `GET /api/system/init-status`
+- `GET /api/config/env`
+
+## `GET /api/config/settings`
+
+Returns persisted settings, resolved OpenClaw config, settings file path, and workspace validation.
+
+```bash
+curl -sS "http://127.0.0.1:3000/api/config/settings"
+```
+
+Example response shape:
+
+```json
+{
+  "data": {
+    "settings": {
+      "gatewayHttpUrl": "http://127.0.0.1:18789",
+      "workspacePath": "/Users/me/OpenClaw",
+      "remoteAccessMode": "local_only",
+      "setupCompleted": false
+    },
+    "workspaceValidation": {
+      "ok": true,
+      "issues": []
+    }
+  }
+}
+```
+
+## `PUT /api/config/settings`
+
+Updates settings fields (`remoteAccessMode`, gateway URLs/token, `workspacePath`, `setupCompleted`).
+
+```bash
+curl -sS -X PUT "http://127.0.0.1:3000/api/config/settings" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "remoteAccessMode": "tailscale_tunnel",
+    "gatewayHttpUrl": "http://127.0.0.1:18789",
+    "workspacePath": "/Users/me/OpenClaw"
+  }'
+```
+
+### Error patterns
+
+- `400 INVALID_REMOTE_ACCESS_MODE`
+- `400 NON_LOOPBACK_FORBIDDEN` (for non-loopback gateway URL)
+- `400` for invalid body types
+
+## `GET /api/system/init-status`
+
+Returns readiness and setup checks across database, OpenClaw CLI, gateway, and workspace.
+
+```bash
+curl -sS "http://127.0.0.1:3000/api/system/init-status"
+```
+
+Key fields:
+
+- `ready`
+- `requiresSetup`
+- `setupCompleted`
+- `access.mode` (`local_only` or `tailscale_tunnel`)
+- check states/messages for `database`, `openclaw`, `gateway`, `workspace`
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Quickstart: First-run Setup](/quickstart/first-run-setup)
+- [Feature: Settings + Remote Access](/features/settings-remote-access)
+- [Data and Persistence](/data/persistence-and-migrations)

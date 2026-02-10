@@ -1,0 +1,31 @@
+# Developers: Repository Layout
+
+This page maps repository structure relevant to docs and product behavior.
+
+## Top-level Structure
+
+- `apps/clawcontrol`: Next.js product app (UI + API)
+- `apps/clawcontrol-desktop`: Electron wrapper
+- `packages/core`: governor/types/state-machine logic
+- `packages/ui`: shared UI components (including typed confirm modal)
+- `packages/adapters-openclaw`: OpenClaw adapter and command runner
+- `docs`: existing internal docs set
+- `mintlify`: public docs site (this site)
+
+## Important Runtime Paths
+
+- API routes: `apps/clawcontrol/app/api/**/route.ts`
+- dashboard pages: `apps/clawcontrol/app/(dashboard)/**`
+- settings persistence: `apps/clawcontrol/lib/settings/store.ts`
+- DB init/migrations: `apps/clawcontrol/lib/db/init.ts`
+- local-only guard: `apps/clawcontrol/scripts/local-only.mjs`
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Developers: Build/Test/Lint/Typecheck](/developers/build-test-lint-typecheck)
+- [Developers: Contributing + Docs Maintenance](/developers/contributing-and-docs-maintenance)
+- [Product Architecture](/product/architecture)

@@ -1,0 +1,48 @@
+# OpenClaw Integration
+
+This page documents how ClawControl integrates with OpenClaw in the current implementation.
+
+## Supported Binary and Version Expectation
+
+- Supported binary: `openclaw`
+- Minimum version expectation in code/docs: `0.1.0`
+- CLI resolution supports explicit `OPENCLAW_BIN` override and common install paths
+
+## Discovery and Resolution Behavior
+
+Config resolution combines (in priority order):
+
+1. ClawControl settings (`settings.json`)
+2. environment variables
+3. OpenClaw config discovery (`~/.openclaw`, `~/.OpenClaw`, `~/.moltbot`, `~/.clawdbot`)
+4. default loopback gateway URLs
+
+## Capability Probing
+
+Capabilities endpoint probes OpenClaw and returns feature support map. Results are cached briefly and can be refreshed.
+
+## Command Safety Model
+
+- OpenClaw execution is allowlist-based.
+- Commands run via `spawn` with array args (no shell interpolation).
+- Dynamic command forms enforce required params.
+- Command execution results are logged in receipts.
+
+## Unavailable / Degraded Behavior
+
+When OpenClaw is unavailable:
+
+- API responses return unavailable/degraded states or errors per endpoint contract.
+- UI renders empty or unavailable states using real data contracts.
+- No fake/demo fallback data is generated.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Plugins](/features/plugins)
+- [Feature: Models](/features/models)
+- [API: OpenClaw + Console + Cron](/api/openclaw-console-cron)
+- [Operations: OpenClaw/Auth/Workspace Errors](/operations/openclaw-auth-workspace-errors)

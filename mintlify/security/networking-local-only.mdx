@@ -1,0 +1,39 @@
+# Security and Networking: Local-only Enforcement
+
+This page documents the enforced local-only runtime model.
+
+## Enforcement Points
+
+- startup guard script refuses non-loopback host env values
+- Next.js proxy rejects non-loopback host access with HTTP `403`
+- config API enforces loopback-only gateway URLs
+
+## Default Local Endpoints
+
+- ClawControl UI/API: `http://127.0.0.1:3000`
+- OpenClaw gateway default: `http://127.0.0.1:18789`
+
+## Explicitly Unsupported
+
+- binding ClawControl to `0.0.0.0`
+- exposing ClawControl over reverse proxy to LAN/WAN
+- `tailscale serve` exposure of ClawControl ports
+
+## Host Verification
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+lsof -nP -iTCP:18789 -sTCP:LISTEN
+```
+
+Expected: loopback listeners only.
+
+## Last updated
+
+2026-02-10
+
+## Related pages
+
+- [Security: Forbidden Exposure Paths](/security/forbidden-exposure-paths)
+- [Remote Tunnel-only Workflow](/remote/tailscale-ssh-tunnel-only)
+- [Operations: Loopback Policy Violations](/operations/loopback-policy-violations)

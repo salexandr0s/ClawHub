@@ -6,6 +6,9 @@ import { randomUUID } from 'node:crypto'
 
 describe('workspace timestamps', () => {
   const originalWorkspace = process.env.OPENCLAW_WORKSPACE
+  const originalSettingsPath = process.env.CLAWCONTROL_SETTINGS_PATH
+  const originalClawcontrolWorkspaceRoot = process.env.CLAWCONTROL_WORKSPACE_ROOT
+  const originalWorkspaceRoot = process.env.WORKSPACE_ROOT
   let workspaceRoot = ''
 
   beforeEach(async () => {
@@ -17,11 +20,17 @@ describe('workspace timestamps', () => {
     await fsp.writeFile(join(workspaceRoot, 'memory', 'entry.md'), 'hello')
 
     process.env.OPENCLAW_WORKSPACE = workspaceRoot
+    process.env.CLAWCONTROL_SETTINGS_PATH = join(workspaceRoot, 'settings.json')
+    delete process.env.CLAWCONTROL_WORKSPACE_ROOT
+    delete process.env.WORKSPACE_ROOT
     vi.resetModules()
   })
 
   afterEach(() => {
     process.env.OPENCLAW_WORKSPACE = originalWorkspace
+    process.env.CLAWCONTROL_SETTINGS_PATH = originalSettingsPath
+    process.env.CLAWCONTROL_WORKSPACE_ROOT = originalClawcontrolWorkspaceRoot
+    process.env.WORKSPACE_ROOT = originalWorkspaceRoot
   })
 
   it('maps createdAt/lastEditedAt fields on workspace entries', async () => {

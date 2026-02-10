@@ -1,0 +1,35 @@
+# Feature: Models
+
+This page describes model configuration and auth status visibility.
+
+## Implemented Views
+
+Models page loads in parallel:
+
+- model status (`modelsApi.getStatus()`)
+- model list action (`modelsApi.runAction('list')`)
+
+## What It Shows
+
+- default model and fallback chain
+- provider authentication state
+- model inventory grouped by provider
+- aliases and availability metadata
+
+## Model Add Flow
+
+The UI includes add-model flow and refresh logic after successful add.
+
+## Notes
+
+Model behavior depends on OpenClaw configuration and provider auth state. ClawControl shows current real status; it does not synthesize fake model data.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [OpenClaw Integration](/integration/openclaw-integration)
+- [API: Plugins + Skills + Models](/api/plugins-skills-models)
+- [Operations: OpenClaw/Auth/Workspace Errors](/operations/openclaw-auth-workspace-errors)

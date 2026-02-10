@@ -14,7 +14,7 @@ function parseHost(hostHeader: string | null): string | null {
   return h.split(':')[0]
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const host = parseHost(req.headers.get('host'))
 
   // Hard fail if accessed via anything other than loopback.

@@ -1,0 +1,36 @@
+# Operations: Unsigned Desktop Install Guidance
+
+This page documents required trust steps for current desktop releases.
+
+## Current Trust Model
+
+ClawControl desktop artifacts are currently unsigned.
+
+On first macOS launch, use:
+
+1. right-click app
+2. choose **Open**
+3. confirm Gatekeeper bypass prompt
+
+## Security Expectations
+
+- download from trusted project releases
+- verify checksums before installation
+- keep app local-only; unsigned status does not justify wider network exposure
+
+## Verify Artifact Integrity
+
+```bash
+cd <download-folder>
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Release Distribution and Checksums](/operations/release-distribution-checksums)
+- [Quickstart: Release Install](/quickstart/release-install)
+- [Deployment: Publish docs.clawcontrol.cc](/deploy/publish-docs-clawcontrol-cc)

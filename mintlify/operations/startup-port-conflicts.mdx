@@ -1,0 +1,51 @@
+# Operations: Startup Failures and Port Conflicts
+
+This page covers startup and binding failures.
+
+## Symptoms
+
+- app fails to open or exits immediately
+- backend does not respond at `127.0.0.1:3000`
+- desktop reports local server startup failure
+
+## Port 3000 Conflict
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+```
+
+If occupied by unrelated process, stop that process or choose an alternate run strategy.
+
+## Port 18789 Conflict (OpenClaw Gateway)
+
+```bash
+lsof -nP -iTCP:18789 -sTCP:LISTEN
+```
+
+If gateway is not reachable, setup/init status will report gateway warning/error.
+
+## Local-only Guard Failures
+
+ClawControl startup will refuse host env values that are not loopback.
+
+Check and unset bad values:
+
+```bash
+echo "$HOST $HOSTNAME"
+```
+
+## Recovery Actions
+
+- run setup checks again (`/setup`)
+- use maintenance page health/recovery actions
+- inspect receipts for command-level error output
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Troubleshooting Index](/operations/troubleshooting)
+- [Loopback Policy Violations](/operations/loopback-policy-violations)
+- [Maintenance / Recovery](/features/maintenance-recovery)

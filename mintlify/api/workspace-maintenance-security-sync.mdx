@@ -1,0 +1,63 @@
+# API: Workspace + Maintenance + Security + Sync
+
+Purpose: filesystem operations, operational maintenance commands, security audits, and sync control endpoints.
+
+## Workspace
+
+- `GET/POST /api/workspace`
+- `GET/PUT/DELETE /api/workspace/:id`
+- `GET/POST /api/workspace/favorites`
+- `POST /api/workspace/recents`
+- `GET /api/workspace/calendar`
+
+Create file example:
+
+```bash
+curl -sS -X POST "http://127.0.0.1:3000/api/workspace" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "path":"/agents",
+    "name":"new-agent.md",
+    "type":"file",
+    "content":"# Agent",
+    "typedConfirmText":"CONFIRM"
+  }'
+```
+
+## Maintenance
+
+- `GET /api/maintenance`
+- `POST /api/maintenance/:action`
+- `POST /api/maintenance/recover`
+
+Maintenance actions generate receipts and activity logs.
+
+## Security Audit
+
+- `POST /api/security/audit`
+
+Supports audit modes including fix paths, with typed confirmation required for protected fix action.
+
+## Sync
+
+- `GET /api/sync/status`
+- `POST /api/sync/run`
+- `POST /api/openclaw/sessions/sync`
+- `POST /api/openclaw/usage/sync`
+
+## Error patterns
+
+- workspace path/name validation returns `400`
+- protected file deletion returns `403`
+- typed confirmation failures return `428`/`403`
+- upstream OpenClaw command failures may return `502`/`503`
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Workspace Browser and Editing](/features/workspace-browser-editing)
+- [Feature: Maintenance / Recovery](/features/maintenance-recovery)
+- [Operations Troubleshooting](/operations/troubleshooting)

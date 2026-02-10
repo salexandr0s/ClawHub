@@ -1,8 +1,11 @@
+export type RemoteAccessMode = 'local_only' | 'tailscale_tunnel'
+
 export interface ClawcontrolSettings {
   gatewayHttpUrl?: string
   gatewayWsUrl?: string
   gatewayToken?: string
   workspacePath?: string
+  remoteAccessMode?: RemoteAccessMode
   setupCompleted?: boolean
   updatedAt: string
 }

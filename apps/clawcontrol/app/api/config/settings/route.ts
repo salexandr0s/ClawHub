@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getOpenClawConfig } from '@/lib/openclaw-client'
 import { readSettings, writeSettings } from '@/lib/settings/store'
-import type { ClawcontrolSettings } from '@/lib/settings/types'
+import type { ClawcontrolSettings, RemoteAccessMode } from '@/lib/settings/types'
 import { invalidateWorkspaceRootCache } from '@/lib/fs/path-policy'
 import { validateWorkspaceStructure } from '@/lib/workspace/validate'
+
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]'])
 
 function normalizeString(value: unknown): string | null {
   if (typeof value !== 'string') return null
@@ -19,6 +21,29 @@ function normalizeBoolean(value: unknown): boolean | null {
     if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off') return false
   }
   return null
+}
+
+function normalizeRemoteAccessMode(value: unknown): RemoteAccessMode | null {
+  const normalized = normalizeString(value)
+  if (normalized === 'local_only' || normalized === 'tailscale_tunnel') {
+    return normalized
+  }
+  return null
+}
+
+function isLoopbackHostname(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase()
+  if (LOOPBACK_HOSTS.has(normalized)) return true
+  return /^127(?:\.\d{1,3}){3}$/.test(normalized)
+}
+
+function isLoopbackUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value)
+    return isLoopbackHostname(parsed.hostname)
+  } catch {
+    return false
+  }
 }
 
 function applyRuntimeWorkspacePath(workspacePath: string | null | undefined): void {
@@ -49,6 +74,7 @@ async function buildResponseData() {
       gatewayWsUrl: settings.gatewayWsUrl ?? null,
       gatewayToken: settings.gatewayToken ?? null,
       workspacePath: settings.workspacePath ?? null,
+      remoteAccessMode: settings.remoteAccessMode ?? 'local_only',
       setupCompleted: settings.setupCompleted ?? false,
       updatedAt: settings.updatedAt,
     },
@@ -113,6 +139,20 @@ export async function PUT(request: Request) {
       patch.workspacePath = normalizeString(body.workspacePath)
     }
 
+    if ('remoteAccessMode' in body) {
+      const parsed = normalizeRemoteAccessMode(body.remoteAccessMode)
+      if (parsed === null) {
+        return NextResponse.json(
+          {
+            error: 'remoteAccessMode must be "local_only" or "tailscale_tunnel"',
+            code: 'INVALID_REMOTE_ACCESS_MODE',
+          },
+          { status: 400 }
+        )
+      }
+      patch.remoteAccessMode = parsed
+    }
+
     if ('setupCompleted' in body) {
       const parsed = normalizeBoolean(body.setupCompleted)
       if (parsed === null) {
@@ -122,6 +162,26 @@ export async function PUT(request: Request) {
         )
       }
       patch.setupCompleted = parsed
+    }
+
+    if (typeof patch.gatewayHttpUrl === 'string' && !isLoopbackUrl(patch.gatewayHttpUrl)) {
+      return NextResponse.json(
+        {
+          error: 'Gateway HTTP URL must use a loopback host (127.0.0.1, localhost, or ::1).',
+          code: 'NON_LOOPBACK_FORBIDDEN',
+        },
+        { status: 400 }
+      )
+    }
+
+    if (typeof patch.gatewayWsUrl === 'string' && !isLoopbackUrl(patch.gatewayWsUrl)) {
+      return NextResponse.json(
+        {
+          error: 'Gateway WebSocket URL must use a loopback host (127.0.0.1, localhost, or ::1).',
+          code: 'NON_LOOPBACK_FORBIDDEN',
+        },
+        { status: 400 }
+      )
     }
 
     const saved = await writeSettings(patch as Partial<ClawcontrolSettings>)

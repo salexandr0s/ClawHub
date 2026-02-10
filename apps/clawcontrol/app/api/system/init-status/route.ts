@@ -3,12 +3,17 @@ import { checkOpenClawAvailable } from '@clawcontrol/adapters-openclaw'
 import { ensureDatabaseInitialized, getDatabaseInitStatus } from '@/lib/db/init'
 import { getOpenClawConfig, waitForGatewayAvailability } from '@/lib/openclaw-client'
 import { readSettings } from '@/lib/settings/store'
+import type { RemoteAccessMode } from '@/lib/settings/types'
 import { validateWorkspaceStructure } from '@/lib/workspace/validate'
 
 export interface InitStatus {
   ready: boolean
   requiresSetup: boolean
   setupCompleted: boolean
+  access: {
+    mode: RemoteAccessMode
+    loopbackEnforced: true
+  }
   checks: {
     database: {
       state: 'ok' | 'error'
@@ -73,6 +78,7 @@ export async function GET() {
     )
 
     const setupCompleted = settingsResult.settings.setupCompleted === true
+    const remoteAccessMode: RemoteAccessMode = settingsResult.settings.remoteAccessMode ?? 'local_only'
 
     const criticalReady = dbStatus.ok && workspaceValidation.ok
     const ready = criticalReady && setupCompleted
@@ -99,6 +105,10 @@ export async function GET() {
       ready,
       requiresSetup,
       setupCompleted,
+      access: {
+        mode: remoteAccessMode,
+        loopbackEnforced: true,
+      },
       checks: {
         database: {
           state: dbStatus.ok ? 'ok' : 'error',

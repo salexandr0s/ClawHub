@@ -32,11 +32,34 @@ describe('database initialization', () => {
 
     const mod = await import('@/lib/db/init')
     const status = await mod.ensureDatabaseInitialized()
+    const { prisma } = await import('@/lib/db')
 
     expect(status.ok).toBe(true)
     expect(status.initialized).toBe(true)
     expect(status.code).toBeNull()
     await expect(fsp.stat(dbPath)).resolves.toBeDefined()
+
+    const operationColumns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
+      'PRAGMA table_info("operations")'
+    )
+    const operationColumnNames = new Set(operationColumns.map((row) => row.name))
+    expect(operationColumnNames.has('execution_type')).toBe(true)
+    expect(operationColumnNames.has('loop_config_json')).toBe(true)
+    expect(operationColumnNames.has('claimed_by')).toBe(true)
+
+    const storyColumns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
+      'PRAGMA table_info("operation_stories")'
+    )
+    const storyColumnNames = new Set(storyColumns.map((row) => row.name))
+    expect(storyColumnNames.has('story_key')).toBe(true)
+    expect(storyColumnNames.has('acceptance_criteria_json')).toBe(true)
+
+    const appliedMigrations = await prisma.$queryRawUnsafe<Array<{ id: string }>>(
+      'SELECT id FROM "_clawcontrol_migrations"'
+    )
+    expect(appliedMigrations.some((row) => row.id === '20260210190000_manager_engine_single_mode')).toBe(true)
+
+    await prisma.$disconnect()
 
     await fsp.rm(tempRoot, { recursive: true, force: true })
   })

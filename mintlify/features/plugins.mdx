@@ -1,0 +1,46 @@
+# Feature: Plugins
+
+This page documents plugin management behavior implemented in ClawControl.
+
+## Capability-aware UI
+
+Plugin UI first queries capabilities, then enables/disables actions based on what OpenClaw reports.
+
+## Implemented Plugin Actions
+
+- list/get
+- install
+- enable/disable
+- uninstall
+- run doctor
+- update plugin config
+- restart plugins for config application
+
+Most mutating actions are governor/typed-confirm protected.
+
+## Sources
+
+Install source types include:
+
+- npm
+- git
+- local path
+- tarball (`.tgz`)
+
+## Operational Signals
+
+Plugin rows surface:
+
+- doctor status
+- restart-required flag
+- runtime status and errors
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [OpenClaw Integration](/integration/openclaw-integration)
+- [Feature: Maintenance / Recovery](/features/maintenance-recovery)
+- [API: Plugins + Skills + Models](/api/plugins-skills-models)

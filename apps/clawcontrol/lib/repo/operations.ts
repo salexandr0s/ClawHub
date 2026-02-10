@@ -96,6 +96,10 @@ export function createDbOperationsRepo(): OperationsRepo {
           assigneeAgentIds: '[]',
           dependsOnOperationIds: JSON.stringify(input.dependsOnOperationIds ?? []),
           wipClass: input.wipClass ?? 'implementation',
+          executionType: 'single',
+          retryCount: 0,
+          maxRetries: 2,
+          timeoutCount: 0,
         },
       })
       return toDTO(row)
@@ -190,6 +194,17 @@ function toDTO(row: {
   title: string
   notes: string | null
   status: string
+  workflowId: string | null
+  workflowStageIndex: number
+  iterationCount: number
+  executionType: string
+  currentStoryId: string | null
+  retryCount: number
+  maxRetries: number
+  claimedBy: string | null
+  claimExpiresAt: Date | null
+  lastClaimedAt: Date | null
+  timeoutCount: number
   assigneeAgentIds: string
   dependsOnOperationIds: string
   wipClass: string
@@ -204,6 +219,17 @@ function toDTO(row: {
     title: row.title,
     notes: row.notes,
     status: row.status as OperationDTO['status'],
+    workflowId: row.workflowId,
+    workflowStageIndex: row.workflowStageIndex,
+    iterationCount: row.iterationCount,
+    executionType: row.executionType as OperationDTO['executionType'],
+    currentStoryId: row.currentStoryId,
+    retryCount: row.retryCount,
+    maxRetries: row.maxRetries,
+    claimedBy: row.claimedBy,
+    claimExpiresAt: row.claimExpiresAt,
+    lastClaimedAt: row.lastClaimedAt,
+    timeoutCount: row.timeoutCount,
     assigneeAgentIds: JSON.parse(row.assigneeAgentIds),
     dependsOnOperationIds: JSON.parse(row.dependsOnOperationIds),
     wipClass: row.wipClass,

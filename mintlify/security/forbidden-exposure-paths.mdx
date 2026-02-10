@@ -1,0 +1,29 @@
+# Security: Explicit Forbidden Exposure Paths
+
+This page is an explicit deny-list for unsupported exposure patterns.
+
+## Hard Not Allowed
+
+- `tailscale serve` for ClawControl ports
+- binding ClawControl to `0.0.0.0`
+- exposing ClawControl through reverse proxy to LAN/WAN
+- public tunnel exposure (`ngrok`, `cloudflared`, similar)
+- disabling local-only safeguards for public access behavior
+
+## Why
+
+ClawControl is designed as a local-first admin console with single-user trust assumptions and local host enforcement. Unsupported exposure patterns break those assumptions.
+
+## Supported Remote Pattern
+
+Only user-initiated SSH local forwarding (including Tailscale transport) is supported.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Remote Tunnel-only Workflow](/remote/tailscale-ssh-tunnel-only)
+- [Security: Local-only Enforcement](/security/networking-local-only)
+- [Operations: Loopback Policy Violations](/operations/loopback-policy-violations)

@@ -1,0 +1,51 @@
+# Feature: Agents + Hierarchy + Templates
+
+This page covers implemented agent lifecycle, hierarchy views, and template-based creation.
+
+## Agents
+
+Agent records include runtime identity and control fields:
+
+- display identity (`displayName`, `slug`, `runtimeAgentId`)
+- lifecycle/status (`idle`, `active`, `blocked`, `error`)
+- kind (`worker`, `manager`, `ceo`, `guard`)
+- dispatch eligibility and WIP limit
+- model + fallback configuration
+
+## Agent Actions
+
+Implemented actions include:
+
+- create agent directly
+- create from template
+- preview template expansion
+- provision agent to OpenClaw
+- test agent execution
+- update agent metadata/state
+- set/remove avatar with typed confirmation
+
+## Hierarchy View
+
+Agents page supports list and hierarchy modes backed by `/api/agents/hierarchy`.
+
+## Templates
+
+Agent templates support:
+
+- list/get/create/update/delete
+- import/export
+- file retrieval per template
+
+## Skills Duplication
+
+Agents workflow includes duplication of global skills into agent scope where supported.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Skills](/features/skills)
+- [API: Agents + Templates + Stations](/api/agents-templates-stations)
+- [OpenClaw Integration](/integration/openclaw-integration)

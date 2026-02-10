@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepos } from '@/lib/repo'
-import type { OperationFilters, CreateOperationInput } from '@/lib/repo'
+import type { OperationFilters } from '@/lib/repo'
 import { withRouteTiming } from '@/lib/perf/route-timing'
 
 /**
@@ -57,65 +57,17 @@ export const GET = withRouteTiming('api.operations.get', getOperationsRoute)
 /**
  * POST /api/operations
  *
- * Create a new operation
+ * Manual operation graph mutation is disabled in manager-only execution mode.
  */
 const postOperationsRoute = async (request: NextRequest) => {
-  try {
-    const body = await request.json()
-    const { workOrderId, station, title, notes, dependsOnOperationIds, wipClass } = body
-
-    // Validate required fields
-    if (!workOrderId || !station || !title) {
-      return NextResponse.json(
-        { error: 'Missing required fields: workOrderId, station, title' },
-        { status: 400 }
-      )
-    }
-
-    const repos = getRepos()
-
-    // Verify work order exists
-    const workOrder = await repos.workOrders.getById(workOrderId)
-    if (!workOrder) {
-      return NextResponse.json(
-        { error: 'Work order not found' },
-        { status: 404 }
-      )
-    }
-
-    const input: CreateOperationInput = {
-      workOrderId,
-      station,
-      title,
-      notes,
-      dependsOnOperationIds,
-      wipClass,
-    }
-
-    const data = await repos.operations.create(input)
-
-    // Write activity record
-    await repos.activities.create({
-      type: 'operation.created',
-      actor: 'system',
-      entityType: 'operation',
-      entityId: data.id,
-      summary: `Operation "${title}" created for ${workOrder.code}`,
-      payloadJson: {
-        workOrderId,
-        station,
-        title,
-      },
-    })
-
-    return NextResponse.json({ data }, { status: 201 })
-  } catch (error) {
-    console.error('[api/operations] POST error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create operation' },
-      { status: 500 }
-    )
-  }
+  void request
+  return NextResponse.json(
+    {
+      error: 'Manual operation graph creation is manager-controlled',
+      code: 'MANAGER_CONTROLLED_OPERATION_GRAPH',
+    },
+    { status: 410 }
+  )
 }
 
 export const POST = withRouteTiming('api.operations.post', postOperationsRoute)

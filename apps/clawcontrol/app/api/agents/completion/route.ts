@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { handleAgentCompletion } from '@/lib/services/manager'
+import { advanceOnCompletion } from '@/lib/services/workflow-engine'
 
 type CompletionBody = {
   operationId?: string
@@ -7,6 +7,7 @@ type CompletionBody = {
   output?: unknown
   feedback?: string
   artifacts?: string[]
+  completionToken?: string
 }
 
 export async function POST(request: Request) {
@@ -30,13 +31,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Invalid status: ${body.status}` }, { status: 400 })
   }
 
-  await handleAgentCompletion(body.operationId, {
+  const completed = await advanceOnCompletion(body.operationId, {
     status: body.status,
     output: body.output,
     feedback: body.feedback,
     artifacts: body.artifacts,
+  }, {
+    completionToken: body.completionToken,
   })
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({
+    success: true,
+    duplicate: completed.duplicate,
+    noop: completed.noop,
+  })
 }
-

@@ -513,6 +513,20 @@ function validateParsedCandidate(parsed: ParsedTemplateCandidate): PreparedTempl
     )
   }
 
+  if (!candidate.files['HEARTBEAT.md']) {
+    validation = {
+      ...validation,
+      warnings: [
+        ...validation.warnings,
+        {
+          path: '/HEARTBEAT.md',
+          message: 'Template is missing HEARTBEAT.md (recommended in v1, required for built-in defaults).',
+          code: 'MISSING_HEARTBEAT',
+        },
+      ],
+    }
+  }
+
   return {
     templateId: config.id,
     name: config.name || candidate.name,

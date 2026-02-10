@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Save, FolderOpen } from 'lucide-react'
-import { configApi, type InitStatusResponse } from '@/lib/http'
+import { configApi, type InitStatusResponse, type RemoteAccessMode } from '@/lib/http'
 import { cn } from '@/lib/utils'
 
 declare global {
@@ -36,6 +36,7 @@ export default function SetupPage() {
 
   const [gatewayHttpUrl, setGatewayHttpUrl] = useState('http://127.0.0.1:18789')
   const [workspacePath, setWorkspacePath] = useState('')
+  const [remoteAccessMode, setRemoteAccessMode] = useState<RemoteAccessMode>('local_only')
 
   const [saving, setSaving] = useState(false)
   const [testingGateway, setTestingGateway] = useState(false)
@@ -59,6 +60,7 @@ export default function SetupPage() {
       setInitStatus(statusRes.data)
       setGatewayHttpUrl(settingsRes.data.settings.gatewayHttpUrl || settingsRes.data.resolved?.gatewayHttpUrl || 'http://127.0.0.1:18789')
       setWorkspacePath(settingsRes.data.settings.workspacePath || settingsRes.data.resolved?.workspacePath || '')
+      setRemoteAccessMode(settingsRes.data.settings.remoteAccessMode || 'local_only')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load setup status')
     } finally {
@@ -87,6 +89,7 @@ export default function SetupPage() {
 
     try {
       await configApi.updateSettings({
+        remoteAccessMode,
         gatewayHttpUrl: gatewayHttpUrl || null,
         workspacePath: workspacePath || null,
       })
@@ -131,6 +134,7 @@ export default function SetupPage() {
     setError(null)
     try {
       await configApi.updateSettings({
+        remoteAccessMode,
         gatewayHttpUrl: gatewayHttpUrl || null,
         workspacePath: workspacePath || null,
         setupCompleted: true,
@@ -149,6 +153,7 @@ export default function SetupPage() {
 
     try {
       await configApi.updateSettings({
+        remoteAccessMode,
         gatewayHttpUrl: gatewayHttpUrl || null,
         workspacePath: workspacePath || null,
         setupCompleted: true,
@@ -232,6 +237,66 @@ export default function SetupPage() {
                   <span className={stateTone(initStatus.checks.gateway.state)}>{initStatus.checks.gateway.message}</span>
                 </div>
               </div>
+            </section>
+
+            <section className="p-4 rounded-[var(--radius-lg)] bg-bg-2 border border-bd-0 space-y-3">
+              <h2 className="text-sm font-medium">How will you access ClawControl?</h2>
+              <p className="text-xs text-fg-2">
+                ClawControl always runs on loopback only. Choose whether you plan to tunnel in remotely.
+              </p>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  onClick={() => setRemoteAccessMode('local_only')}
+                  className={cn(
+                    'rounded-[var(--radius-md)] border px-3 py-2 text-left transition-colors',
+                    remoteAccessMode === 'local_only'
+                      ? 'border-status-info/70 bg-status-info/10 text-fg-0'
+                      : 'border-bd-0 bg-bg-1 text-fg-2 hover:bg-bg-3'
+                  )}
+                >
+                  <p className="text-sm font-medium">Local only (recommended)</p>
+                  <p className="mt-1 text-xs text-fg-3">
+                    Use this machine directly at <code>http://127.0.0.1:3000</code>.
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => setRemoteAccessMode('tailscale_tunnel')}
+                  className={cn(
+                    'rounded-[var(--radius-md)] border px-3 py-2 text-left transition-colors',
+                    remoteAccessMode === 'tailscale_tunnel'
+                      ? 'border-status-info/70 bg-status-info/10 text-fg-0'
+                      : 'border-bd-0 bg-bg-1 text-fg-2 hover:bg-bg-3'
+                  )}
+                >
+                  <p className="text-sm font-medium">Tailscale tunnel (advanced)</p>
+                  <p className="mt-1 text-xs text-fg-3">
+                    Keep local bind, access remotely through an SSH tunnel over Tailscale.
+                  </p>
+                </button>
+              </div>
+
+              {remoteAccessMode === 'tailscale_tunnel' ? (
+                <div className="rounded-[var(--radius-md)] border border-status-warning/40 bg-status-warning/10 px-3 py-3 text-xs text-fg-1 space-y-2">
+                  <p className="font-medium text-status-warning">
+                    Tunnel mode keeps ClawControl local-only.
+                  </p>
+                  <p>Host machine still runs on <code>127.0.0.1:3000</code>.</p>
+                  <p>From a remote machine on your tailnet, run:</p>
+                  <pre className="overflow-x-auto rounded bg-bg-1 p-2 text-[11px] text-fg-2">
+ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
+                  </pre>
+                  <p>Then open <code>http://127.0.0.1:3000</code> on the remote machine.</p>
+                  <p className="text-status-danger">
+                    Do not use <code>tailscale serve</code> or expose ClawControl ports directly.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-fg-3">
+                  Local-only mode never exposes the app to LAN or internet interfaces.
+                </p>
+              )}
             </section>
 
             <section className="p-4 rounded-[var(--radius-lg)] bg-bg-2 border border-bd-0 space-y-3">

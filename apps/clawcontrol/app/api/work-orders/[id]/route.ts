@@ -19,6 +19,13 @@ const STATE_TO_ACTION: Record<string, ActionKind> = {
   cancelled: 'work_order.cancel',
 }
 
+function isManagerActor(request: NextRequest): boolean {
+  const actorType = request.headers.get('x-clawcontrol-actor-type')?.trim().toLowerCase()
+  const actorId = request.headers.get('x-clawcontrol-actor-id')?.trim().toLowerCase()
+  if (actorType !== 'system') return false
+  return actorId === 'manager' || actorId === 'manager-engine' || actorId === 'workflow-engine'
+}
+
 /**
  * GET /api/work-orders/:id
  *
@@ -100,6 +107,16 @@ export async function PATCH(
     // If state is being changed to a different value, validate the transition
     const stateActuallyChanging = state && state !== current.state
     if (stateActuallyChanging) {
+      if (state === 'active' && !isManagerActor(request)) {
+        return NextResponse.json(
+          {
+            error: 'Work order activation is manager-controlled',
+            code: 'MANAGER_CONTROLLED_STATE',
+          },
+          { status: 400 }
+        )
+      }
+
       const validation = validateWorkOrderTransition(
         current.state as WorkOrderState,
         state as WorkOrderState

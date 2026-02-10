@@ -1,0 +1,50 @@
+# Operations: OpenClaw, Auth-required, and Workspace Errors
+
+This page covers the most common integration and configuration failures.
+
+## OpenClaw Not Found
+
+Symptoms:
+
+- init status warns OpenClaw not installed
+- OpenClaw-backed pages show unavailable/empty states
+
+Checks:
+
+```bash
+which openclaw
+openclaw --version
+```
+
+## Gateway Auth-required State
+
+Gateway probe can return `auth_required`.
+
+- configure token in settings when required
+- retest gateway from setup/settings page
+- confirm gateway URL remains loopback-hosted
+
+## Workspace Validation Errors
+
+Common validation codes/messages include:
+
+- workspace not configured
+- workspace not found
+- workspace not directory
+- root `AGENTS.md` missing
+
+Fix by setting valid `workspacePath` in settings and ensuring required root files exist.
+
+## Real-data-only Reminder
+
+Unavailable OpenClaw integration does not trigger demo data fallback. Empty states are expected until real OpenClaw connectivity is restored.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [OpenClaw Integration](/integration/openclaw-integration)
+- [Feature: Settings + Remote Access](/features/settings-remote-access)
+- [Data and Persistence](/data/persistence-and-migrations)

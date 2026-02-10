@@ -1,0 +1,39 @@
+# Operations: Troubleshooting
+
+This page is the troubleshooting index for ClawControl operators.
+
+## Common Incident Areas
+
+- startup failures
+- port conflicts
+- OpenClaw missing/unavailable
+- gateway auth-required responses
+- workspace validation failures
+- loopback policy violations
+- unsigned desktop launch friction
+
+## First-response Checks
+
+1. Confirm local listeners are loopback only.
+2. Confirm database path and migration state.
+3. Confirm OpenClaw CLI exists on PATH.
+4. Re-run gateway test from setup/settings flow.
+5. Check activity/receipt logs for failed operations.
+
+## Targeted Guides
+
+- [Startup Failures and Port Conflicts](/operations/startup-port-conflicts)
+- [OpenClaw/Auth/Workspace Errors](/operations/openclaw-auth-workspace-errors)
+- [Loopback Policy Violations](/operations/loopback-policy-violations)
+- [Unsigned Desktop Install](/operations/unsigned-desktop-install)
+- [Release Distribution + Checksums](/operations/release-distribution-checksums)
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Maintenance / Recovery](/features/maintenance-recovery)
+- [Config + Init API](/api/config-init)
+- [Streaming API](/api/streaming)

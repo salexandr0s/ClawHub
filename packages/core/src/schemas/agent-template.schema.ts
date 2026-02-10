@@ -37,7 +37,7 @@ export const AGENT_TEMPLATE_SCHEMA = {
     role: {
       type: 'string',
       enum: ['CEO', 'BUILD', 'OPS', 'REVIEW', 'SPEC', 'QA', 'SHIP', 'COMPOUND', 'UPDATE', 'CUSTOM'],
-      description: 'Agent role type',
+      description: 'Agent role type (MANAGER planned for v1.1)',
     },
     namingPattern: {
       type: 'string',
@@ -237,6 +237,7 @@ export interface AgentTemplate {
   config?: AgentTemplateConfig
   hasReadme: boolean
   hasSoul: boolean
+  hasHeartbeat: boolean
   hasOverlay: boolean
   createdAt: Date
   updatedAt: Date

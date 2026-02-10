@@ -1,0 +1,83 @@
+# API: OpenClaw + Console + Cron
+
+Purpose: OpenClaw discovery, gateway status/probing, session telemetry, console messaging, cron control, usage telemetry.
+
+## Key Endpoint Groups
+
+- discovery/capabilities: `/api/openclaw/discover`, `/api/openclaw/capabilities`
+- gateway: `/api/openclaw/gateway/status`, `/api/openclaw/gateway/test`
+- sessions: `/api/openclaw/sessions`, `/api/openclaw/sessions/sync`
+- console: `/api/openclaw/console/sessions/*`, `/api/openclaw/console/agent/turn`
+- cron: `/api/openclaw/cron/*`
+- usage: `/api/openclaw/usage/*`
+
+## Discovery + Gateway Probe Example
+
+```bash
+curl -sS "http://127.0.0.1:3000/api/openclaw/discover"
+curl -sS -X POST "http://127.0.0.1:3000/api/openclaw/gateway/test" \
+  -H "Content-Type: application/json" \
+  -d '{"withRetry": true}'
+```
+
+## Console Session Chat Example (session-scoped)
+
+```bash
+curl -N -X POST "http://127.0.0.1:3000/api/openclaw/console/sessions/<sessionId>/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Summarize current task context"}'
+```
+
+Returns SSE stream with message chunks and done marker.
+
+## Console Agent Chat Example (agent-scoped)
+
+```bash
+curl -N -X POST "http://127.0.0.1:3000/api/openclaw/console/sessions/<sessionId>/send" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Run status check","typedConfirmText":"CONFIRM"}'
+```
+
+## Agent Turn Endpoint
+
+`POST /api/openclaw/console/agent/turn` is governor-gated and requires typed confirmation.
+
+```bash
+curl -N -X POST "http://127.0.0.1:3000/api/openclaw/console/agent/turn" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId":"main",
+    "message":"Inspect active work order blockers",
+    "typedConfirmText":"CONFIRM"
+  }'
+```
+
+## Cron Status + Jobs Example
+
+```bash
+curl -sS "http://127.0.0.1:3000/api/openclaw/cron/status"
+curl -sS "http://127.0.0.1:3000/api/openclaw/cron/jobs"
+```
+
+## Usage Summary Example
+
+```bash
+curl -sS "http://127.0.0.1:3000/api/openclaw/usage/summary?range=daily"
+```
+
+## Error patterns
+
+- `503 GATEWAY_UNAVAILABLE`
+- `404 SESSION_NOT_FOUND` in console routes
+- `400` for invalid text/body constraints
+- cron/action endpoints may return `502` when underlying OpenClaw command fails
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [OpenClaw Integration](/integration/openclaw-integration)
+- [Feature: Live / Now / Console](/features/live-now-console)
+- [API Streaming](/api/streaming)

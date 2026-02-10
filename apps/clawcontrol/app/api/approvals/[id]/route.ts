@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getRepos } from '@/lib/repo'
+import { prisma } from '@/lib/db'
+import { resumeManagedWorkOrder } from '@/lib/services/manager'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -128,6 +130,57 @@ export async function PATCH(
         note: note || null,
       },
     })
+
+    const shouldAutoResume =
+      status === 'approved' &&
+      Boolean(current.operationId) &&
+      (current.type === 'risky_action' || current.type === 'scope_change')
+
+    if (shouldAutoResume && current.operationId) {
+      const operation = await prisma.operation.findUnique({
+        where: { id: current.operationId },
+        select: { id: true, workflowId: true },
+      })
+
+      if (operation?.workflowId) {
+        try {
+          const resumed = await resumeManagedWorkOrder(data.workOrderId, {
+            reason: `approval:${id}`,
+          })
+
+          await repos.activities.create({
+            type: 'workflow.auto_resumed',
+            actor: 'system:manager',
+            actorType: 'system',
+            entityType: 'work_order',
+            entityId: data.workOrderId,
+            summary: resumed
+              ? `Auto-resumed workflow from approval ${id}`
+              : `Approval ${id} resolved; no resume candidate found`,
+            payloadJson: {
+              approvalId: id,
+              operationId: current.operationId,
+              resumed: Boolean(resumed),
+              resumedOperationId: resumed?.operationId ?? null,
+            },
+          })
+        } catch (resumeError) {
+          await repos.activities.create({
+            type: 'workflow.auto_resume_failed',
+            actor: 'system:manager',
+            actorType: 'system',
+            entityType: 'work_order',
+            entityId: data.workOrderId,
+            summary: `Failed to auto-resume workflow after approval ${id}`,
+            payloadJson: {
+              approvalId: id,
+              operationId: current.operationId,
+              error: resumeError instanceof Error ? resumeError.message : String(resumeError),
+            },
+          })
+        }
+      }
+    }
 
     return NextResponse.json({ data })
   } catch (error) {

@@ -1,0 +1,52 @@
+# API: Streaming (SSE)
+
+Purpose: real-time server-sent event feeds for activities, receipts, and gateway live graph.
+
+## Endpoints
+
+- `GET /api/stream/activities`
+- `GET /api/stream/receipts/:id`
+- `GET /api/stream/openclaw`
+
+## Connection Limits
+
+Streaming endpoints use shared limiter logic with max `50` concurrent clients per endpoint bucket.
+
+## Activities Stream
+
+```bash
+curl -N "http://127.0.0.1:3000/api/stream/activities"
+```
+
+Supports filters such as `type`, `entityType`, `entityId`, and `sinceId`.
+
+## Receipt Stream
+
+```bash
+curl -N "http://127.0.0.1:3000/api/stream/receipts/<receiptId>"
+```
+
+Events include current state, `stdout`, `stderr`, and `finalized`.
+
+## OpenClaw Graph Stream
+
+```bash
+curl -N "http://127.0.0.1:3000/api/stream/openclaw"
+```
+
+Events include `connected`, `snapshot`, and `delta` with optional query filtering by `agentId`, `sessionKey`, and `channel`.
+
+## Error patterns
+
+- `429` when connection limit is exceeded
+- stream closes when source data is missing/finalized/aborted depending on endpoint
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Feature: Live / Now / Console](/features/live-now-console)
+- [Feature: Work Orders + Operations](/features/work-orders-operations)
+- [Product Architecture](/product/architecture)

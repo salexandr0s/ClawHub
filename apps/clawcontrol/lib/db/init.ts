@@ -24,8 +24,31 @@ interface MigrationEntry {
   filePath: string
 }
 
-const REQUIRED_TABLES = ['work_orders', 'operations', 'agents']
+const REQUIRED_TABLES = ['work_orders', 'operations', 'operation_stories', 'agents']
 const REQUIRED_COLUMNS_BY_TABLE: Record<string, readonly string[]> = {
+  work_orders: ['owner_type', 'owner_agent_id', 'tags', 'workflow_id', 'current_stage'],
+  operations: [
+    'workflow_id',
+    'workflow_stage_index',
+    'iteration_count',
+    'execution_type',
+    'loop_config_json',
+    'current_story_id',
+    'retry_count',
+    'max_retries',
+    'claimed_by',
+    'claim_expires_at',
+    'last_claimed_at',
+    'timeout_count',
+  ],
+  operation_stories: [
+    'operation_id',
+    'work_order_id',
+    'story_index',
+    'story_key',
+    'acceptance_criteria_json',
+    'status',
+  ],
   agents: ['dispatch_eligible', 'name_source', 'is_stale', 'stale_at'],
 }
 

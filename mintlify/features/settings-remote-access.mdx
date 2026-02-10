@@ -1,0 +1,54 @@
+# Feature: Settings (Including Remote Access Mode)
+
+This page describes implemented settings behavior, including remote access mode.
+
+## Settings Stored
+
+Config API persists:
+
+- `gatewayHttpUrl`
+- `gatewayWsUrl`
+- `gatewayToken`
+- `workspacePath`
+- `remoteAccessMode`
+- `setupCompleted`
+
+## Remote Access Mode Values
+
+- `local_only`
+- `tailscale_tunnel`
+
+No other mode is accepted by the settings API.
+
+## Loopback Validation
+
+Settings update rejects non-loopback gateway URLs with `NON_LOOPBACK_FORBIDDEN`.
+
+Accepted hosts include loopback values such as:
+
+- `127.0.0.1`
+- `localhost`
+- `::1`
+
+## Desktop-specific UX
+
+In desktop mode, settings page can:
+
+- open native directory picker
+- request local server restart after workspace change
+
+## Explicit Policy
+
+- ClawControl remains loopback-only regardless of selected remote mode.
+- Remote mode indicates planned tunnel workflow, not bind exposure behavior.
+- `tailscale serve` remains disallowed.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Remote Tailscale Tunnel-only Workflow](/remote/tailscale-ssh-tunnel-only)
+- [Config + Init API](/api/config-init)
+- [Security: Local-only Enforcement](/security/networking-local-only)

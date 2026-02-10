@@ -22,6 +22,7 @@ interface RouteModule {
 }
 
 const originalOpenClawWorkspace = process.env.OPENCLAW_WORKSPACE
+const originalSettingsPath = process.env.CLAWCONTROL_SETTINGS_PATH
 const originalClawcontrolWorkspaceRoot = process.env.CLAWCONTROL_WORKSPACE_ROOT
 const originalWorkspaceRoot = process.env.WORKSPACE_ROOT
 
@@ -177,8 +178,13 @@ beforeEach(async () => {
   await fsp.mkdir(tempWorkspace, { recursive: true })
 
   process.env.OPENCLAW_WORKSPACE = tempWorkspace
+  process.env.CLAWCONTROL_SETTINGS_PATH = join(tempWorkspace, 'settings.json')
   delete process.env.CLAWCONTROL_WORKSPACE_ROOT
   delete process.env.WORKSPACE_ROOT
+  await fsp.writeFile(
+    process.env.CLAWCONTROL_SETTINGS_PATH,
+    JSON.stringify({ workspacePath: tempWorkspace, updatedAt: new Date().toISOString() })
+  )
 
   vi.resetModules()
 })
@@ -188,6 +194,7 @@ afterEach(async () => {
   vi.resetModules()
 
   restoreEnv('OPENCLAW_WORKSPACE', originalOpenClawWorkspace)
+  restoreEnv('CLAWCONTROL_SETTINGS_PATH', originalSettingsPath)
   restoreEnv('CLAWCONTROL_WORKSPACE_ROOT', originalClawcontrolWorkspaceRoot)
   restoreEnv('WORKSPACE_ROOT', originalWorkspaceRoot)
 

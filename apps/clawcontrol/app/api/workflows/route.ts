@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
-import { WORKFLOWS } from '@/lib/workflows/definitions'
+import { listWorkflowConfigs } from '@/lib/workflows/registry'
 
 export async function GET() {
+  const workflows = await listWorkflowConfigs()
+
   return NextResponse.json({
-    data: Object.values(WORKFLOWS),
+    data: workflows,
   })
 }
-

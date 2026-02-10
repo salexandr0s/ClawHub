@@ -1,0 +1,42 @@
+# Quickstart: First-run Setup Flow
+
+This page documents the implemented setup flow at `/setup`.
+
+## Setup Checks
+
+The setup page fetches `/api/system/init-status` and evaluates:
+
+- Database initialization/migration readiness
+- Workspace validation status
+- OpenClaw CLI availability
+- Gateway reachability (`reachable`, `auth_required`, or `unreachable`)
+
+## Configuration Saved
+
+Setup persists through `/api/config/settings`:
+
+- `workspacePath`
+- `gatewayHttpUrl` (loopback-only validation)
+- `remoteAccessMode` (`local_only` or `tailscale_tunnel`)
+- `setupCompleted`
+
+## Access Mode Choice
+
+- **Local only**: default and recommended.
+- **Tailscale tunnel**: still local bind on host; remote via SSH forwarding only.
+- Explicit warning is shown in setup UI: do not use `tailscale serve`.
+
+## Completion Logic
+
+- Dashboard readiness requires database `ok` and workspace `ok`.
+- Setup completion flag is stored in settings.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Settings and Remote Access Mode](/features/settings-remote-access)
+- [Config + Init API Reference](/api/config-init)
+- [OpenClaw/Auth/Workspace Errors](/operations/openclaw-auth-workspace-errors)

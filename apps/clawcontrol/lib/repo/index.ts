@@ -32,6 +32,7 @@ export type {
   AgentKind,
   AgentNameSource,
   OperationDTO,
+  OperationStoryDTO,
   OperationSummaryDTO,
   OperationFilters,
   AgentDTO,

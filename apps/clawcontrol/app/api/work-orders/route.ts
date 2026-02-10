@@ -3,6 +3,7 @@ import { getRepos } from '@/lib/repo'
 import type { WorkOrderFilters } from '@/lib/repo'
 import { normalizeOwnerRef, ownerToActor } from '@/lib/agent-identity'
 import { withRouteTiming } from '@/lib/perf/route-timing'
+import { selectWorkflowForWorkOrder } from '@/lib/workflows/registry'
 
 /**
  * GET /api/work-orders
@@ -92,6 +93,7 @@ const postWorkOrdersRoute = async (request: NextRequest) => {
       ownerType,
       ownerAgentId,
       tags,
+      workflowId,
     } = body
 
     if (!title || !goalMd) {
@@ -102,6 +104,13 @@ const postWorkOrdersRoute = async (request: NextRequest) => {
     }
 
     const normalizedOwner = normalizeOwnerRef({ owner, ownerType, ownerAgentId })
+    const selectedWorkflow = await selectWorkflowForWorkOrder({
+      requestedWorkflowId: typeof workflowId === 'string' ? workflowId : null,
+      priority,
+      title,
+      goalMd,
+      tags: Array.isArray(tags) ? tags : [],
+    })
 
     const repos = getRepos()
     const data = await repos.workOrders.create({
@@ -112,6 +121,7 @@ const postWorkOrdersRoute = async (request: NextRequest) => {
       ownerType: normalizedOwner.ownerType,
       ownerAgentId: normalizedOwner.ownerAgentId,
       tags,
+      workflowId: selectedWorkflow.workflowId,
     })
 
     // Log work order creation for audit trail (P0 Security Fix)
@@ -132,12 +142,23 @@ const postWorkOrdersRoute = async (request: NextRequest) => {
         ownerAgentId: normalizedOwner.ownerAgentId,
         tags: data.tags,
         state: data.state,
+        workflowId: data.workflowId,
+        workflowSelection: {
+          reason: selectedWorkflow.reason,
+          matchedRuleId: selectedWorkflow.matchedRuleId,
+        },
       },
     })
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
     console.error('[api/work-orders] POST error:', error)
+    if (error instanceof Error && error.message.includes('Unknown requested workflow')) {
+      return NextResponse.json(
+        { error: error.message, code: 'UNKNOWN_WORKFLOW' },
+        { status: 400 }
+      )
+    }
     return NextResponse.json(
       { error: 'Failed to create work order' },
       { status: 500 }

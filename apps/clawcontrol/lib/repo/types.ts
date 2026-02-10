@@ -26,7 +26,8 @@ export interface WorkOrderDTO {
   ownerAgentId: string | null
   ownerLabel: string
   tags: string[]
-  routingTemplate: string
+  workflowId: string | null
+  currentStage: number
   blockedReason: string | null
   createdAt: Date
   updatedAt: Date
@@ -56,10 +57,38 @@ export interface OperationDTO {
   title: string
   notes: string | null
   status: 'todo' | 'in_progress' | 'blocked' | 'review' | 'done' | 'rework'
+  workflowId: string | null
+  workflowStageIndex: number
+  iterationCount: number
+  executionType: 'single' | 'loop'
+  currentStoryId: string | null
+  retryCount: number
+  maxRetries: number
+  claimedBy: string | null
+  claimExpiresAt: Date | null
+  lastClaimedAt: Date | null
+  timeoutCount: number
   assigneeAgentIds: string[]
   dependsOnOperationIds: string[]
   wipClass: string
   blockedReason: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface OperationStoryDTO {
+  id: string
+  operationId: string
+  workOrderId: string
+  storyIndex: number
+  storyKey: string
+  title: string
+  description: string
+  acceptanceCriteria: string[]
+  status: 'pending' | 'running' | 'done' | 'failed'
+  outputJson: Record<string, unknown> | null
+  retryCount: number
+  maxRetries: number
   createdAt: Date
   updatedAt: Date
 }

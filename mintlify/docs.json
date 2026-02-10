@@ -1,0 +1,131 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "ClawControl Docs",
+  "colors": {
+    "primary": "#0E7490",
+    "light": "#22D3EE",
+    "dark": "#0E7490"
+  },
+  "favicon": "/images/logo-icon.png",
+  "logo": {
+    "light": "/images/logo-icon.png",
+    "dark": "/images/logo-icon.png"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Home",
+            "pages": [
+              "index"
+            ]
+          },
+          {
+            "group": "Product",
+            "pages": [
+              "product/overview",
+              "product/core-concepts",
+              "product/architecture",
+              "product/data-flow",
+              "product/local-process-model"
+            ]
+          },
+          {
+            "group": "Quickstart",
+            "pages": [
+              "quickstart/web-only",
+              "quickstart/desktop-app",
+              "quickstart/release-install",
+              "quickstart/first-run-setup"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/dashboard",
+              "features/work-orders-operations",
+              "features/agents-hierarchy-templates",
+              "features/skills",
+              "features/plugins",
+              "features/models",
+              "features/live-now-console",
+              "features/approvals-governor",
+              "features/workspace-browser-editing",
+              "features/maintenance-recovery",
+              "features/settings-remote-access"
+            ]
+          },
+          {
+            "group": "Integration",
+            "pages": [
+              "integration/openclaw-integration"
+            ]
+          },
+          {
+            "group": "Security & Networking",
+            "pages": [
+              "security/networking-local-only",
+              "security/path-safety-allowlist",
+              "security/approvals-typed-confirm",
+              "security/forbidden-exposure-paths"
+            ]
+          },
+          {
+            "group": "Remote Access",
+            "pages": [
+              "remote/tailscale-ssh-tunnel-only"
+            ]
+          },
+          {
+            "group": "Data",
+            "pages": [
+              "data/persistence-and-migrations"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api/overview",
+              "api/config-init",
+              "api/openclaw-console-cron",
+              "api/work-orders-operations-receipts",
+              "api/agents-templates-stations",
+              "api/plugins-skills-models",
+              "api/workspace-maintenance-security-sync",
+              "api/streaming",
+              "api/internal-endpoint-index"
+            ]
+          },
+          {
+            "group": "Operations",
+            "pages": [
+              "operations/troubleshooting",
+              "operations/startup-port-conflicts",
+              "operations/openclaw-auth-workspace-errors",
+              "operations/loopback-policy-violations",
+              "operations/unsigned-desktop-install",
+              "operations/release-distribution-checksums"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "deploy/publish-docs-clawcontrol-cc"
+            ]
+          },
+          {
+            "group": "Developers",
+            "pages": [
+              "developers/repo-layout",
+              "developers/build-test-lint-typecheck",
+              "developers/contributing-and-docs-maintenance"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

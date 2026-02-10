@@ -8,6 +8,7 @@ import {
   configApi,
   type SettingsConfigResponse,
   type GatewayTestResponse,
+  type RemoteAccessMode,
 } from '@/lib/http'
 import { cn } from '@/lib/utils'
 import { UserAvatar } from '@/components/ui/user-avatar'
@@ -80,6 +81,7 @@ export default function SettingsPage() {
   const [settingsError, setSettingsError] = useState<string | null>(null)
   const [workspacePath, setWorkspacePath] = useState('')
   const [gatewayHttpUrl, setGatewayHttpUrl] = useState('')
+  const [remoteAccessMode, setRemoteAccessMode] = useState<RemoteAccessMode>('local_only')
   const [pickerAvailable, setPickerAvailable] = useState(false)
   const [restartAvailable, setRestartAvailable] = useState(false)
   const [pickingWorkspace, setPickingWorkspace] = useState(false)
@@ -135,6 +137,7 @@ export default function SettingsPage() {
           || res.data.resolved?.gatewayHttpUrl
           || 'http://127.0.0.1:18789'
       )
+      setRemoteAccessMode(res.data.settings.remoteAccessMode || 'local_only')
     } catch (err) {
       setSettingsError(err instanceof Error ? err.message : 'Failed to load settings')
     } finally {
@@ -190,13 +193,17 @@ export default function SettingsPage() {
   }
 
   async function handleSaveSettings() {
-    const workspaceChanged = Boolean(hasSettingsChanges)
+    const workspaceChanged = Boolean(
+      settingsConfig
+      && workspacePath !== (settingsConfig.settings.workspacePath || '')
+    )
     setSaving(true)
     setRestartingServer(false)
     setSaveSuccess(false)
     setSettingsError(null)
     try {
       const res = await configApi.updateSettings({
+        remoteAccessMode,
         workspacePath: workspacePath || null,
         gatewayHttpUrl: gatewayHttpUrl || null,
       })
@@ -305,6 +312,7 @@ export default function SettingsPage() {
     settingsConfig && (
       workspacePath !== (settingsConfig.settings.workspacePath || '')
       || gatewayHttpUrl !== (settingsConfig.settings.gatewayHttpUrl || settingsConfig.resolved?.gatewayHttpUrl || '')
+      || remoteAccessMode !== (settingsConfig.settings.remoteAccessMode || 'local_only')
     )
   )
   const discovered = discoverData && discoverData.status !== 'not_found' ? discoverData : null
@@ -434,6 +442,68 @@ export default function SettingsPage() {
             </div>
           ) : (
             <>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm text-fg-1">
+                  Remote Access Mode
+                </label>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    onClick={() => setRemoteAccessMode('local_only')}
+                    disabled={saving}
+                    className={cn(
+                      'rounded-[var(--radius-md)] border px-3 py-2 text-left transition-colors',
+                      saving && 'cursor-not-allowed opacity-80',
+                      remoteAccessMode === 'local_only'
+                        ? 'border-status-info/70 bg-status-info/10 text-fg-0'
+                        : 'border-bd-0 bg-bg-1 text-fg-2 hover:bg-bg-3'
+                    )}
+                  >
+                    <p className="text-sm font-medium">Local only (recommended)</p>
+                    <p className="mt-1 text-xs text-fg-3">
+                      Use this machine directly at <code>http://127.0.0.1:3000</code>.
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => setRemoteAccessMode('tailscale_tunnel')}
+                    disabled={saving}
+                    className={cn(
+                      'rounded-[var(--radius-md)] border px-3 py-2 text-left transition-colors',
+                      saving && 'cursor-not-allowed opacity-80',
+                      remoteAccessMode === 'tailscale_tunnel'
+                        ? 'border-status-info/70 bg-status-info/10 text-fg-0'
+                        : 'border-bd-0 bg-bg-1 text-fg-2 hover:bg-bg-3'
+                    )}
+                  >
+                    <p className="text-sm font-medium">Tailscale tunnel (advanced)</p>
+                    <p className="mt-1 text-xs text-fg-3">
+                      Keep local bind and use SSH port forwarding over your tailnet.
+                    </p>
+                  </button>
+                </div>
+
+                {remoteAccessMode === 'tailscale_tunnel' ? (
+                  <div className="rounded-[var(--radius-md)] border border-status-warning/40 bg-status-warning/10 px-3 py-3 text-xs text-fg-1 space-y-2">
+                    <p className="font-medium text-status-warning">
+                      Tunnel mode keeps ClawControl local-only.
+                    </p>
+                    <p>Host machine remains bound to <code>127.0.0.1:3000</code>.</p>
+                    <p>From a remote machine on your tailnet, run:</p>
+                    <pre className="overflow-x-auto rounded bg-bg-1 p-2 text-[11px] text-fg-2">
+ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
+                    </pre>
+                    <p>Then open <code>http://127.0.0.1:3000</code> on the remote machine.</p>
+                    <p className="text-status-danger">
+                      Never use <code>tailscale serve</code> or expose ClawControl directly.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-fg-3">
+                    Local-only mode never exposes ClawControl to LAN or internet interfaces.
+                  </p>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm text-fg-1">
                   Gateway URL
@@ -576,7 +646,7 @@ export default function SettingsPage() {
 
               {/* Help text */}
               <p className="text-xs text-fg-3 pt-2">
-                Configure both the gateway URL and workspace directory. Gateway changes apply immediately after save; workspace changes may require restart.
+                Configure access mode, gateway URL, and workspace directory. Gateway/access mode changes apply immediately after save; workspace changes may require restart.
                 {restartAvailable
                   ? ' Changes are applied with an automatic server restart.'
                   : ' Changes require a server restart.'}

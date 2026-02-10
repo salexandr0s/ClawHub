@@ -1,0 +1,56 @@
+# Developers: Build / Test / Lint / Typecheck
+
+This page lists implemented commands used in this repository.
+
+## Workspace-level Commands
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run test
+npm run typecheck
+```
+
+## Database Commands
+
+```bash
+npm run db:migrate
+npm run db:push
+npm run db:studio
+```
+
+## App-specific Commands
+
+```bash
+npm run dev --workspace=clawcontrol
+npm run test --workspace=clawcontrol
+npm run typecheck --workspace=clawcontrol
+```
+
+## Desktop Build Commands
+
+```bash
+npm run build:mac --workspace=clawcontrol-desktop
+npm run build:win --workspace=clawcontrol-desktop
+npm run build:linux --workspace=clawcontrol-desktop
+```
+
+## Docs Validation Commands
+
+```bash
+cd /Users/savorgserver/OpenClaw/projects/ClawControl/mintlify
+npm run validate
+npm run links
+npm run a11y
+```
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [Developers: Repo Layout](/developers/repo-layout)
+- [Developers: Contributing + Docs Maintenance](/developers/contributing-and-docs-maintenance)
+- [Deployment Runbook](/deploy/publish-docs-clawcontrol-cc)

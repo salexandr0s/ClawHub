@@ -1,0 +1,41 @@
+# Operations: Loopback Policy Violations
+
+This page describes diagnosis/remediation when local-only policy is violated.
+
+## What Violates Policy
+
+- binding ClawControl to non-loopback interfaces
+- attempting to expose via `tailscale serve`
+- reverse proxy/public tunnel exposure
+
+## Detection
+
+- `403` response from proxy host guard for non-loopback host headers
+- startup guard failure from local-only script
+- listener checks showing `0.0.0.0` instead of loopback
+
+## Verification Commands
+
+```bash
+lsof -nP -iTCP:3000 -sTCP:LISTEN
+lsof -nP -iTCP:18789 -sTCP:LISTEN
+```
+
+Expected: `127.0.0.1` and/or `::1` only.
+
+## Required Remediation
+
+1. remove non-loopback host env overrides
+2. stop unsupported exposure tooling
+3. restart ClawControl in local-only mode
+4. use SSH tunnel workflow for remote operations
+
+## Last updated
+
+2026-02-10
+
+## Related pages
+
+- [Security: Local-only Enforcement](/security/networking-local-only)
+- [Security: Forbidden Exposure Paths](/security/forbidden-exposure-paths)
+- [Remote Tunnel-only Workflow](/remote/tailscale-ssh-tunnel-only)

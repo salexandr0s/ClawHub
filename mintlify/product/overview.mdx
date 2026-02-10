@@ -1,0 +1,45 @@
+# Product Overview
+
+This page describes what ClawControl does and how it is intended to be operated in production.
+
+## Product Scope
+
+ClawControl provides:
+
+- Work orchestration: work orders, manager-driven operations, statuses, assignees, and deterministic YAML workflows.
+- Governance: risk policies, approvals, and typed confirmation enforcement for protected actions.
+- Runtime visibility: activity feeds, receipt streaming, OpenClaw session and usage telemetry.
+- Workspace operations: controlled browsing/editing under workspace path policy.
+- Operational controls: maintenance actions, gateway checks, diagnostics, and recovery flows.
+
+## Local-first Model
+
+ClawControl is intentionally local-first:
+
+- Next server startup is guarded by `/scripts/local-only.mjs`, which rejects non-loopback host overrides.
+- API proxy rejects non-loopback Host headers with `403`.
+- Settings API enforces loopback-only gateway URLs and rejects non-loopback values with `NON_LOOPBACK_FORBIDDEN`.
+
+## Process Components
+
+- Web app: Next.js pages and API routes in `/apps/clawcontrol`.
+- Desktop app: Electron shell in `/apps/clawcontrol-desktop` that manages local server lifecycle.
+- OpenClaw adapter: command allowlists and discovery in `/packages/adapters-openclaw`.
+- Shared policy/types: governor and core domain types in `/packages/core`.
+
+## OpenClaw Behavior
+
+- ClawControl probes OpenClaw CLI and gateway capabilities.
+- When OpenClaw is unavailable, OpenClaw-backed features return unavailable/degraded states and empty real-data views.
+- No mock/demo fallback is injected for unavailable OpenClaw data.
+
+## Last updated
+
+2026-02-10
+
+## Related pages
+
+- [Core Concepts](/product/core-concepts)
+- [OpenClaw Integration](/integration/openclaw-integration)
+- [Settings and Remote Access Mode](/features/settings-remote-access)
+- [Security and Networking](/security/networking-local-only)

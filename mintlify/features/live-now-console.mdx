@@ -1,0 +1,49 @@
+# Feature: Live / Now / Console
+
+This page covers real-time observability and console messaging features.
+
+## Live
+
+`/live` provides real-time activity views:
+
+- timeline mode
+- visualizer mode
+- live stream indicators and updates
+
+## Gateway Live
+
+`/gateway-live` subscribes to `/api/stream/openclaw`:
+
+- initial graph snapshot
+- incremental deltas
+- filter options (`agentId`, `sessionKey`, `channel`)
+
+## Now Route
+
+`/now` currently redirects to `/dashboard`.
+
+## Console
+
+`/console` supports session-driven operations:
+
+- list sessions from `/api/openclaw/console/sessions`
+- optional history load per session
+- manual session sync trigger
+- send/abort/end session actions
+
+### Messaging Modes
+
+- Agent chat path (`/api/openclaw/console/sessions/:id/send`) routes by agent ID.
+- Session chat path (`/api/openclaw/console/sessions/:id/chat`) routes by session key (true session injection mode in current implementation).
+
+Both paths create activity + receipt records.
+
+## Last updated
+
+2026-02-09
+
+## Related pages
+
+- [API: OpenClaw + Console + Cron](/api/openclaw-console-cron)
+- [API: Streaming](/api/streaming)
+- [Feature: Approvals / Governor](/features/approvals-governor)
