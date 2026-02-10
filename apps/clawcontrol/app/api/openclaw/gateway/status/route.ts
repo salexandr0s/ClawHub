@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { runCommandJson } from '@clawcontrol/adapters-openclaw'
+import { probeGatewayHealth, runCommandJson } from '@clawcontrol/adapters-openclaw'
 import {
   type OpenClawResponse,
   OPENCLAW_TIMEOUT_MS,
@@ -7,6 +7,11 @@ import {
   getCached,
   setCache,
 } from '@/lib/openclaw/availability'
+import {
+  getOpenClawConfig,
+  getOpenClawConfigSync,
+} from '@/lib/openclaw-client'
+import { DEFAULT_GATEWAY_HTTP_URL } from '@/lib/settings/types'
 
 /**
  * Gateway status response from OpenClaw CLI.
@@ -46,35 +51,73 @@ export async function GET(): Promise<NextResponse<OpenClawResponse<GatewayStatus
   const start = Date.now()
 
   try {
-    const res = await runCommandJson<GatewayStatusDTO>('status.json', {
-      timeout: OPENCLAW_TIMEOUT_MS,
-    })
+    let gatewayUrl = DEFAULT_GATEWAY_HTTP_URL
+    let gatewayToken: string | undefined
 
+    // Primary truth for reachability should be direct gateway probing.
+    // CLI status may be unavailable in some runtime environments (desktop PATH),
+    // while the gateway itself is still healthy.
+    try {
+      const resolved = (await getOpenClawConfig(true)) ?? getOpenClawConfigSync()
+      if (resolved) {
+        gatewayUrl = resolved.gatewayUrl
+        gatewayToken = resolved.token ?? undefined
+      }
+    } catch {
+      const syncConfig = getOpenClawConfigSync()
+      if (syncConfig) {
+        gatewayUrl = syncConfig.gatewayUrl
+        gatewayToken = syncConfig.token ?? undefined
+      }
+    }
+
+    const probe = await probeGatewayHealth(gatewayUrl, gatewayToken)
     const latencyMs = Date.now() - start
 
-    if (res.error || !res.data) {
+    if (probe.ok || probe.state === 'auth_required') {
+      let data: GatewayStatusDTO = { running: true }
+
+      // Optional CLI enrichment for process details (pid/version/connections).
+      // Reachability should not depend on CLI availability.
+      try {
+        const cli = await runCommandJson<GatewayStatusDTO>('status.json', {
+          timeout: OPENCLAW_TIMEOUT_MS,
+        })
+        if (!cli.error && cli.data) {
+          data = {
+            ...cli.data,
+            running: cli.data.running ?? true,
+          }
+        }
+      } catch {
+        // Keep probe-derived status when CLI command fails.
+      }
+
       const response: OpenClawResponse<GatewayStatusDTO> = {
-        status: 'unavailable',
+        status:
+          probe.state === 'auth_required'
+            ? 'degraded'
+            : latencyMs > DEGRADED_THRESHOLD_MS
+              ? 'degraded'
+              : 'ok',
         latencyMs,
-        data: null,
-        error: res.error ?? 'Failed to get gateway status',
+        data,
+        error: probe.state === 'auth_required' ? 'Gateway reachable, authentication required' : null,
         timestamp: new Date().toISOString(),
         cached: false,
       }
-      // Don't cache unavailable responses - allow immediate retry
+      setCache(CACHE_KEY, response)
       return NextResponse.json(response)
     }
 
     const response: OpenClawResponse<GatewayStatusDTO> = {
-      status: latencyMs > DEGRADED_THRESHOLD_MS ? 'degraded' : 'ok',
+      status: 'unavailable',
       latencyMs,
-      data: res.data,
-      error: null,
+      data: null,
+      error: probe.error ?? `Gateway unreachable at ${probe.url}`,
       timestamp: new Date().toISOString(),
       cached: false,
     }
-
-    setCache(CACHE_KEY, response)
     return NextResponse.json(response)
   } catch (err) {
     const latencyMs = Date.now() - start
