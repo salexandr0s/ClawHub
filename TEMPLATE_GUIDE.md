@@ -9,10 +9,10 @@ Use this as the single reference for building templates that pass validation and
 
 This guide is based on the current implementation in:
 
-- `/Users/savorgserver/OpenClaw/projects/ClawControl/packages/core/src/schemas/agent-template.schema.ts`
-- `/Users/savorgserver/OpenClaw/projects/ClawControl/apps/clawcontrol/lib/templates.ts`
-- `/Users/savorgserver/OpenClaw/projects/ClawControl/apps/clawcontrol/app/api/agent-templates/import/route.ts`
-- `/Users/savorgserver/OpenClaw/projects/ClawControl/apps/clawcontrol/app/api/agents/create-from-template/route.ts`
+- `packages/core/src/schemas/agent-template.schema.ts`
+- `apps/clawcontrol/lib/templates.ts`
+- `apps/clawcontrol/app/api/agent-templates/import/route.ts`
+- `apps/clawcontrol/app/api/agents/create-from-template/route.ts`
 
 Import now supports:
 

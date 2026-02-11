@@ -25,7 +25,7 @@ This repository defines the multi-agent behavior. These rules apply to every age
 - No skipping stages. Follow the configured workflow chain.
 - Build, UI, and Ops require an approved PlanReview before starting.
 - Security veto is absolute; no agent may override it.
-- {{PREFIX_CAPITALIZED}}Manager orchestrates; {{PREFIX_CAPITALIZED}}CEO is the only agent that communicates with Alexandros.
+- {{PREFIX_CAPITALIZED}}Manager orchestrates; {{PREFIX_CAPITALIZED}}CEO is the only agent that communicates with {{OWNER}}.
 
 ---
 
@@ -42,7 +42,7 @@ Dispatch flow:
 - Session key must include `:op:<operationId>` for telemetry linkage.
 - Specialists execute and return a Receipt with evidence.
 - {{PREFIX_CAPITALIZED}}Manager validates Receipts and enforces QA gates.
-- {{PREFIX_CAPITALIZED}}CEO reports approved outcomes to Alexandros.
+- {{PREFIX_CAPITALIZED}}CEO reports approved outcomes to {{OWNER}}.
 
 ---
 

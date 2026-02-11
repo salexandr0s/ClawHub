@@ -13,7 +13,7 @@ npm run init:agents -- --prefix <org-prefix> --owner "<owner-name>" --force
 Example:
 
 ```bash
-npm run init:agents -- --prefix savorg --owner "Alexandros" --force
+npm run init:agents -- --prefix team --owner "Workspace Owner" --force
 ```
 
 ## Validate

@@ -1,7 +1,7 @@
 # ============================================================================
 # {{PREFIX_UPPER}} — Multi-Agent System Configuration
 # ============================================================================
-# Owner: Alexandros
+# Owner: {{OWNER}}
 # Platform: OpenClaw Gateway
 # Version: 1.0.0
 # ============================================================================
@@ -9,7 +9,7 @@
 system:
   name: "{{SYSTEM_SLUG}}"
   version: "1.0.0"
-  description: "Multi-agent orchestration system for VitaGrowth and personal projects"
+  description: "Multi-agent orchestration system for product and operations workflows"
   owner: "{{OWNER}}"
   platform: "openclaw"
 
@@ -121,7 +121,7 @@ agents:
     name: "CEO"
     role: "strategic_interface"
     description: >
-      Primary interface between Alexandros and the system.
+      Primary interface between {{OWNER}} and the system.
       Interprets intent, frames strategy, synthesizes final responses.
       Never delegates directly to workers — always through Manager.
     model_tier: "tier_1_reasoning"
@@ -136,9 +136,9 @@ agents:
       can_send_messages: true
       can_delegate: true
     receives_from:
-      - "alexandros"
+      - "{{OWNER}}"
       - "{{PREFIX}}manager"
-    reports_to: "alexandros"
+    reports_to: "{{OWNER}}"
     delegates_to:
       - "{{PREFIX}}manager"
 
@@ -558,7 +558,7 @@ input_pipeline:
       - on_malicious: "quarantine + block + alert {{PREFIX}}ceo"
 
   internal:
-    description: "Messages from Alexandros via OpenClaw"
+    description: "Messages from {{OWNER}} via OpenClaw"
     flow:
       - agent: "{{PREFIX}}ceo"
 

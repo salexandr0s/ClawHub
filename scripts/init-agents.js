@@ -192,11 +192,11 @@ const ROLE_SOUL = {
   },
   ceo: {
     role: 'Strategic interface and final synthesizer.',
-    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Final delivery/approval by Alexandros.',
+    reportsTo: '{{PREFIX_CAPITALIZED}}CEO (main). Final delivery/approval by {{OWNER}}.',
     can: [
       'Interpret intent and clarify goals.',
       'Delegate tasks to {{PREFIX_CAPITALIZED}}Manager only.',
-      'Communicate with Alexandros.',
+      'Communicate with {{OWNER}}.',
       'Synthesize final outputs and decisions.',
     ],
     cannot: [
@@ -236,7 +236,7 @@ const ROLE_SOUL = {
     cannot: [
       'Write code or modify files.',
       'Execute commands.',
-      'Communicate with Alexandros directly.',
+      'Communicate with {{OWNER}} directly.',
     ],
     output: '`dispatch` and `workflow_result` YAML as defined in `agents/manager.md`.',
   },
@@ -534,7 +534,7 @@ function formatPermissionList(permissions) {
     .join('\n');
 }
 
-function resolveRoleFlow(role, prefixCap) {
+function resolveRoleFlow(role, prefixCap, owner) {
   const ceoName = buildAgentName(prefixCap, 'ceo');
   const managerName = buildAgentName(prefixCap, 'manager');
   const guardName = buildAgentName(prefixCap, 'guard');
@@ -542,10 +542,10 @@ function resolveRoleFlow(role, prefixCap) {
   switch (role) {
     case 'ceo':
       return {
-        receivesFrom: ['Alexandros', managerName],
+        receivesFrom: [owner, managerName],
         delegatesTo: [managerName],
-        handoffTo: ['Alexandros'],
-        escalationTarget: 'Alexandros',
+        handoffTo: [owner],
+        escalationTarget: owner,
       };
     case 'manager':
       return {
@@ -986,7 +986,7 @@ async function maybePromptMissingInputs(args, manifest) {
     }
 
     if (needsOwner) {
-      const ownerAnswer = await rl.question('Owner [Alexandros]: ');
+      const ownerAnswer = await rl.question('Owner [Workspace Owner]: ');
       if (ownerAnswer.trim()) {
         answers.owner = ownerAnswer.trim();
       }
@@ -1037,7 +1037,7 @@ async function main() {
     args.owner
     ?? manifest.owner
     ?? prompts.owner
-    ?? 'Alexandros'
+    ?? 'Workspace Owner'
   ).trim();
 
   const prefix = normalizePrefix(prefixInput);
@@ -1146,7 +1146,7 @@ async function main() {
       ...(ROLE_PERMISSION_DEFAULTS[role] || {}),
       ...(rolePermissionOverrides.get(role) || {}),
     };
-    const roleFlow = resolveRoleFlow(role, prefixCap);
+    const roleFlow = resolveRoleFlow(role, prefixCap, owner);
 
     if (!roleTemplateCache[role]) {
       roleTemplateCache[role] = await fsp.readFile(path.join(rootDir, `templates/roles/${role}.template.md`), 'utf8');

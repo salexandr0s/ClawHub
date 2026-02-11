@@ -74,6 +74,7 @@ openclaw/
 AGENTS.md
 SOUL.md
 HEARTBEAT.md
+clawcontrol.config.yaml
 main.js
 main.js.map
 CODEX_TASK.md
