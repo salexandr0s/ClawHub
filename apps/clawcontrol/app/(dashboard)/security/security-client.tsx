@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageHeader, PageSection, TypedConfirmModal } from '@clawcontrol/ui'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import {
   securityApi,
   workOrdersApi,
@@ -26,7 +27,6 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronRight,
-  Loader2,
   Play,
   Zap,
   Wrench,
@@ -190,7 +190,7 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
             )}
           >
             {isRunning && auditType === 'basic' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoadingSpinner size="md" />
             ) : (
               <Play className="w-4 h-4" />
             )}
@@ -207,7 +207,7 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
             )}
           >
             {isRunning && auditType === 'deep' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoadingSpinner size="md" />
             ) : (
               <Zap className="w-4 h-4" />
             )}
@@ -225,7 +225,7 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
             )}
           >
             {isRunning && auditType === 'fix' ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoadingSpinner size="md" />
             ) : (
               <Wrench className="w-4 h-4" />
             )}
@@ -308,7 +308,7 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
                   )}
                 >
                   {isCreatingWorkOrder ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <LoadingSpinner size="sm" />
                   ) : (
                     <ClipboardList className="w-3.5 h-3.5" />
                   )}
@@ -391,18 +391,20 @@ For automated fixes where available, run \`openclaw security audit --fix\`.
 
         {/* Loading State */}
         {isRunning && (
-          <div className="p-8 text-center bg-bg-2 rounded-[var(--radius-lg)]">
-            <Loader2 className="w-12 h-12 mx-auto mb-4 text-accent-primary animate-spin" />
-            <h3 className="text-lg font-medium text-fg-0 mb-2">
-              Running {auditType === 'deep' ? 'Deep ' : auditType === 'fix' ? 'Fix ' : ''}Audit...
-            </h3>
-            <p className="text-sm text-fg-2">
-              {auditType === 'deep'
-                ? 'Performing comprehensive scan with Gateway probe...'
-                : auditType === 'fix'
-                  ? 'Applying security fixes...'
-                  : 'Scanning configuration for security issues...'}
-            </p>
+          <div className="p-8 bg-bg-2 rounded-[var(--radius-lg)]">
+            <LoadingState
+              height="auto"
+              size="3xl"
+              spinnerClassName="text-accent-primary"
+              label={`Running ${auditType === 'deep' ? 'Deep ' : auditType === 'fix' ? 'Fix ' : ''}Audit...`}
+              description={
+                auditType === 'deep'
+                  ? 'Performing comprehensive scan with Gateway probe...'
+                  : auditType === 'fix'
+                    ? 'Applying security fixes...'
+                    : 'Scanning configuration for security issues...'
+              }
+            />
           </div>
         )}
       </div>

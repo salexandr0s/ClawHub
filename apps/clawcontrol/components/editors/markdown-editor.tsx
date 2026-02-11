@@ -6,13 +6,13 @@ import { markdown } from '@codemirror/lang-markdown'
 import { oneDark } from '@codemirror/theme-one-dark'
 import ReactMarkdown from 'react-markdown'
 import { cn } from '@/lib/utils'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import {
   Edit3,
   Eye,
   Columns,
   Wand2,
   Save,
-  Loader2,
   Check,
   AlertCircle,
 } from 'lucide-react'
@@ -221,7 +221,7 @@ export function MarkdownEditor({
               title="Format (Cmd/Ctrl+Shift+F)"
             >
               {isPrettifying ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoadingSpinner size="sm" />
               ) : (
                 <Wand2 className="w-3.5 h-3.5" />
               )}
@@ -243,7 +243,7 @@ export function MarkdownEditor({
               title="Save (Cmd/Ctrl+S)"
             >
               {isSaving ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoadingSpinner size="sm" />
               ) : hasChanges ? (
                 <Save className="w-3.5 h-3.5" />
               ) : (

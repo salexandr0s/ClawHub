@@ -9,7 +9,8 @@ import {
   HttpError,
 } from '@/lib/http'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, KeyRound, Loader2, Terminal } from 'lucide-react'
+import { ArrowLeft, KeyRound, Terminal } from 'lucide-react'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import { ProviderCard } from './provider-card'
 
 type Step = 'provider' | 'auth'
@@ -162,7 +163,7 @@ export function AddModelModal({
         <>
           {isLoadingProviders ? (
             <div className="flex items-center gap-2 text-fg-3 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <LoadingSpinner size="md" />
               <span>Loading providers...</span>
             </div>
           ) : supportedProviders.length === 0 ? (
@@ -266,7 +267,7 @@ export function AddModelModal({
                   disabled={isSubmitting || !apiKey.trim()}
                   className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium rounded-[var(--radius-md)] bg-status-info text-bg-0 hover:bg-status-info/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isSubmitting && <LoadingSpinner size="sm" />}
                   Add
                 </button>
               </div>

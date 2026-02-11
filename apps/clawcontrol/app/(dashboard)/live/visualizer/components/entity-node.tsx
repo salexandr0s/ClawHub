@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import {
   ClipboardList,
   Settings,
@@ -14,7 +15,6 @@ import {
   AlertTriangle,
   Clock,
   ArrowRight,
-  Loader2,
 } from 'lucide-react'
 import type { VisualizerNode, VisualizerEntityType, ExecutionState } from '../visualizer-store'
 import type { StatusTone } from '@clawcontrol/ui/theme'
@@ -174,7 +174,7 @@ export function EntityNode({
             )}
           >
             {isRunning ? (
-              <Loader2 className={cn('w-3 h-3 animate-spin', toneClasses.icon)} />
+              <LoadingSpinner size="xs" className={toneClasses.icon} />
             ) : (
               <StatusIcon className={cn('w-3 h-3', toneClasses.icon)} />
             )}

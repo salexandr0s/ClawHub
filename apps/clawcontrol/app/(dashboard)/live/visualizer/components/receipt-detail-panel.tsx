@@ -2,11 +2,11 @@
 
 import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import {
   Terminal,
   CheckCircle,
   XCircle,
-  Loader2,
   Clock,
   Wifi,
   WifiOff,
@@ -94,7 +94,7 @@ export function ReceiptDetailPanel({ receiptId }: ReceiptDetailPanelProps) {
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <Loader2 className="w-3.5 h-3.5 text-status-progress animate-spin" />
+              <LoadingSpinner size="sm" className="text-status-progress" />
               <span className="text-status-progress font-medium">Running</span>
             </div>
           )}
@@ -123,7 +123,7 @@ export function ReceiptDetailPanel({ receiptId }: ReceiptDetailPanelProps) {
           )}
           {connectionState === 'connecting' && (
             <>
-              <Loader2 className="w-3 h-3 text-status-warning animate-spin" />
+              <LoadingSpinner size="xs" className="text-status-warning" />
               <span className="text-xs text-status-warning">Connecting...</span>
             </>
           )}
@@ -181,7 +181,7 @@ export function ReceiptDetailPanel({ receiptId }: ReceiptDetailPanelProps) {
               </>
             ) : (
               <>
-                <Loader2 className="w-8 h-8 mb-2 animate-spin text-status-progress/50" />
+                <LoadingSpinner size="2xl" className="mb-2 text-status-progress/50" />
                 <span className="text-sm">Waiting for output...</span>
               </>
             )}

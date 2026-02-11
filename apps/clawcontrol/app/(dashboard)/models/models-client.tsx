@@ -10,13 +10,13 @@ import {
   type ProviderAuth,
   HttpError,
 } from '@/lib/http'
+import { LoadingState } from '@/components/ui/loading-state'
 import { cn } from '@/lib/utils'
 import { usePageReadyTiming } from '@/lib/perf/client-timing'
 import {
   Cpu,
   Plus,
   RefreshCw,
-  Loader2,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -168,10 +168,14 @@ export function ModelsClient() {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="p-8 text-center bg-bg-2 rounded-[var(--radius-lg)]">
-          <Loader2 className="w-12 h-12 mx-auto mb-4 text-status-info animate-spin" />
-          <h3 className="text-lg font-medium text-fg-0 mb-2">Loading Models...</h3>
-          <p className="text-sm text-fg-2">Fetching model configuration and auth status</p>
+        <div className="p-8 bg-bg-2 rounded-[var(--radius-lg)]">
+          <LoadingState
+            height="auto"
+            size="3xl"
+            spinnerClassName="text-status-info"
+            label="Loading models..."
+            description="Fetching model configuration and auth status"
+          />
         </div>
       )}
 

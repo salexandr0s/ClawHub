@@ -5,6 +5,7 @@ import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import { PageHeader, PageSection, EmptyState } from '@clawcontrol/ui'
 import { OperationStatusPill, WorkOrderStatePill, PriorityPill } from '@/components/ui/status-pill'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { workOrdersApi, operationsApi, activitiesApi, approvalsApi, receiptsApi, agentsApi } from '@/lib/http'
 import type { WorkOrderWithOpsDTO, OperationDTO, ActivityDTO, ApprovalDTO, ReceiptDTO } from '@/lib/repo'
 import { cn } from '@/lib/utils'
@@ -14,7 +15,6 @@ import { getValidWorkOrderTransitions, type WorkOrderState } from '@clawcontrol/
 import { formatOwnerLabel, ownerTextTone } from '@/lib/agent-identity'
 import {
   ArrowLeft,
-  Loader2,
   ClipboardList,
   LayoutList,
   Terminal,
@@ -148,11 +148,7 @@ export function WorkOrderDetail({ workOrderId }: WorkOrderDetailProps) {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (error || !workOrder) {
@@ -597,7 +593,7 @@ function OverviewTab({
                       disabled={isResolving}
                       className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-status-success text-bg-0 hover:bg-status-success/90 rounded-[var(--radius-sm)] disabled:opacity-50"
                     >
-                      {isResolving && <Loader2 className="w-3 h-3 animate-spin" />}
+                      {isResolving && <LoadingSpinner size="xs" />}
                       Approve
                     </button>
                   </div>

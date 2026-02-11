@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { enableWalMode } from '@/lib/db'
+import { LoadingState } from '@/components/ui/loading-state'
 import {
   getWorkOrdersWithOps,
   getPendingApprovals,
@@ -66,7 +67,7 @@ export default async function DashboardPage() {
   }))
 
   return (
-    <Suspense fallback={<div className="animate-pulse">Loading...</div>}>
+    <Suspense fallback={<LoadingState height="md" />}>
       <Dashboard
         workOrders={transformedWorkOrders}
         approvals={transformedApprovals}

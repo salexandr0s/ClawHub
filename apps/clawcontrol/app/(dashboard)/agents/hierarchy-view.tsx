@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { EmptyState, PageSection } from '@clawcontrol/ui'
-import { Bot, Loader2, RefreshCcw } from 'lucide-react'
+import { Bot, RefreshCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AgentAvatar } from '@/components/ui/agent-avatar'
+import { LoadingState } from '@/components/ui/loading-state'
 import { StationIcon } from '@/components/station-icon'
 import type {
   AgentHierarchyData,
@@ -381,11 +382,7 @@ export function HierarchyView({ data, loading, error, onRetry }: HierarchyViewPr
   }, [data])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (error) {

@@ -3,10 +3,10 @@
 import { useCallback } from 'react'
 import { PageHeader, EmptyState } from '@clawcontrol/ui'
 import { cn } from '@/lib/utils'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import {
   Wifi,
   WifiOff,
-  Loader2,
   AlertCircle,
   Pause,
   Play,
@@ -102,10 +102,11 @@ export function GatewayLiveClient() {
       <div className="flex-1 min-h-0 relative">
         {connectionState === 'connecting' ? (
           <div className="absolute inset-0 flex items-center justify-center bg-bg-1">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-fg-2" />
-              <span className="text-sm text-fg-2">Connecting to Gateway...</span>
-            </div>
+            <LoadingState
+              height="auto"
+              size="2xl"
+              label="Connecting to Gateway..."
+            />
           </div>
         ) : connectionState === 'error' || connectionState === 'disconnected' ? (
           <div className="absolute inset-0 flex items-center justify-center bg-bg-1">
@@ -178,7 +179,7 @@ function ConnectionBadge({
       )}
       {state === 'connecting' && (
         <>
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          <LoadingSpinner size="sm" />
           <span>Connecting...</span>
         </>
       )}

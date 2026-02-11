@@ -6,6 +6,7 @@ import { PageHeader, EmptyState } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { WorkOrderStatePill, PriorityPill } from '@/components/ui/status-pill'
 import { ViewToggle, type ViewMode } from '@/components/ui/view-toggle'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { KanbanBoard } from '@/components/kanban'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { agentsApi, workOrdersApi } from '@/lib/http'
@@ -14,7 +15,7 @@ import type { AgentDTO, WorkOrderWithOpsDTO } from '@/lib/repo'
 import type { WorkOrderState, Priority, Owner } from '@clawcontrol/core'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import { usePageReadyTiming } from '@/lib/perf/client-timing'
-import { ClipboardList, Plus, Filter, Loader2, X } from 'lucide-react'
+import { ClipboardList, Plus, Filter, X } from 'lucide-react'
 import { formatOwnerLabel, ownerTextTone } from '@/lib/agent-identity'
 
 // ============================================================================
@@ -364,7 +365,7 @@ function NewWorkOrderModal({
               disabled={isSubmitting || !formData.title.trim() || !formData.goalMd.trim()}
               className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-bg-0 bg-status-info hover:bg-status-info/90 rounded-[var(--radius-md)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isSubmitting && <LoadingSpinner size="sm" />}
               {isSubmitting ? 'Creating...' : 'Create Work Order'}
             </button>
           </div>
@@ -870,11 +871,7 @@ export function WorkOrdersClient() {
 
   // Loading state
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState />
   }
 
   // Error state

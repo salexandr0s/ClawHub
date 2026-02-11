@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { X, Search, Loader2, Globe, Check, Copy } from 'lucide-react'
+import { X, Search, Globe, Check, Copy } from 'lucide-react'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import { skillsApi, type SkillSummary } from '@/lib/http'
 
 interface SkillSelectorProps {
@@ -123,7 +124,7 @@ export function SkillSelector({
         <div className="flex-1 overflow-auto p-2">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-fg-2" />
+              <LoadingSpinner size="lg" className="text-fg-2" />
             </div>
           ) : filteredSkills.length === 0 ? (
             <div className="text-center py-8 text-fg-3 text-sm">

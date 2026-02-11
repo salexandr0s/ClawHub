@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { PageHeader, PageSection, TypedConfirmModal } from '@clawcontrol/ui'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { StatusPill } from '@/components/ui/status-pill'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { YamlEditor } from '@/components/editors/yaml-editor'
@@ -20,7 +21,6 @@ import {
   Trash2,
   RotateCcw,
   FileCode,
-  Loader2,
   Edit3,
   Stethoscope,
   Wrench,
@@ -465,7 +465,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
                 className="btn-secondary flex items-center gap-1.5 text-xs"
               >
                 {runningAction === 'health' ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <LoadingSpinner size="xs" />
                 ) : (
                   <RefreshCw className="w-3 h-3" />
                 )}
@@ -589,7 +589,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
                 className="btn-primary flex items-center gap-1.5"
               >
                 {runningAction === 'recover' ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner size="sm" />
                 ) : (
                   <Wrench className="w-3.5 h-3.5" />
                 )}
@@ -638,7 +638,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
                 disabled={errorSummaryLoading}
                 className="btn-secondary text-xs flex items-center gap-1.5"
               >
-                {errorSummaryLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                {errorSummaryLoading ? <LoadingSpinner size="xs" /> : <RefreshCw className="w-3 h-3" />}
                 Refresh
               </button>
             </div>
@@ -697,9 +697,7 @@ export function MaintenanceClient({ gateway: initialGateway, playbooks: initialP
         width="lg"
       >
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-          </div>
+          <LoadingState />
         ) : selectedPlaybook ? (
           <YamlEditor
             value={playbookContent}
@@ -806,7 +804,7 @@ function LiveActionCard({
       )}
     >
       {isRunning ? (
-        <Loader2 className="w-5 h-5 text-accent-primary shrink-0 mt-0.5 animate-spin" />
+        <LoadingSpinner size="lg" className="text-accent-primary shrink-0 mt-0.5" />
       ) : (
         <Icon className={cn(
           'w-5 h-5 shrink-0 mt-0.5',
@@ -887,7 +885,7 @@ function PlaybookCard({
           title="Run playbook"
         >
           {isRunning ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <LoadingSpinner size="xs" />
           ) : (
             <Play className="w-3 h-3" />
           )}

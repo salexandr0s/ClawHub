@@ -4,12 +4,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, PageSection, EmptyState } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { OperationStatusPill } from '@/components/ui/status-pill'
+import { LoadingState } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { StationIcon } from '@/components/station-icon'
 import { operationsApi, workOrdersApi, agentsApi } from '@/lib/http'
 import type { OperationDTO, WorkOrderDTO, AgentDTO } from '@/lib/repo'
 import { usePageReadyTiming } from '@/lib/perf/client-timing'
-import { TerminalSquare, Loader2 } from 'lucide-react'
+import { TerminalSquare } from 'lucide-react'
 
 export function RunsClient() {
   const [operations, setOperations] = useState<OperationDTO[]>([])
@@ -77,11 +78,7 @@ export function RunsClient() {
   const blockedCount = operations.filter((op) => op.status === 'blocked').length
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (error) {

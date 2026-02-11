@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, CheckCircle2, AlertTriangle, XCircle, RefreshCw, Save, FolderOpen } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, XCircle, RefreshCw, Save, FolderOpen } from 'lucide-react'
+import { InlineLoading, LoadingSpinner } from '@/components/ui/loading-state'
 import { configApi, type InitStatusResponse, type RemoteAccessMode } from '@/lib/http'
 import { cn } from '@/lib/utils'
 
@@ -177,8 +178,7 @@ export default function SetupPage() {
 
         {loading ? (
           <div className="p-4 rounded-[var(--radius-lg)] bg-bg-2 border border-bd-0 flex items-center gap-2 text-fg-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Checking prerequisites...</span>
+            <InlineLoading label="Checking prerequisites..." size="md" />
           </div>
         ) : error ? (
           <div className="p-4 rounded-[var(--radius-lg)] bg-status-danger/10 text-status-danger border border-status-danger/30 flex items-center justify-between">
@@ -348,7 +348,7 @@ ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
                       : 'bg-status-info text-white hover:bg-status-info/90'
                   )}
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saving ? <LoadingSpinner size="md" /> : <Save className="w-4 h-4" />}
                   Save Configuration
                 </button>
 
@@ -362,7 +362,7 @@ ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
                       : 'bg-bg-3 text-fg-1 hover:bg-bd-1'
                   )}
                 >
-                  {testingGateway ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {testingGateway ? <LoadingSpinner size="md" /> : <RefreshCw className="w-4 h-4" />}
                   Test Gateway
                 </button>
               </div>

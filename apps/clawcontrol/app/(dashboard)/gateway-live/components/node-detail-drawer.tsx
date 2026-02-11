@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { X, Bot, MessageSquare, Wrench, Settings, Radio, Shield, Loader2, Eye, Code } from 'lucide-react'
+import { X, Bot, MessageSquare, Wrench, Settings, Radio, Shield, Eye, Code } from 'lucide-react'
 import { TypedConfirmModal } from '@clawcontrol/ui'
 import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
 import { useSettings } from '@/lib/settings-context'
 import { ModalFrame } from '@/components/ui/modal'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import type { GraphNode, GraphNodeKind } from '@/lib/openclaw/live-graph'
 
 interface NodeDetailDrawerProps {
@@ -199,7 +200,7 @@ export function NodeDetailDrawer({ node, onClose }: NodeDetailDrawerProps) {
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-bg-3 hover:bg-bd-1 rounded-[var(--radius-md)] border border-bd-0 text-fg-1 disabled:opacity-50"
               >
                 {isLoadingRaw ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner size="sm" />
                 ) : (
                   <Shield className="w-3.5 h-3.5" />
                 )}

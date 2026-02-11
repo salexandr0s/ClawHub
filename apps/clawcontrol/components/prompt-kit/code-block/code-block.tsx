@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import { CopyButton } from './copy-button'
 import { highlightCodeToHtml } from './shiki-highlighter'
 
@@ -75,7 +75,7 @@ export function CodeBlock({
       >
         {status === 'loading' && (
           <div className="flex items-center gap-2 text-fg-2">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <LoadingSpinner size="sm" />
             <span className="text-xs">Highlighting…</span>
           </div>
         )}
@@ -97,4 +97,3 @@ export function CodeBlock({
     </div>
   )
 }
-

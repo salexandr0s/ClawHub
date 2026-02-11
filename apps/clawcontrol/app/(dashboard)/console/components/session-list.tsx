@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useMemo, useDeferredValue } from 'react'
-import { Bot, Clock, AlertCircle, CheckCircle, Pause, RefreshCw, Search, X, Loader2, DollarSign, Wrench } from 'lucide-react'
+import { Bot, Clock, AlertCircle, CheckCircle, Pause, RefreshCw, Search, X, DollarSign, Wrench } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AgentAvatar } from '@/components/ui/agent-avatar'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import type { ConsoleSessionDTO } from '@/app/api/openclaw/console/sessions/route'
 import type { AvailabilityStatus } from '@/lib/openclaw/availability'
 import type { AgentDTO } from '@/lib/repo'
@@ -339,7 +340,7 @@ export function SessionList({
                     )}
                     title="End session"
                   >
-                    {ending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                    {ending ? <LoadingSpinner size="sm" /> : <X className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               )

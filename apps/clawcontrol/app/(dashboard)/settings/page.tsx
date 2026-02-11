@@ -4,6 +4,7 @@ import { useState, useEffect, type ChangeEvent } from 'react'
 import { useLayout } from '@/lib/layout-context'
 import { useSettings } from '@/lib/settings-context'
 import { useSyncStatus } from '@/lib/hooks/useSyncStatus'
+import { InlineLoading, LoadingSpinner } from '@/components/ui/loading-state'
 import {
   configApi,
   type SettingsConfigResponse,
@@ -19,7 +20,6 @@ import {
   AlertCircle,
   RefreshCw,
   Save,
-  Loader2,
   ShieldOff,
   Upload,
   Trash2,
@@ -416,7 +416,7 @@ export default function SettingsPage() {
                 disabled={avatarBusy}
                 className="sr-only"
               />
-              {avatarBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              {avatarBusy ? <LoadingSpinner size="md" /> : <Upload className="w-4 h-4" />}
               {avatarBusy ? 'Processing...' : 'Upload Image'}
             </label>
 
@@ -457,8 +457,7 @@ export default function SettingsPage() {
         <div className="p-4 rounded-[var(--radius-lg)] bg-bg-2 border border-bd-0 space-y-4">
           {settingsLoading ? (
             <div className="flex items-center gap-2 text-fg-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Loading settings...</span>
+              <InlineLoading label="Loading settings..." size="md" />
             </div>
           ) : settingsError ? (
             <div className="flex items-center gap-2 text-status-danger">
@@ -553,7 +552,7 @@ ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
                       )}
                     >
                       {tailscaleReadinessLoading ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <LoadingSpinner size="sm" />
                       ) : (
                         <RefreshCw className="w-3.5 h-3.5" />
                       )}
@@ -638,7 +637,7 @@ ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
                     )}
                   >
                     {testingGateway ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <LoadingSpinner size="md" />
                     ) : (
                       <RefreshCw className="w-4 h-4" />
                     )}
@@ -726,7 +725,7 @@ ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
                       )}
                     >
                       {pickingWorkspace ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <LoadingSpinner size="md" />
                       ) : (
                         <FolderOpen className="w-4 h-4" />
                       )}
@@ -744,7 +743,7 @@ ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
                     )}
                   >
                     {saving ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <LoadingSpinner size="md" />
                     ) : saveSuccess ? (
                       <Check className="w-4 h-4" />
                     ) : (
@@ -803,8 +802,7 @@ ssh -L 3000:127.0.0.1:3000 {'<user>@<host-tailnet-name>'}
         <div className="p-4 rounded-[var(--radius-lg)] bg-bg-2 border border-bd-0 space-y-4">
           {discoverLoading ? (
             <div className="flex items-center gap-2 text-fg-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Scanning local OpenClaw config...</span>
+              <InlineLoading label="Scanning local OpenClaw config..." size="md" />
             </div>
           ) : discoverError ? (
             <div className="flex items-center gap-2 text-status-danger">

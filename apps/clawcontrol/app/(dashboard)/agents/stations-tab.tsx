@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PageSection, EmptyState } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
+import { InlineLoading } from '@/components/ui/loading-state'
 import { useProtectedActionTrigger } from '@/components/protected-action-modal'
 import { StationIcon } from '@/components/station-icon'
 import { useStations } from '@/lib/stations-context'
@@ -156,7 +157,7 @@ export function StationsTab() {
           : undefined}
       >
         {loading ? (
-          <div className="text-xs text-fg-3">Loading…</div>
+          <InlineLoading label="Loading..." size="sm" className="text-fg-3" />
         ) : error ? (
           <EmptyState title="Failed to load stations" description={error} />
         ) : rows.length === 0 ? (

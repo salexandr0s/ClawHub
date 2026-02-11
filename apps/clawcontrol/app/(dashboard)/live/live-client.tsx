@@ -6,6 +6,7 @@ import { activitiesApi, agentsApi } from '@/lib/http'
 import { useSseStream, type SseConnectionState } from '@/lib/hooks/useSseStream'
 import type { ActivityDTO } from '@/lib/repo'
 import { StationIcon } from '@/components/station-icon'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { cn } from '@/lib/utils'
 import {
   Activity as ActivityIcon,
@@ -16,7 +17,6 @@ import {
   Bot,
   Settings,
   Clock,
-  Loader2,
   Wifi,
   WifiOff,
   AlertCircle,
@@ -87,11 +87,7 @@ export function LiveClient() {
       : activities.filter((a) => a.type.startsWith(filter))
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (error) {
@@ -255,7 +251,7 @@ function ConnectionStatus({
       )}
       {state === 'connecting' && (
         <>
-          <Loader2 className="w-3.5 h-3.5 text-status-warning animate-spin" />
+          <LoadingSpinner size="sm" className="text-status-warning" />
           <span className="text-xs text-status-warning">Connecting...</span>
         </>
       )}

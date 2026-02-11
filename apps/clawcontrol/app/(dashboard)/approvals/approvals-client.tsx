@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { PageHeader, PageSection, EmptyState } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { approvalsApi } from '@/lib/http'
 import type { ApprovalDTO, WorkOrderDTO } from '@/lib/repo'
@@ -17,7 +18,6 @@ import {
   AlertTriangle,
   ShieldAlert,
   Ship,
-  Loader2,
   ExternalLink,
   Square,
   CheckSquare,
@@ -179,7 +179,7 @@ const createColumns = (
           className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-status-success text-white rounded hover:bg-status-success/90 disabled:opacity-50"
         >
           {isApproving ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <LoadingSpinner size="xs" />
           ) : (
             <CheckCircle className="w-3 h-3" />
           )}
@@ -412,7 +412,7 @@ export function ApprovalsClient({ approvals: initialApprovals, workOrderMap }: P
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-status-success text-white hover:bg-status-success/90 rounded-[var(--radius-md)] disabled:opacity-50"
             >
               {isBatchProcessing ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoadingSpinner size="sm" />
               ) : (
                 <CheckCircle className="w-3.5 h-3.5" />
               )}
@@ -628,7 +628,7 @@ function ApprovalDetail({
               className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-status-success text-white hover:bg-status-success/90 rounded-[var(--radius-md)] disabled:opacity-50"
             >
               {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <LoadingSpinner size="md" />
               ) : (
                 <CheckCircle className="w-4 h-4" />
               )}

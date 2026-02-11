@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { X, Save, Loader2, FileCode, AlertCircle } from 'lucide-react'
+import { X, Save, FileCode, AlertCircle } from 'lucide-react'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { workspaceApi } from '@/lib/http'
 import { TypedConfirmModal } from '@clawcontrol/ui'
 import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
@@ -151,7 +152,7 @@ export function FileEditorModal({
                 )}
               >
                 {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <LoadingSpinner size="md" />
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
@@ -177,9 +178,7 @@ export function FileEditorModal({
           {/* Editor */}
           <div className="flex-1 overflow-hidden">
             {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-              </div>
+              <LoadingState height="full" />
             ) : (
               <textarea
                 value={content}

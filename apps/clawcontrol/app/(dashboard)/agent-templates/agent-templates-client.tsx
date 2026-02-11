@@ -4,6 +4,7 @@ import { useState, useCallback, type ChangeEvent, type DragEvent } from 'react'
 import { PageHeader, EmptyState, TypedConfirmModal } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
 import { useSettings } from '@/lib/settings-context'
@@ -18,7 +19,6 @@ import { cn } from '@/lib/utils'
 import {
   LayoutTemplate,
   Plus,
-  Loader2,
   CheckCircle,
   XCircle,
   AlertTriangle,
@@ -888,7 +888,7 @@ export function AgentTemplatesClient({ templates: initialTemplates }: Props) {
                 className="btn-primary flex items-center gap-1.5"
               >
                 {isCreating ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner size="sm" />
                 ) : (
                   <Plus className="w-3.5 h-3.5" />
                 )}
@@ -998,7 +998,7 @@ export function AgentTemplatesClient({ templates: initialTemplates }: Props) {
 
                   {isAnalyzingImport && (
                     <div className="flex items-center gap-2 text-xs text-fg-2">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <LoadingSpinner size="sm" />
                       Analyzing import file...
                     </div>
                   )}
@@ -1066,7 +1066,7 @@ export function AgentTemplatesClient({ templates: initialTemplates }: Props) {
                 className="btn-primary flex items-center gap-1.5"
               >
                 {isImporting ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner size="sm" />
                 ) : (
                   <Upload className="w-3.5 h-3.5" />
                 )}
@@ -1129,11 +1129,7 @@ function TemplateDetail({
   onClosePreview,
 }: TemplateDetailProps) {
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState height="sm" />
   }
 
   return (
@@ -1230,7 +1226,7 @@ function OverviewTab({
             className="btn-secondary flex items-center gap-1.5"
           >
             {isExporting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <Download className="w-3.5 h-3.5" />
             )}
@@ -1242,7 +1238,7 @@ function OverviewTab({
             className="btn-secondary flex items-center gap-1.5 text-status-error"
           >
             {isDeleting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <Trash2 className="w-3.5 h-3.5" />
             )}
@@ -1391,7 +1387,7 @@ function FilesTab({
               className="btn-secondary btn-sm flex items-center gap-1"
             >
               {isLoadingFile ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <LoadingSpinner size="xs" />
               ) : (
                 <Eye className="w-3 h-3" />
               )}

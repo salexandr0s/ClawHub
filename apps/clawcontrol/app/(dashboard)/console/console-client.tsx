@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { EmptyState } from '@clawcontrol/ui'
-import { Terminal, AlertCircle, RefreshCw } from 'lucide-react'
+import { Terminal, AlertCircle } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { agentsApi } from '@/lib/http'
 import { useGatewayChat } from '@/lib/hooks/useGatewayChat'
+import { LoadingState } from '@/components/ui/loading-state'
 import { useChatStore, type ChatMessage } from '@/lib/stores/chat-store'
 import type { PromptSubmitPayload } from '@/components/prompt-kit'
 import { SessionList } from './components/session-list'
@@ -327,11 +328,8 @@ export function ConsoleClient() {
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {loading && sessions.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <RefreshCw className="w-6 h-6 text-fg-3 animate-spin" />
-              <span className="text-sm text-fg-2">Loading sessions...</span>
-            </div>
+          <div className="flex-1">
+            <LoadingState height="full" label="Loading sessions..." />
           </div>
         ) : sessions.length === 0 && !hasActiveSessionFilters ? (
           <div className="flex-1 flex items-center justify-center p-8">

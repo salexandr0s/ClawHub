@@ -1,10 +1,10 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import {
   Wifi,
   WifiOff,
-  Loader2,
   AlertCircle,
   RefreshCw,
   Activity,
@@ -87,7 +87,7 @@ export function LivePulseHeader({
           )}
           {connectionState === 'connecting' && (
             <>
-              <Loader2 className="w-3.5 h-3.5 text-status-warning animate-spin" />
+              <LoadingSpinner size="sm" className="text-status-warning" />
               <span className="text-xs text-status-warning font-medium">Connecting</span>
             </>
           )}

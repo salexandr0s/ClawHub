@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo, type CSSProperties }
 import { PageHeader, PageSection, EmptyState } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { InlineLoading, LoadingSpinner } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { AvailabilityBadge } from '@/components/availability-badge'
 import { getModelShortName } from '@/lib/models'
@@ -23,7 +24,6 @@ import {
   Plus,
   Play,
   Pause,
-  Loader2,
   Trash2,
   X,
   RefreshCw,
@@ -1669,15 +1669,17 @@ export function CronClient() {
 
         {isBackgroundLoading && (
           <div className="flex items-center gap-2 text-fg-3 text-xs">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Hydrating health and cost insights in background...
+            <InlineLoading
+              label="Hydrating health and cost insights in background..."
+              size="sm"
+              className="text-fg-3 text-xs"
+            />
           </div>
         )}
 
         {isLoading && (
           <div className="flex items-center gap-2 text-fg-3 text-sm">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Loading crons...</span>
+            <InlineLoading label="Loading crons..." size="md" className="text-fg-3" />
           </div>
         )}
 
@@ -2432,7 +2434,7 @@ function CronDetail({
               )}
             >
               {actionInProgress === 'save' ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoadingSpinner size="sm" />
               ) : (
                 <Save className="w-3.5 h-3.5" />
               )}
@@ -2460,7 +2462,7 @@ function CronDetail({
             )}
           >
             {actionInProgress === 'run' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <Play className="w-3.5 h-3.5" />
             )}
@@ -2478,7 +2480,7 @@ function CronDetail({
             )}
           >
             {actionInProgress === 'toggle' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : job.enabled ? (
               <Pause className="w-3.5 h-3.5" />
             ) : (
@@ -2498,7 +2500,7 @@ function CronDetail({
             )}
           >
             {actionInProgress === 'delete' ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <Trash2 className="w-3.5 h-3.5" />
             )}
@@ -2783,7 +2785,7 @@ function CreateCronJobModal({ isOpen, onClose, onCreated }: CreateCronJobModalPr
               disabled={isSubmitting || !name.trim() || !schedule.trim() || !command.trim()}
               className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-bg-0 bg-status-info hover:bg-status-info/90 rounded-[var(--radius-md)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isSubmitting && <LoadingSpinner size="sm" />}
               {isSubmitting ? 'Creating...' : 'Create Job'}
             </button>
           </div>

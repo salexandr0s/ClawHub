@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, type CSSProperties } from 'react'
 import { PageHeader, EmptyState, TypedConfirmModal } from '@clawcontrol/ui'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { MarkdownEditor } from '@/components/editors/markdown-editor'
 import { YamlEditor } from '@/components/editors/yaml-editor'
@@ -18,7 +19,6 @@ import {
   FileText,
   ChevronRight,
   FileCode,
-  Loader2,
   Shield,
   Plus,
   FilePlus,
@@ -1180,7 +1180,7 @@ export function WorkspaceClient({ initialFiles }: Props) {
 
               {calendarLoading && !hasAllRequiredCalendarMonths ? (
                 <div className="flex items-center justify-center py-8 text-fg-2 text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  <LoadingSpinner size="md" className="mr-2" />
                   Loading calendar…
                 </div>
               ) : calendarView === 'year' ? (
@@ -1597,9 +1597,7 @@ export function WorkspaceClient({ initialFiles }: Props) {
         width="xl"
       >
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-          </div>
+          <LoadingState />
         ) : (
           renderEditor()
         )}
@@ -1666,7 +1664,7 @@ export function WorkspaceClient({ initialFiles }: Props) {
                   disabled={!newName.trim() || isCreating}
                   className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-status-info text-white hover:bg-status-info/90 rounded-[var(--radius-md)] disabled:opacity-50"
                 >
-                  {isCreating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {isCreating && <LoadingSpinner size="sm" />}
                   Create
                 </button>
               </div>

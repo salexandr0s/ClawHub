@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { PageHeader, PageSection, EmptyState } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { useProtectedActionTrigger } from '@/components/protected-action-modal'
 import { AgentAvatar } from '@/components/ui/agent-avatar'
@@ -32,7 +33,6 @@ import { HierarchyView } from './hierarchy-view'
 import {
   Bot,
   Plus,
-  Loader2,
   X,
   Check,
   Zap,
@@ -490,11 +490,7 @@ export function AgentsClient() {
   }
 
   if (loading && agents.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState />
   }
 
   if (error) {
@@ -1151,9 +1147,7 @@ function CreateFromTemplateWizard({
           )}
 
           {loading && (
-            <div className="flex items-center justify-center h-40">
-              <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-            </div>
+            <LoadingState height="sm" />
           )}
 
           {!loading && step === 'select' && (
@@ -1514,7 +1508,7 @@ function AgentDetail({
         <div className="space-y-2">
           {loadingSkills ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-4 h-4 animate-spin text-fg-2" />
+              <LoadingSpinner size="md" className="text-fg-2" />
             </div>
           ) : agentSkills.length === 0 ? (
             <p className="text-xs text-fg-3">No skills assigned to this agent</p>

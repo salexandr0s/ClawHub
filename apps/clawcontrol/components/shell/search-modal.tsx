@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Search, FileText, Cog, MessageSquare, File, X, Loader2 } from 'lucide-react'
+import { Search, FileText, Cog, MessageSquare, File, X } from 'lucide-react'
+import { LoadingSpinner } from '@/components/ui/loading-state'
 import type { SearchResult } from '@/lib/data'
 
 interface SearchModalProps {
@@ -163,7 +164,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
               placeholder="Search work orders, operations, messages..."
               className="flex-1 bg-transparent text-sm text-fg-0 placeholder:text-fg-3 outline-none"
             />
-            {loading && <Loader2 className="w-4 h-4 text-fg-2 animate-spin" />}
+            {loading && <LoadingSpinner size="md" className="text-fg-2" />}
             <button
               onClick={onClose}
               className="p-1 rounded hover:bg-bg-3 transition-colors"

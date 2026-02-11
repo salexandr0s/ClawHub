@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { PageHeader, PageSection, EmptyState, TypedConfirmModal } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { MarkdownEditor } from '@/components/editors'
 import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
@@ -18,7 +19,6 @@ import {
   Globe,
   User,
   Power,
-  Loader2,
   Download,
   Copy,
   CheckCircle,
@@ -498,9 +498,7 @@ export function SkillsClient({ skills: initialSkills, agents }: Props) {
         width="lg"
       >
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-          </div>
+          <LoadingState />
         ) : selectedSkill ? (
           <div className="space-y-6">
             {/* Header Info */}
@@ -544,7 +542,7 @@ export function SkillsClient({ skills: initialSkills, agents }: Props) {
                   className="inline-flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs bg-bg-3 border border-bd-0 rounded-[var(--radius-md)] text-fg-1 hover:bg-bg-2 transition-colors disabled:opacity-50"
                 >
                   {isValidating ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <LoadingSpinner size="sm" />
                   ) : (
                     <RefreshCw className="w-3.5 h-3.5" />
                   )}
@@ -920,7 +918,7 @@ function UploadSkillModal({
               disabled={isSubmitting || (scope === 'agent' && !agentId)}
               className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-bg-0 bg-status-info hover:bg-status-info/90 rounded-[var(--radius-md)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isSubmitting && <LoadingSpinner size="sm" />}
               {isSubmitting ? 'Installing...' : 'Install'}
             </button>
           </div>
@@ -1165,7 +1163,7 @@ function CreateSkillModal({
               disabled={isSubmitting || !name.trim() || (scope === 'agent' && !agentId)}
               className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-bg-0 bg-status-info hover:bg-status-info/90 rounded-[var(--radius-md)] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {isSubmitting && <LoadingSpinner size="sm" />}
               {isSubmitting ? 'Creating...' : 'Create Skill'}
             </button>
           </div>

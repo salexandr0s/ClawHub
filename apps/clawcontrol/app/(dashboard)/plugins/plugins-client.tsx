@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { PageHeader, PageSection, EmptyState, TypedConfirmModal } from '@clawcontrol/ui'
 import { CanonicalTable, type Column } from '@/components/ui/canonical-table'
 import { StatusPill } from '@/components/ui/status-pill'
+import { LoadingSpinner, LoadingState } from '@/components/ui/loading-state'
 import { RightDrawer } from '@/components/shell/right-drawer'
 import { useProtectedAction } from '@/lib/hooks/useProtectedAction'
 import { useSettings } from '@/lib/settings-context'
@@ -22,7 +23,6 @@ import {
   Plus,
   Settings,
   Power,
-  Loader2,
   Stethoscope,
   CheckCircle,
   AlertTriangle,
@@ -530,14 +530,14 @@ export function PluginsClient({ plugins: initialPlugins, meta: initialMeta }: Pr
 
         {listLoading && plugins.length === 0 && (
           <div className="rounded-md border border-bd-0 bg-bg-2 px-3 py-2 text-sm text-fg-2 flex items-center gap-2">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <LoadingSpinner size="sm" />
             Loading plugins...
           </div>
         )}
 
         {listRefreshing && plugins.length > 0 && (
           <div className="rounded-md border border-bd-0 bg-bg-2 px-3 py-2 text-sm text-fg-2 flex items-center gap-2">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <LoadingSpinner size="sm" />
             Refreshing plugins in background...
           </div>
         )}
@@ -567,7 +567,7 @@ export function PluginsClient({ plugins: initialPlugins, meta: initialMeta }: Pr
               title="Re-probe OpenClaw capabilities"
             >
               {isProbing ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoadingSpinner size="sm" />
               ) : (
                 <RotateCcw className="w-3.5 h-3.5" />
               )}
@@ -595,7 +595,7 @@ export function PluginsClient({ plugins: initialPlugins, meta: initialMeta }: Pr
               title="Re-probe OpenClaw capabilities"
             >
               {isProbing ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoadingSpinner size="sm" />
               ) : (
                 <RotateCcw className="w-3.5 h-3.5" />
               )}
@@ -619,7 +619,7 @@ export function PluginsClient({ plugins: initialPlugins, meta: initialMeta }: Pr
               className="btn-secondary flex items-center gap-1.5 text-status-warning border-status-warning/30 hover:bg-status-warning/10"
             >
               {isRestarting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <LoadingSpinner size="sm" />
               ) : (
                 <RotateCcw className="w-3.5 h-3.5" />
               )}
@@ -759,7 +759,7 @@ export function PluginsClient({ plugins: initialPlugins, meta: initialMeta }: Pr
                 className="btn-primary flex items-center gap-1.5"
               >
                 {isInstalling ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <LoadingSpinner size="sm" />
                 ) : (
                   <Plus className="w-3.5 h-3.5" />
                 )}
@@ -820,11 +820,7 @@ function PluginDetail({
   onUninstall,
 }: PluginDetailProps) {
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <Loader2 className="w-6 h-6 animate-spin text-fg-2" />
-      </div>
-    )
+    return <LoadingState height="sm" />
   }
 
   return (
@@ -933,7 +929,7 @@ function OverviewTab({
             )}
           >
             {isToggling ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <Power className="w-3.5 h-3.5" />
             )}
@@ -946,7 +942,7 @@ function OverviewTab({
             className="btn-secondary flex items-center gap-1.5 text-status-error"
           >
             {isUninstalling ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <Trash2 className="w-3.5 h-3.5" />
             )}
@@ -1125,7 +1121,7 @@ function ConfigTab({
             className="btn-primary flex items-center gap-1.5"
           >
             {isSaving ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <LoadingSpinner size="sm" />
             ) : (
               <Save className="w-3.5 h-3.5" />
             )}
@@ -1184,7 +1180,7 @@ function DoctorTab({
           className="btn-secondary flex items-center gap-1.5"
         >
           {isRunningDoctor ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <LoadingSpinner size="sm" />
           ) : (
             <Stethoscope className="w-3.5 h-3.5" />
           )}
