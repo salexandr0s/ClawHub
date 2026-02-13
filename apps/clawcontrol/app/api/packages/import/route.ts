@@ -3,6 +3,8 @@ import { asAuthErrorResponse, verifyOperatorRequest } from '@/lib/auth/operator-
 import { enforceActionPolicy } from '@/lib/with-governor'
 import { analyzePackageImport, PackageServiceError } from '@/lib/packages/service'
 
+export const runtime = 'nodejs'
+
 /**
  * POST /api/packages/import
  * Stage and analyze a .clawpack.zip package before deployment.
